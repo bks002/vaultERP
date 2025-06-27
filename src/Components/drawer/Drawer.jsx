@@ -13,6 +13,7 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
 import {Link} from "react-router-dom"
+import { ListSubheader } from '@mui/material';
 
 const drawerWidth = 240;
 const openedMixin = (theme) => ({
@@ -98,10 +99,39 @@ export default function MiniDrawer({ drawer, handleDrawer}) {
             </List>
             <Divider />
             <List>
+                {drawer && (
+                    <ListSubheader component="div" id="nested-list-subheader">
+                        Inventory Management
+                    </ListSubheader>
+                )}
                 <ListItem disablePadding>
-                    <ListItemButton href="/Inventory"  >
+                    <ListItemButton component={Link} to="/Inventory/Category"  >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
-                        <ListItemText primary="Inventory Master" />
+                        <ListItemText primary="Category Master" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Inventory/Item"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Item Master" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Inventory/Vendor"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Vendor Master" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Inventory/RateCard"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Rate Card" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Inventory/PO"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Purchase Order" />
                     </ListItemButton>
                 </ListItem>
             </List>
