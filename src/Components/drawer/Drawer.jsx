@@ -91,9 +91,9 @@ export default function MiniDrawer({ drawer, handleDrawer}) {
             <Divider />
             <List>
                 <ListItem disablePadding>
-                    <ListItemButton component={Link} to="/asset" >
+                    <ListItemButton component={Link} to="/employee" >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
-                        <ListItemText primary="Asset Master" />
+                        <ListItemText primary="Employee Master" />
                     </ListItemButton>
                 </ListItem>
             </List>
