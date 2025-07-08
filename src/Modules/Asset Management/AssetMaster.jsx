@@ -47,7 +47,6 @@ const AssetMaster = () => {
         </Typography>
 
         <FormControl component="fieldset">
-          <FormLabel component="legend">Choose Asset Type:</FormLabel>
           <RadioGroup
             row
             name="assetType"
