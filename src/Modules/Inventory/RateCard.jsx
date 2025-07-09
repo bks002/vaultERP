@@ -158,7 +158,15 @@ const RateCard = () => {
                                         <TableCell>{rateCard.itemName}</TableCell>
                                         <TableCell>{rateCard.vendorName}</TableCell>
                                         <TableCell>₹{rateCard.price}</TableCell>
-                                        <TableCell>{new Date(rateCard.ValidTill).toLocaleDateString()}</TableCell>
+                                        <TableCell>
+                                            {rateCard.validTill
+                                                ? new Date(rateCard.validTill).toLocaleDateString('en-IN', {
+                                                    day: '2-digit',
+                                                    month: 'short',
+                                                    year: 'numeric'
+                                                })
+                                                : '-'}
+                                        </TableCell>
                                         <TableCell align="center">
                                             <IconButton color="error" onClick={() => handleDelete(rateCard.id)}>
                                                 <DeleteIcon />

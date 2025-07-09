@@ -73,7 +73,7 @@ const PurchaseOrder = () => {
                         <TableBody>
                             {purchaseOrders.length > 0 ? (
                                 purchaseOrders.map((po, index) => (
-                                    <TableRow key={po.id}>
+                                    <TableRow key={po.purchaseOrderId}>
                                         <TableCell>{index + 1}</TableCell>
                                         <TableCell>{po.poNumber}</TableCell>
                                         <TableCell>{new Date(po.poDateTime).toLocaleString()}</TableCell>

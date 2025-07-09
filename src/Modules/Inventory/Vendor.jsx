@@ -220,12 +220,12 @@ const Vendor = () => {
                             onChange={(e) => setSelectedVendor({ ...selectedVendor, panNumber: e.target.value })}
                             fullWidth
                         />
-                        <TextField
-                            label="Website URL"
-                            value={selectedVendor.websiteUrl}
-                            onChange={(e) => setSelectedVendor({ ...selectedVendor, websiteUrl: e.target.value })}
-                            fullWidth
-                        />
+                        {/*<TextField*/}
+                        {/*    label="Website URL"*/}
+                        {/*    value={selectedVendor.websiteUrl}*/}
+                        {/*    onChange={(e) => setSelectedVendor({ ...selectedVendor, websiteUrl: e.target.value })}*/}
+                        {/*    fullWidth*/}
+                        {/*/>*/}
                         <FormControlLabel
                             control={
                                 <Switch

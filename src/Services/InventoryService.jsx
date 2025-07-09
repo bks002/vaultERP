@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-//const API_BASE_URL = 'https://api.urest.in:7093/api/inventory';
+const API_BASE_URL = 'https://admin.urest.in:8089/api/inventory';
 
-const API_BASE_URL = 'https://localhost:7093/api/inventory';
+//const API_BASE_URL = 'https://localhost:7093/api/inventory';
 const api = axios.create({
     baseURL: API_BASE_URL,
     headers: {
@@ -41,7 +41,7 @@ export const getCategoryById = async (id) => {
 
 export const createCategory = async (category) => {
     try {
-        const response = await api.post('', category);
+        const response = await api.post('/Category', category);
         return response.data;
     } catch (error) {
         handleApiError(error);

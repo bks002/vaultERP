@@ -34,7 +34,7 @@ const Category = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState({ name: '', description: '' });
+    const [selectedCategory, setSelectedCategory] = useState({ name: '', description: '',isActive:false,isApproved:false });
     const [isEdit, setIsEdit] = useState(false);
 
     const loadCategories = async () => {
@@ -79,6 +79,8 @@ const Category = () => {
                 await updateCategory(selectedCategory.id, {
                     name: selectedCategory.name,
                     description: selectedCategory.description,
+                    isActive:selectedCategory.isActive,
+                    isApproved:selectedCategory.isApproved
                 }); // Edit case
                 alert('Category updated successfully!');
             } else {
