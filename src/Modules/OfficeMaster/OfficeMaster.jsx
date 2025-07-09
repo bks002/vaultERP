@@ -101,7 +101,7 @@ const OfficeMasterPage = () => {
     };
 
     return (
-        <Container  maxWidth={false }>
+        <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Typography variant="h4">Office Master</Typography>
                 <Button variant="contained" onClick={handleCreate}>
@@ -194,10 +194,10 @@ const OfficeMasterPage = () => {
                         <TextField label="State" value={selectedOffice.state} fullWidth disabled />
                         <TextField label="Latitude" value={selectedOffice.latitude} fullWidth disabled />
                         <TextField label="Longitude" value={selectedOffice.longitude} fullWidth disabled />
-                        <TextField fullWidth label="Email" name="email" value={selectedOffice.email} onChange={handleChange}  disabled/>
+                        <TextField fullWidth label="Email" name="email" value={selectedOffice.email} onChange={handleChange} disabled />
                         <TextField fullWidth label="Region" name="region" value={selectedOffice.region} onChange={handleChange} disabled />
-                        <TextField fullWidth label="Pincode" name="pincode" value={selectedOffice.pincode} onChange={handleChange}  disabled/>
-                        <TextField fullWidth label="Office Type" name="officeType" value={selectedOffice.officeType} onChange={handleChange}  disabled/>
+                        <TextField fullWidth label="Pincode" name="pincode" value={selectedOffice.pincode} onChange={handleChange} disabled />
+                        <TextField fullWidth label="Office Type" name="officeType" value={selectedOffice.officeType} onChange={handleChange} disabled />
                         <TextField fullWidth label="Address Line 1" name="addressLine1" value={selectedOffice.addressLine1} onChange={handleChange} disabled />
                         <TextField fullWidth label="Address Line 2" name="addressLine2" value={selectedOffice.addressLine2} onChange={handleChange} disabled />
                         <TextField fullWidth label="Contact Number" name="contactNumber" value={selectedOffice.contactNumber} onChange={handleChange} disabled />

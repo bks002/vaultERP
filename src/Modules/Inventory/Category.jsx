@@ -31,6 +31,7 @@ import { useSelector } from 'react-redux';
 
 const Category = () => {
     const officeId = useSelector((state) => state.user.officeId);
+    console.log('Office ID:', officeId);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -43,6 +44,7 @@ const Category = () => {
             const data = await getCategories(officeId);
             setCategories(data);
         } catch (error) {
+            setCategories([]);
             console.error(error.message);
         } finally {
             setLoading(false);
