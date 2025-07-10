@@ -37,6 +37,14 @@ export default function PrimarySearchAppBar({ drawer, handleDrawer }) {
 
     const handleLogout = () => {
         localStorage.removeItem("isAuthenticated");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("loginTime");
+
+        sessionStorage.removeItem("isAuthenticated");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("user");
+
         navigate("/");
     };
 
