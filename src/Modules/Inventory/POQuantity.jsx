@@ -99,6 +99,9 @@ const POQuantity = ({ open, onClose, selectedItems = [] }) => {
         } catch (error) {
             console.error(error);
             alert("Error creating Purchase Orders. Please try again.");
+        }finally {
+            setBillingAddress("");
+            setShippingAddress("");
         }
     };
 

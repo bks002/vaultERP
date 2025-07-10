@@ -83,8 +83,7 @@ const CreatePurchaseOrder = ({ open, onClose, officeId }) => {
             return;
         }
         const poItems = Array.from(selectedItemIds.ids).map((itemId) => {
-            const item = items.find((i) => i.itemId === itemId);
-            console.log(item);
+            const item = items.find((i) => (i.id) === (itemId));
             return {
                 itemId,
                 itemName: item.itemName,
@@ -97,7 +96,6 @@ const CreatePurchaseOrder = ({ open, onClose, officeId }) => {
                 lineTotal:0
             };
         });
-        console.log(poItems)
         setSelectedItemsForPO(poItems);
         setPoQuantityOpen(true);
     };
@@ -162,7 +160,7 @@ const CreatePurchaseOrder = ({ open, onClose, officeId }) => {
                                 },
                             }}
                             pageSizeOptions={[5]}
-                            getRowId={(row) => row.itemId}
+                            getRowId={(row) => row.id}
                             onRowSelectionModelChange={(newSelection) => {
                                 setSelectedItemIds(newSelection);
                             }}
