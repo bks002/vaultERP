@@ -1,30 +1,31 @@
 import React from "react";
-import {Route, Routes} from "react-router-dom";
-import OfficeMaster from "./Modules/OfficeMaster/OfficeMaster.jsx";
-
-import ItemMaster from "./Modules/Inventory/Item.jsx";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "./Modules/Dashboard/Dashboard.jsx";
+import OfficeMaster from "./Modules/OfficeMaster/OfficeMaster.jsx";
+import EmployeeMaster from "./Modules/Employee/EmployeeMaster.jsx";
+import ItemMaster from "./Modules/Inventory/Item.jsx";
 import Category from "./Modules/Inventory/Category.jsx";
 import Vendor from "./Modules/Inventory/Vendor.jsx";
 import RateCard from "./Modules/Inventory/RateCard.jsx";
 import PurchaseOrder from "./Modules/Inventory/PurchaseOrder.jsx";
-import EmployeeMaster from "./Modules/Employee/EmployeeMaster.jsx";
-// Import all route components here
+import SlotsSignIn from "./Components/login & signup/login.jsx";
+import AuthWrapper from "./AuthWrapper";
 
 function AppRoutes() {
-    return (
-        <Routes>
-            <Route path="/" element={<Dashboard/>}/>
-            <Route path="/office" element={<OfficeMaster />} />
-            <Route path="/employee" element={<EmployeeMaster />} />
-            <Route path="/inventory/item" element={<ItemMaster />} />
-            <Route path="/inventory/Category" element={<Category />} />
-            <Route path="/inventory/Vendor" element={<Vendor/>} />
-            <Route path="/inventory/RateCard" element={<RateCard/>} />
-            <Route path="/inventory/PO" element={<PurchaseOrder/>} />
-            {/* Add more routes here */}
-        </Routes>
-    );
+  return (
+    <Routes>
+      <Route path="/" element={<SlotsSignIn />} />
+
+      <Route path="/dashboard" element={<AuthWrapper><Dashboard /></AuthWrapper>} />
+      <Route path="/office" element={<AuthWrapper><OfficeMaster /></AuthWrapper>} />
+      <Route path="/employee" element={<AuthWrapper><EmployeeMaster /></AuthWrapper>} />
+      <Route path="/inventory/item" element={<AuthWrapper><ItemMaster /></AuthWrapper>} />
+      <Route path="/inventory/Category" element={<AuthWrapper><Category /></AuthWrapper>} />
+      <Route path="/inventory/Vendor" element={<AuthWrapper><Vendor /></AuthWrapper>} />
+      <Route path="/inventory/RateCard" element={<AuthWrapper><RateCard /></AuthWrapper>} />
+      <Route path="/inventory/PO" element={<AuthWrapper><PurchaseOrder /></AuthWrapper>} />
+    </Routes>
+  );
 }
 
 export default AppRoutes;

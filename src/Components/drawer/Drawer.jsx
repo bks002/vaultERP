@@ -73,7 +73,7 @@ export default function MiniDrawer({ drawer, handleDrawer}) {
             </Toolbar>
             <List>
                 <ListItem disablePadding>
-                    <ListItemButton href="/"  >
+                    <ListItemButton href="/dashboard"  >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
                         <ListItemText primary="Dashboard" />
                     </ListItemButton>
