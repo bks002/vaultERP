@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 
-const EXPIRY_DURATION = 1 * 60 * 1000; 
+const EXPIRY_DURATION = 60 * 60 * 1000; 
 
 export default function AuthWrapper({ children }) {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
