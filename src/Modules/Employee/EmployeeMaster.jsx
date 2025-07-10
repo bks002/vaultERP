@@ -1,30 +1,35 @@
-// src/pages/Master/EmployeeMasterPage.jsx
-
 import React, { useEffect, useState } from 'react';
 import {
     Container, Typography, Button, TextField, Dialog,
     DialogTitle, DialogContent, DialogActions, Box,
     IconButton, Tooltip, Table, TableHead, TableRow,
-    TableCell, TableBody, Stack
+    TableCell, TableBody, Stack, TableContainer
 } from '@mui/material';
 import {
     getAllEmployees,
     createEmployee,
     updateEmployee,
-    deleteEmployee
+    deleteEmployee,
 } from "../../Services/EmployeeService";
+import { getAllOperation, OperationMapping, getOperationbyEmployee } from "../../Services/OperationService";
 import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { useSelector } from "react-redux";
+import Paper from '@mui/material/Paper';
+import Checkbox from '@mui/material/Checkbox';
 
 const EmployeeMasterPage = () => {
     const officeId = useSelector((state) => state.user.officeId);
     const [employees, setEmployees] = useState([]);
+    const [operations, setOperations] = useState([]);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [viewOpen, setViewOpen] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
+    const [settingOpen, setSettingOpen] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
 
     const [selectedEmployee, setSelectedEmployee] = useState({
         employeeName: '',
@@ -34,7 +39,12 @@ const EmployeeMasterPage = () => {
         roleId: '',
         officeId: '',
         employeeCode: '',
-        Image: ''
+        Image: '',
+        operationIds: [
+            {
+                operationId: '',
+            }
+        ]
     });
 
     const [alert, setAlert] = useState({ open: false, type: 'success', message: '' });
@@ -42,6 +52,7 @@ const EmployeeMasterPage = () => {
     useEffect(() => {
         if (officeId) {
             loadEmployees();
+            loadOperations();
         }
     }, [officeId]);
 
@@ -51,6 +62,15 @@ const EmployeeMasterPage = () => {
             setEmployees(data);
         } catch {
             showAlert('error', 'Failed to load employee list');
+        }
+    };
+
+    const loadOperations = async () => {
+        try {
+            const data = await getAllOperation(officeId);
+            setOperations(data);
+        } catch {
+            showAlert('error', 'Failed to load operations');
         }
     };
 
@@ -95,20 +115,66 @@ const EmployeeMasterPage = () => {
         }
     };
 
+    const handleSettings = async (emp) => {
+        try {
+            setSelectedEmployee({ ...emp });
+
+            const mappedOps = await getOperationbyEmployee(emp.employeeId);
+            const ids = mappedOps.map(op => (typeof op === "object" ? op.operationId : op));
+            setSelectedIds(ids);
+            setSettingOpen(true);
+        } catch (err) {
+            console.error("Error loading mapped operations:", err);
+            showAlert("error", "Failed to load mapped operations");
+        }
+    }
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setSelectedEmployee({ ...selectedEmployee, [name]: value });
     };
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setSelectedEmployee({ ...selectedEmployee, profileImageUrl: reader.result });
-            };
-            reader.readAsDataURL(file);
-        }
+    // const handleFileChange = async (e) => {
+    //     const file = e.target.files[0];
+    //     if (!file) return;
+
+    //     const formData = new FormData();
+    //     formData.append("file", file);
+    //     console.log("Uploading file:", file);
+    //     console.log("Uploading file:", formData);
+
+    //     try {
+    //         const response = await axios.post(
+    //             "https://admin.urest.in:8089/api/ImageUpload/upload",
+    //             file,
+    //             {
+    //                 headers: {
+    //                     "Content-Type": "multipart/form-data",
+    //                 },
+    //             }
+    //         );
+
+    //         if (response.status === 200 && response.data.url) {
+    //             setSelectedEmployee((prev) => ({
+    //                 ...prev,
+    //                 profileImageUrl: response.data.url,
+    //             }));
+    //             showAlert("success", "Image uploaded successfully");
+    //         } else {
+    //             showAlert("error", "Image upload failed");
+    //         }
+    //     } catch (error) {
+    //         console.error("Upload Error:", error);
+    //         showAlert("error", "Error uploading image");
+    //     }
+    // };
+
+    const handleCheckboxChange = (employeeId) => {
+        setSelectedIds((prev) =>
+            prev.includes(employeeId)
+                ? prev.filter((id) => id !== employeeId)
+                : [...prev, employeeId]
+        );
     };
 
     const handleSave = async () => {
@@ -128,10 +194,29 @@ const EmployeeMasterPage = () => {
                 await createEmployee(payload);
                 showAlert('success', 'Employee created successfully');
             }
+
             setDialogOpen(false);
             loadEmployees();
         } catch {
             showAlert('error', 'Failed to save employee');
+        }
+    };
+
+    const handleSaveSettings = async () => {
+        try {
+            const payload = {
+                employeeId: selectedEmployee.employeeId,
+                operationIds: selectedIds,
+                updatedBy: 1
+            };
+
+            await OperationMapping(payload);
+            showAlert("success", "Employee operations mapped successfully");
+            setSettingOpen(false);
+            loadEmployees();
+        } catch (error) {
+            console.error("Mapping failed:", error);
+            showAlert("error", error.message || "Failed to map operations");
         }
     };
 
@@ -178,6 +263,11 @@ const EmployeeMasterPage = () => {
                                             <DeleteIcon />
                                         </IconButton>
                                     </Tooltip>
+                                    <Tooltip title="Settings">
+                                        <IconButton onClick={() => handleSettings(emp)} color="default">
+                                            <SettingsIcon />
+                                        </IconButton>
+                                    </Tooltip>
                                 </TableCell>
                             </TableRow>
                         ))
@@ -200,7 +290,7 @@ const EmployeeMasterPage = () => {
                         <TextField label="Designation" name="designation" value={selectedEmployee.designation} onChange={handleChange} fullWidth />
                         <TextField label="Role ID" name="roleId" value={selectedEmployee.roleId} onChange={handleChange} fullWidth />
                         <TextField label="Employee Code" name="employeeCode" value={selectedEmployee.employeeCode} onChange={handleChange} fullWidth />
-                        <TextField type="file" name="image" onChange={handleFileChange} fullWidth InputLabelProps={{ shrink: true }} />
+                        {/* <TextField type="file" name="image" onChange={handleFileChange} fullWidth InputLabelProps={{ shrink: true }} /> */}
                     </Stack>
                 </DialogContent>
                 <DialogActions>
@@ -221,11 +311,50 @@ const EmployeeMasterPage = () => {
                         <TextField label="Role ID" value={selectedEmployee.roleId} fullWidth disabled />
                         <TextField label="Office ID" value={selectedEmployee.officeId} fullWidth disabled />
                         <TextField label="Employee Code" value={selectedEmployee.employeeCode} fullWidth disabled />
-                        <TextField label="Image" value={selectedEmployee.Image} fullWidth disabled />
+                        {/* <TextField label="Image" value={selectedEmployee.Image} fullWidth disabled /> */}
                     </Stack>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setViewOpen(false)}>Close</Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={settingOpen} onClose={() => setSettingOpen(false)} fullWidth maxWidth="sm">
+                <DialogTitle>Operation Employee</DialogTitle>
+                <DialogContent>
+                    <Stack spacing={2} mt={1}>
+                        <TextField label="Employee Name" value={selectedEmployee.employeeName} fullWidth />
+                        <TextField label="Employee Code" value={selectedEmployee.employeeCode} fullWidth />
+                    </Stack>
+                    <TableContainer component={Paper} sx={{ mt: 3 }}>
+                        <Table size="small">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell />
+                                    <TableCell>Operation Name</TableCell>
+                                    <TableCell>Description</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {operations.map((op) => (
+                                    <TableRow key={op.operationId}>
+                                        <TableCell>
+                                            <Checkbox
+                                                checked={selectedIds.includes(op.operationId)}
+                                                onChange={() => handleCheckboxChange(op.operationId)}
+                                            />
+                                        </TableCell>
+                                        <TableCell>{op.operationName}</TableCell>
+                                        <TableCell>{op.description}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setSettingOpen(false)}>Cancel</Button>
+                    <Button variant="contained" onClick={handleSaveSettings}>Save</Button>
                 </DialogActions>
             </Dialog>
 

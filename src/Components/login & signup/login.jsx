@@ -17,7 +17,7 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { AppProvider } from "@toolpad/core/AppProvider";
 import { SignInPage } from "@toolpad/core/SignInPage";
 import { useTheme } from "@mui/material/styles";
-import axios from "axios";
+import { login } from "../../Services/AuthService";
 
 const providers = [{ id: "credentials", name: "Email and Password" }];
 
@@ -99,13 +99,13 @@ function CustomButton() {
   );
 }
 
-function SignUpLink() {
-  return (
-    <Link href="/" variant="body2">
-      Sign up
-    </Link>
-  );
-}
+// function SignUpLink() {
+//   return (
+//     <Link href="/" variant="body2">
+//       Sign up
+//     </Link>
+//   );
+// }
 
 function ForgotPasswordLink() {
   return (
@@ -157,37 +157,37 @@ export default function SlotsSignIn() {
           const password = formData.get("password");
 
           try {
-            const response = await axios.post("https://admin.urest.in:8089/api/Auth/login", {
-              email,
-              password
-            }, {
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              withCredentials: false
-            });
-            const data = response?.data;
-            if (data.success || response.status === 200) {
-              localStorage.setItem("isAuthenticated", "true");
+            const data = await login(email, password);
+
+            if (data.success || data.token) {
+              const remember = formData.get("remember") === "true";
+              const storage = remember ? localStorage : sessionStorage;
+              const loginTime = Date.now();
+
+              storage.setItem("isAuthenticated", "true");
               if (data.token) {
-                localStorage.setItem("token", data.token);
+                storage.setItem("token", data.token);
+              }
+              if (data.user) {
+                storage.setItem("user", JSON.stringify(data.user));
+              }
+              if (remember) {
+                storage.setItem("loginTime", loginTime.toString());
               }
               window.location.href = "/dashboard";
             } else {
-              alert(data.message || "Invalid email or password");
+              alert(data.message || "Invalid credentials");
             }
-          } catch (error) {
-            const message =
-              error.response?.data?.message || "Something went wrong. Please try again.";
-            alert("Login failed: " + message);
+          } catch (err) {
+            alert("Login failed: " + err.message);
           }
         }}
         slots={{
           title: Title,
+          subtitle: Subtitle,
           emailField: CustomEmailField,
           passwordField: CustomPasswordField,
           submitButton: CustomButton,
-          signUpLink: SignUpLink,
           rememberMe: RememberMeCheckbox,
           forgotPasswordLink: ForgotPasswordLink,
         }}
