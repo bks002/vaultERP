@@ -32,11 +32,13 @@ const EmployeeMasterPage = () => {
     const [selectedIds, setSelectedIds] = useState([]);
 
     const [selectedEmployee, setSelectedEmployee] = useState({
+        employeeId:'',
         employeeName: '',
         email: '',
         phoneNumber: '',
         designation: '',
-        roleId: '',
+        roleId: 10,
+        department:'',
         officeId: '',
         employeeCode: '',
         Image: '',
@@ -58,6 +60,7 @@ const EmployeeMasterPage = () => {
 
     const loadEmployees = async () => {
         try {
+            console.log(officeId)
             const data = await getAllEmployees(officeId);
             setEmployees(data);
         } catch {
@@ -85,7 +88,8 @@ const EmployeeMasterPage = () => {
             email: '',
             phoneNumber: '',
             designation: '',
-            roleId: '',
+            roleId: 9,
+            department: '',
             officeId: officeId || '',
             employeeCode: ''
         });
@@ -106,7 +110,7 @@ const EmployeeMasterPage = () => {
     const handleDelete = async (emp) => {
         if (window.confirm(`Are you sure you want to delete "${emp.employeeName}"?`)) {
             try {
-                await deleteEmployee(emp.id);
+                await deleteEmployee(emp.employeeId);
                 showAlert('success', 'Employee deleted successfully');
                 loadEmployees();
             } catch {
@@ -188,7 +192,7 @@ const EmployeeMasterPage = () => {
 
         try {
             if (isEdit) {
-                await updateEmployee(selectedEmployee.id, payload);
+                await updateEmployee(selectedEmployee.employeeId, payload);
                 showAlert('success', 'Employee updated successfully');
             } else {
                 await createEmployee(payload);
@@ -288,7 +292,7 @@ const EmployeeMasterPage = () => {
                         <TextField label="Email" name="email" value={selectedEmployee.email} onChange={handleChange} fullWidth />
                         <TextField label="Phone Number" name="phoneNumber" value={selectedEmployee.phoneNumber} onChange={handleChange} fullWidth />
                         <TextField label="Designation" name="designation" value={selectedEmployee.designation} onChange={handleChange} fullWidth />
-                        <TextField label="Role ID" name="roleId" value={selectedEmployee.roleId} onChange={handleChange} fullWidth />
+                        <TextField label="Department" name="department" value={selectedEmployee.department} onChange={handleChange} fullWidth />
                         <TextField label="Employee Code" name="employeeCode" value={selectedEmployee.employeeCode} onChange={handleChange} fullWidth />
                         {/* <TextField type="file" name="image" onChange={handleFileChange} fullWidth InputLabelProps={{ shrink: true }} /> */}
                     </Stack>
@@ -308,7 +312,7 @@ const EmployeeMasterPage = () => {
                         <TextField label="Email" value={selectedEmployee.email} fullWidth disabled />
                         <TextField label="Phone Number" value={selectedEmployee.phoneNumber} fullWidth disabled />
                         <TextField label="Designation" value={selectedEmployee.designation} fullWidth disabled />
-                        <TextField label="Role ID" value={selectedEmployee.roleId} fullWidth disabled />
+                        <TextField label="Department" value={selectedEmployee.department} fullWidth disabled />
                         <TextField label="Office ID" value={selectedEmployee.officeId} fullWidth disabled />
                         <TextField label="Employee Code" value={selectedEmployee.employeeCode} fullWidth disabled />
                         {/* <TextField label="Image" value={selectedEmployee.Image} fullWidth disabled /> */}
