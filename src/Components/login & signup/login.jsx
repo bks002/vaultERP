@@ -156,43 +156,31 @@ export default function SlotsSignIn() {
           const email = formData.get("email");
           const password = formData.get("password");
 
-          if (email === "admin@example.com" && password === "password123") {
-            localStorage.setItem("isAuthenticated", "true");
-            window.location.href = "/dashboard"; 
-          } else {
-            alert("Invalid credentials. Try admin@example.com / password123");
+          try {
+            const response = await axios.post("https://admin.urest.in:8089/api/Auth/login", {
+              email,
+              password
+            }, {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              withCredentials: false
+            });
+            const data = response?.data;
+            if (data.success || response.status === 200) {
+              localStorage.setItem("isAuthenticated", "true");
+              if (data.token) {
+                localStorage.setItem("token", data.token);
+              }
+              window.location.href = "/dashboard";
+            } else {
+              alert(data.message || "Invalid email or password");
+            }
+          } catch (error) {
+            const message =
+              error.response?.data?.message || "Something went wrong. Please try again.";
+            alert("Login failed: " + message);
           }
-          // const email = formData.get("email");
-          // const password = formData.get("password");
-
-          // try {
-          //   const response = axios.create({
-          //     baseURL: "https://account.ufirm.in/Account/Login",
-          //     headers: {
-          //       'Content-Type': 'application/json',
-          //     },
-          //     withCredentials: false,
-          //     body: JSON.stringify({ email, password }),
-          //   });
-          //   console.log(response);
-          //   const data = response?.data;
-          //   console.log("Login successful:", data);
-
-          //   if (data.success || response.status === 200) {
-          //     localStorage.setItem("isAuthenticated", "true");
-          //     if (data.token) {
-          //       localStorage.setItem("token", data.token);
-          //     }
-          //     window.location.href = "/dashboard";
-          //   } else {
-          //     alert(data.message || "Invalid email or password");
-          //   }
-          // } catch (error) {
-          //   console.error("Login error:", error);
-          //   const message =
-          //     error.response?.data?.message || "Something went wrong. Please try again.";
-          //   alert("Login failed: " + message);
-          // }
         }}
         slots={{
           title: Title,
