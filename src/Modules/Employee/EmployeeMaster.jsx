@@ -33,7 +33,8 @@ const EmployeeMasterPage = () => {
         designation: '',
         roleId: '',
         officeId: '',
-        employeeCode: ''
+        employeeCode: '',
+        Image: ''
     });
 
     const [alert, setAlert] = useState({ open: false, type: 'success', message: '' });
@@ -97,6 +98,17 @@ const EmployeeMasterPage = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setSelectedEmployee({ ...selectedEmployee, [name]: value });
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setSelectedEmployee({ ...selectedEmployee, profileImageUrl: reader.result });
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     const handleSave = async () => {
@@ -188,6 +200,7 @@ const EmployeeMasterPage = () => {
                         <TextField label="Designation" name="designation" value={selectedEmployee.designation} onChange={handleChange} fullWidth />
                         <TextField label="Role ID" name="roleId" value={selectedEmployee.roleId} onChange={handleChange} fullWidth />
                         <TextField label="Employee Code" name="employeeCode" value={selectedEmployee.employeeCode} onChange={handleChange} fullWidth />
+                        <TextField type="file" name="image" onChange={handleFileChange} fullWidth InputLabelProps={{ shrink: true }} />
                     </Stack>
                 </DialogContent>
                 <DialogActions>
@@ -208,6 +221,7 @@ const EmployeeMasterPage = () => {
                         <TextField label="Role ID" value={selectedEmployee.roleId} fullWidth disabled />
                         <TextField label="Office ID" value={selectedEmployee.officeId} fullWidth disabled />
                         <TextField label="Employee Code" value={selectedEmployee.employeeCode} fullWidth disabled />
+                        <TextField label="Image" value={selectedEmployee.Image} fullWidth disabled />
                     </Stack>
                 </DialogContent>
                 <DialogActions>
