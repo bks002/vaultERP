@@ -29,7 +29,6 @@ const userSlice = createSlice({
             state.email = action.payload;
         },
         setUserTypeId: (state, action) => {
-            console.log("Setting userTypeId:", action.payload);
             state.userTypeId = action.payload;
         },
         clearUserData: (state) => {
