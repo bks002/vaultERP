@@ -37,7 +37,7 @@ const Category = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState({ name: '', description: '',isActive:false,isApproved:false });
+    const [selectedCategory, setSelectedCategory] = useState({ name: '', description: '', isActive: false, isApproved: false });
     const [isEdit, setIsEdit] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -88,8 +88,8 @@ const Category = () => {
                 await updateCategory(selectedCategory.id, {
                     name: selectedCategory.name,
                     description: selectedCategory.description,
-                    isActive:selectedCategory.isActive,
-                    isApproved:selectedCategory.isApproved
+                    isActive: selectedCategory.isActive,
+                    isApproved: selectedCategory.isApproved
                 });
                 alert('Category updated successfully!');
             } else {
@@ -107,42 +107,38 @@ const Category = () => {
         }
     };
 
-  
-const filteredCategories = categories.filter(category =>
-    category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    category.description.toLowerCase().includes(searchQuery.toLowerCase())
-);
+
+    const filteredCategories = categories.filter(category =>
+        category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        category.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     return (
         <div className="col-12">
-          <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-    {/* Title on the left */}
-    <Typography variant="h4">Category Master</Typography>
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                {/* Title on the left */}
+                <Typography variant="h4">Category Master</Typography>
 
-    {/* Search bar and button aligned to the right */}
-    <Box display="flex" alignItems="center" gap={2}>
-        <TextField
-            placeholder="Search category..."
-            variant="outlined"
-            sx={{ width: 300 }} // 👈 Adjust width as needed
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-                startAdornment: (
-                    <InputAdornment position="start">
-                        <SearchIcon />
-                    </InputAdornment>
-                ),
-            }}
-        />
-        <Button variant="contained" color="primary" onClick={handleCreateNew}>
-            Create New Category
-        </Button>
-    </Box>
-</Box>
-
-
-
+                <Box display="flex" alignItems="center" gap={2}>
+                    <TextField
+                        placeholder="Search category..."
+                        variant="outlined"
+                        sx={{ width: 300 }} 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon />
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+                    <Button variant="contained" color="primary" onClick={handleCreateNew}>
+                        Create New Category
+                    </Button>
+                </Box>
+            </Box>
             {loading && <Typography>Loading data...</Typography>}
 
             {!loading && (
@@ -157,8 +153,8 @@ const filteredCategories = categories.filter(category =>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {filteredCategories.length > 0 ? ( 
-                              filteredCategories.map((category, index) => (
+                            {filteredCategories.length > 0 ? (
+                                filteredCategories.map((category, index) => (
                                     <TableRow key={category.id}>
                                         <TableCell>{index + 1}</TableCell>
                                         <TableCell>{category.name}</TableCell>
