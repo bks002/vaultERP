@@ -27,6 +27,7 @@ import {
 } from "../../Redux/userSlice"; 
 import { useNavigate } from "react-router-dom";
 
+
 const providers = [{ id: "credentials", name: "Email and Password" }];
 
 function CustomEmailField() {
