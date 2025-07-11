@@ -41,7 +41,7 @@ export const getCategoryById = async (id) => {
 
 export const createCategory = async (category) => {
     try {
-        const response = await api.post('', category);
+        const response = await api.post('/Category', category);
         return response.data;
     } catch (error) {
         handleApiError(error);

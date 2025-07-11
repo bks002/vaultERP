@@ -33,6 +33,7 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 
 const RateCard = () => {
     const officeId = useSelector((state) => state.user.officeId);
+    const userId = useSelector((state) => state.user.userId);
     const [rateCards, setRateCards] = useState([]);
     const [categories, setCategories] = useState([]);
     const [items, setItems] = useState([]);
@@ -46,7 +47,6 @@ const RateCard = () => {
     const [vendors, setVendors] = useState([]);
 
 
-    // ---- Load data ----
     useEffect(() => {
         if (officeId > 0) {
             loadRateCards();
@@ -181,7 +181,15 @@ const RateCard = () => {
                                         <TableCell>{rateCard.itemName}</TableCell>
                                         <TableCell>{rateCard.vendorName}</TableCell>
                                         <TableCell>₹{rateCard.price}</TableCell>
-                                        <TableCell>{new Date(rateCard.ValidTill).toLocaleDateString()}</TableCell>
+                                        <TableCell>
+                                            {rateCard.validTill
+                                                ? new Date(rateCard.validTill).toLocaleDateString('en-IN', {
+                                                    day: '2-digit',
+                                                    month: 'short',
+                                                    year: 'numeric'
+                                                })
+                                                : '-'}
+                                        </TableCell>
                                         <TableCell align="center">
                                             <IconButton color="error" onClick={() => handleDelete(rateCard.id)}>
                                                 <DeleteIcon />

@@ -33,10 +33,11 @@ import { useSelector } from 'react-redux';
 
 const Category = () => {
     const officeId = useSelector((state) => state.user.officeId);
+    const userId = useSelector((state) => state.user.userId);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState({ name: '', description: '' });
+    const [selectedCategory, setSelectedCategory] = useState({ name: '', description: '',isActive:false,isApproved:false });
     const [isEdit, setIsEdit] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -87,6 +88,8 @@ const Category = () => {
                 await updateCategory(selectedCategory.id, {
                     name: selectedCategory.name,
                     description: selectedCategory.description,
+                    isActive:selectedCategory.isActive,
+                    isApproved:selectedCategory.isApproved
                 });
                 alert('Category updated successfully!');
             } else {
@@ -94,7 +97,7 @@ const Category = () => {
                     officeId,
                     name: selectedCategory.name,
                     description: selectedCategory.description,
-                    createdBy: 1,
+                    createdBy: userId,
                 });
             }
             setDialogOpen(false);

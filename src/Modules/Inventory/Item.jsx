@@ -36,7 +36,7 @@ import { useSelector } from 'react-redux';
 
 const ItemMaster = () => {
     const officeId = useSelector((state) => state.user.officeId);
-    const userId = useSelector((state) => state.user.id);
+    const userId = useSelector((state) => state.user.userId);
     const [items, setItems] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -108,7 +108,7 @@ const ItemMaster = () => {
             MinStockLevel: '',
             BrandName: '',
             HSNCode: '',
-        }); // reset
+        }); 
         setIsEdit(false);
         setDialogOpen(true);
     };
@@ -116,7 +116,7 @@ const ItemMaster = () => {
         console.log('Saving item:', selectedItem);
         try {
             if (isEdit) {
-                await updateItem(selectedItem.Id, selectedItem);
+                await updateItem(selectedItem.id, selectedItem);
                 alert('Item updated successfully!');
             } else {
                 await createItem({ ...selectedItem, OfficeId: officeId, CreatedBy: userId });
@@ -222,9 +222,9 @@ const filteredItems = items.filter((item) =>
                         <TextField
                             select
                             label="Category"
-                            value={selectedItem.CategoryId || ''}
+                            value={selectedItem.categoryId || ''}
                             onChange={(e) =>
-                                setSelectedItem({ ...selectedItem, CategoryId: e.target.value })
+                                setSelectedItem({ ...selectedItem, categoryId: e.target.value })
                             }
                             fullWidth
                         >
@@ -242,20 +242,20 @@ const filteredItems = items.filter((item) =>
                         <TextField
                             label="Item Name"
                             value={selectedItem.name}
-                            onChange={(e) => setSelectedItem({ ...selectedItem, Name: e.target.value })}
+                            onChange={(e) => setSelectedItem({ ...selectedItem, name: e.target.value })}
                             fullWidth
                         />
                         <TextField
                             label="Description"
                             value={selectedItem.description}
-                            onChange={(e) => setSelectedItem({ ...selectedItem, Description: e.target.value })}
+                            onChange={(e) => setSelectedItem({ ...selectedItem, description: e.target.value })}
                             fullWidth
                         />
                         <TextField
                             label="Measurement Unit"
                             value={selectedItem.measurementUnit}
                             onChange={(e) =>
-                                setSelectedItem({ ...selectedItem, MeasurementUnit: e.target.value })
+                                setSelectedItem({ ...selectedItem, measurementUnit: e.target.value })
                             }
                             fullWidth
                         />
@@ -263,20 +263,20 @@ const filteredItems = items.filter((item) =>
                             label="Minimum Stock Level"
                             value={selectedItem.minStockLevel}
                             onChange={(e) =>
-                                setSelectedItem({ ...selectedItem, MinStockLevel: e.target.value })
+                                setSelectedItem({ ...selectedItem, minStockLevel: e.target.value })
                             }
                             fullWidth
                         />
                         <TextField
                             label="Brand Name"
                             value={selectedItem.brandName}
-                            onChange={(e) => setSelectedItem({ ...selectedItem, BrandName: e.target.value })}
+                            onChange={(e) => setSelectedItem({ ...selectedItem, brandName: e.target.value })}
                             fullWidth
                         />
                         <TextField
                             label="HSN Code"
                             value={selectedItem.hsnCode}
-                            onChange={(e) => setSelectedItem({ ...selectedItem, HSNCode: e.target.value })}
+                            onChange={(e) => setSelectedItem({ ...selectedItem, hsnCode: e.target.value })}
                             fullWidth
                         />
                     </Stack>
@@ -289,7 +289,7 @@ const filteredItems = items.filter((item) =>
                         onClick={handleSave}
                         variant="contained"
                         color="primary"
-                        disabled={!selectedItem.Name.trim()}
+                        disabled={!selectedItem.name?.trim()}
                     >
                         {isEdit ? 'Update' : 'Create'}
                     </Button>
@@ -301,13 +301,13 @@ const filteredItems = items.filter((item) =>
                 <DialogTitle>View Item</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} mt={1}>
-                        <TextField label="Category" value={getCategoryName(selectedItem.CategoryId)} fullWidth disabled />
-                        <TextField label="Name" value={selectedItem.Name} fullWidth disabled />
-                        <TextField label="Description" value={selectedItem.Description} fullWidth disabled />
-                        <TextField label="Measurement Unit" value={selectedItem.MeasurementUnit} fullWidth disabled />
-                        <TextField label="Minimum Stock Level" value={selectedItem.MinStockLevel} fullWidth disabled />
-                        <TextField label="Brand Name" value={selectedItem.BrandName} fullWidth disabled />
-                        <TextField label="HSN Code" value={selectedItem.HSNCode} fullWidth disabled />
+                        <TextField label="Category" value={getCategoryName(selectedItem.categoryId)} fullWidth disabled />
+                        <TextField label="Name" value={selectedItem.name} fullWidth disabled />
+                        <TextField label="Description" value={selectedItem.description} fullWidth disabled />
+                        <TextField label="Measurement Unit" value={selectedItem.measurementUnit} fullWidth disabled />
+                        <TextField label="Minimum Stock Level" value={selectedItem.minStockLevel} fullWidth disabled />
+                        <TextField label="Brand Name" value={selectedItem.brandName} fullWidth disabled />
+                        <TextField label="HSN Code" value={selectedItem.hsnCode} fullWidth disabled />
                     </Stack>
                 </DialogContent>
                 <DialogActions>

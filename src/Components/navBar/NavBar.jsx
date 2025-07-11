@@ -15,11 +15,12 @@ import MoreIcon from "@mui/icons-material/MoreVert";
 import OfficeDropdown from "../officeDropdown/OfficeDropdown.jsx";
 import { Link } from 'react-router-dom';
 
+import { useNavigate } from "react-router-dom";
 
 export default function PrimarySearchAppBar({ drawer, handleDrawer }) {
     const [anchorEl, setAnchorEl] = React.useState(null);
     const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = React.useState(null);
-
+    const navigate = useNavigate();
     const isMenuOpen = Boolean(anchorEl);
     const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
 
@@ -34,6 +35,19 @@ export default function PrimarySearchAppBar({ drawer, handleDrawer }) {
     const handleMenuClose = () => {
         setAnchorEl(null);
         handleMobileMenuClose();
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem("isAuthenticated");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("loginTime");
+
+        sessionStorage.removeItem("isAuthenticated");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("user");
+
+        navigate("/");
     };
 
     const handleMobileMenuOpen = (event) => {
@@ -60,6 +74,7 @@ export default function PrimarySearchAppBar({ drawer, handleDrawer }) {
 >
   Add User
 </MenuItem>
+            <MenuItem onClick={handleLogout}>Logout</MenuItem>
         </Menu>
     );
 
