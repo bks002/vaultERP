@@ -157,7 +157,7 @@ const filteredCategories = categories.filter(category =>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {filteredCategories.length > 0 ? (
+                            {filteredCategories.length > 0 ? ( 
                               filteredCategories.map((category, index) => (
                                     <TableRow key={category.id}>
                                         <TableCell>{index + 1}</TableCell>

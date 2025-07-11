@@ -130,13 +130,13 @@ const AssetOperationMaster = () => {
                                 <TableCell>{item.description}</TableCell>
                                 <TableCell align="center">
                                     <Tooltip title="Edit">
-                                        <IconButton color="primary" onClick={() => handleEdit(AssetTypeMaster)}
+                                        <IconButton color="primary" onClick={() => handleEdit(AssetOperationMaster)}
                                         >
                                             <EditIcon />
                                         </IconButton>
                                     </Tooltip>
                                     <Tooltip title="Delete">
-                                        <IconButton color="error" onClick={() => handleDelete(AssetTypeMaster)}
+                                        <IconButton color="error" onClick={() => handleDelete(AssetOperationMaster)}
                                         >
                                             <DeleteIcon />
                                         </IconButton>

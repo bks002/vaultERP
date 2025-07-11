@@ -1,225 +1,239 @@
 import React, { useState } from "react";
+import SearchIcon from "@mui/icons-material/Search";
+import { useSelector } from "react-redux";
 import {
   Container,
   Typography,
   Grid,
   TextField,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-  FormControl,
-  FormLabel,
   Box,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  InputAdornment,
 } from "@mui/material";
 
 const AssetMaster = () => {
+   const officeId = useSelector((state) => state.user.officeId);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [assets, setAssets] = useState([]); // ✅ Store asset list
   const [formData, setFormData] = useState({
-    assetName: "Asset Name",   
+    assetName: "",
     assetType: "Machine/Equipment",
     manufacturer: "",
     assetModel: "",
     lastServiceDate: "",
     isRented: "No",
     description: "",
-    assetStatus: "",
+    assetStatus: "Active",
     assetLocation: "",
     assetImage: "",
     isMovable: "No",
     nextServiceDate: "",
     assetValue: 0,
     qrCode: "",
-    assetCategory: "",
+    assetCategory: "Computer",
     assetServiceReminder: "No Reminder",
     amcUpload: "",
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
+
+  const handleSave = () => {
+    setAssets((prev) => [...prev, formData]); // ✅ Add new asset to the list
+    setDialogOpen(false);
+    setFormData({
+      assetName: "",
+      assetType: "Machine/Equipment",
+      manufacturer: "",
+      assetModel: "",
+      lastServiceDate: "",
+      isRented: "No",
+      description: "",
+      assetStatus: "Active",
+      assetLocation: "",
+      assetImage: "",
+      isMovable: "No",
+      nextServiceDate: "",
+      assetValue: 0,
+      qrCode: "",
+      assetCategory: "Computer",
+      assetServiceReminder: "No Reminder",
+      amcUpload: "",
+    });
+  };
+const filteredAssets = assets.filter((asset) =>
+    asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    asset.description.toLowerCase().includes(searchQuery.toLowerCase())
+);
 
   return (
     <Container maxWidth="lg">
-      <Box sx={{ my: 3 }}>
-        <Typography variant="h5" gutterBottom>
-          Asset Master
-        </Typography>
+      {/* Header with Button */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ my: 3 }}>
+        <Typography variant="h4">Asset Master  {officeId}</Typography>
+        <TextField
+                                placeholder="Search by type or description"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                size="small"
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <SearchIcon />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+        <Button variant="contained" color="primary" onClick={() => setDialogOpen(true)}>
+          Add Asset Master
+        </Button>
+      </Box>
 
-        <FormControl component="fieldset">
-          <RadioGroup
-            row
-            name="assetType"
-            value={formData.assetType}
-            onChange={handleChange}
-          >
-            <FormControlLabel
-              value="Machine/Equipment"
-              control={<Radio />}
-              label="Machine/Equipment"
-            />
-            <FormControlLabel
-              value="Measuring Equipment"
-              control={<Radio />}
-              label="Measuring Equipment"
-            />
-            <FormControlLabel
-              value="Facility"
-              control={<Radio />}
-              label="Facility"
-            />
-          </RadioGroup>
-        </FormControl>
+      {/* ✅ Table Container */}
+      {loading && <Typography>Loading data...</Typography>}
+      
+                  {!loading && (
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>#</TableCell>
+              <TableCell>Asset Name</TableCell>
+              <TableCell>Description</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredAssets.length > 0 ? (
+              filteredAssets.map((asset, index) => (
+                <TableRow key={index}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{asset.assetName}</TableCell>
+                  <TableCell>{asset.description}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={4} align="center">
+                  No asset records found.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+                  )}
 
-        <Grid container spacing={2} sx={{ mt: 2 }}>
-          {/* Left Column */}
-          <Grid item xs={12} md={6} size={6}>
-            <TextField
-              fullWidth
-              label="Asset Type"
-              name="assetType"
-              value={formData.manufacturer}
-              onChange={handleChange}
-            />
-            <TextField
-              fullWidth
-              label="Asset Model"
-              name="assetModel"
-              value={formData.assetModel}
-              onChange={handleChange}
-              sx={{ mt: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Last Service Date"
-              name="lastServiceDate"
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              value={formData.lastServiceDate}
-              onChange={handleChange}
-              sx={{ mt: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Is Rented?"
-              name="isRented"
-              value={formData.isRentable}
-              onChange={handleChange}
-              sx={{ mt: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              sx={{ mt: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Asset Status"
-              name="assetStatus"
-              value={formData.assetStatus}
-              onChange={handleChange}
-              sx={{ mt: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Asset Location"
-              name="assetLocation"
-              value={formData.assetLocation}
-              onChange={handleChange}
-              sx={{ mt: 2 }}
-            />
-            <Button
-              variant="outlined"
-              component="label"
-              fullWidth
-              sx={{ mt: 2 }}
-            >
-              Upload Asset Image
-              <input hidden type="file" name="assetImage" />
-            </Button>
+      {/* Dialog */}
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="md">
+        <DialogTitle>Add New Asset</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} mt={1}>
+            {/* Left Column */}
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth sx={{ mt: 1 }}>
+                <InputLabel>Asset Type</InputLabel>
+                <Select name="assetType" value={formData.assetType} onChange={handleChange} label="Asset Type">
+                  <MenuItem value="Machine/Equipment">Machine/Equipment</MenuItem>
+                  <MenuItem value="Measuring Equipment">Measuring Equipment</MenuItem>
+                  <MenuItem value="Facility">Facility</MenuItem>
+                </Select>
+              </FormControl>
+
+              <TextField fullWidth label="Asset Model" name="assetModel" value={formData.assetModel} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Last Service Date" name="lastServiceDate" type="date" InputLabelProps={{ shrink: true }} value={formData.lastServiceDate} onChange={handleChange} sx={{ mt: 2 }} />
+              <FormControl fullWidth sx={{ mt: 2 }}>
+                <InputLabel>Is Rented?</InputLabel>
+                <Select name="isRented" value={formData.isRented} onChange={handleChange} label="Is Rented?">
+                  <MenuItem value="Yes">Yes</MenuItem>
+                  <MenuItem value="No">No</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField fullWidth label="Description" name="description" value={formData.description} onChange={handleChange} sx={{ mt: 2 }} />
+              <FormControl fullWidth sx={{ mt: 2 }}>
+                <InputLabel>Asset Status</InputLabel>
+                <Select name="assetStatus" value={formData.assetStatus} onChange={handleChange} label="Asset Status">
+                  <MenuItem value="Active">Active</MenuItem>
+                  <MenuItem value="Inactive">Inactive</MenuItem>
+                  <MenuItem value="Under Repair">Under Repair</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField fullWidth label="Asset Location" name="assetLocation" value={formData.assetLocation} onChange={handleChange} sx={{ mt: 2 }} />
+              <Button variant="outlined" component="label" fullWidth sx={{ mt: 2 }}>
+                Upload Asset Image
+                <input hidden type="file" name="assetImage" />
+              </Button>
+            </Grid>
+
+            {/* Right Column */}
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth label="Asset Name" name="assetName" value={formData.assetName} onChange={handleChange} sx={{ mt: 1 }} />
+              <TextField fullWidth label="Manufacturer" name="manufacturer" value={formData.manufacturer} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Next Service Date" name="nextServiceDate" type="date" InputLabelProps={{ shrink: true }} value={formData.nextServiceDate} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Asset Value" name="assetValue" type="number" value={formData.assetValue} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="QR Code" name="qrCode" value={formData.qrCode} onChange={handleChange} sx={{ mt: 2 }} />
+              <FormControl fullWidth sx={{ mt: 2 }}>
+                <InputLabel>Asset Category</InputLabel>
+                <Select name="assetCategory" value={formData.assetCategory} onChange={handleChange} label="Asset Category">
+                  <MenuItem value="Computer">Computer</MenuItem>
+                  <MenuItem value="Electrical">Electrical</MenuItem>
+                  <MenuItem value="Furniture">Furniture</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl fullWidth sx={{ mt: 2 }}>
+                <InputLabel>Asset Service Reminder</InputLabel>
+                <Select name="assetServiceReminder" value={formData.assetServiceReminder} onChange={handleChange} label="Asset Service Reminder">
+                  <MenuItem value="No Reminder">No Reminder</MenuItem>
+                  <MenuItem value="Monthly">Monthly</MenuItem>
+                  <MenuItem value="Quarterly">Quarterly</MenuItem>
+                  <MenuItem value="Yearly">Yearly</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl fullWidth sx={{ mt: 2 }}>
+                <InputLabel>Is Movable?</InputLabel>
+                <Select name="isMovable" value={formData.isMovable} onChange={handleChange} label="Is Movable">
+                  <MenuItem value="Yes">Yes</MenuItem>
+                  <MenuItem value="No">No</MenuItem>
+                </Select>
+              </FormControl>
+              <Button variant="outlined" component="label" fullWidth sx={{ mt: 2 }}>
+                Upload AMC File
+                <input hidden type="file" name="amcUpload" />
+              </Button>
+            </Grid>
           </Grid>
+        </DialogContent>
 
-          {/* Right Column */}
-          <Grid item xs={12} md={6} size={6}>
-            <TextField
-              fullWidth
-              label="Enter Asset Name"
-              name="assetName"
-              value={formData.assetName}
-              onChange={handleChange}
-            />
-            <TextField
-              fullWidth
-              label="Manufacturer"
-              name="manufacturer"
-              value={formData.isMovable}
-              onChange={handleChange}
-              sx={{ mt: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Next Service Date"
-              name="nextServiceDate"
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              value={formData.nextServiceDate}
-              onChange={handleChange}
-              sx={{ mt: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Asset Value"
-              name="assetValue"
-              type="number"
-              value={formData.assetValue}
-              onChange={handleChange}
-              sx={{ mt: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="QR Code"
-              name="qrCode"
-              value={formData.qrCode}
-              onChange={handleChange}
-              sx={{ mt: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Asset Category"
-              name="assetCategory"
-              value={formData.assetCategory}
-              onChange={handleChange}
-              sx={{ mt: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Asset Service Reminder"
-              name="assetServiceReminder"
-              value={formData.assetServiceReminder}
-              onChange={handleChange}
-              sx={{ mt: 2 }}
-            />
-            <Button
-              variant="outlined"
-              component="label"
-              fullWidth
-              sx={{ mt: 2 }}
-            >
-              Upload AMC File
-              <input hidden type="file" name="amcUpload" />
-            </Button>
-          </Grid>
-        </Grid>
-
-        <Box display="flex" justifyContent="flex-end" sx={{ mt: 4 }}>
-          <Button variant="contained" color="primary">
+        <DialogActions>
+          <Button onClick={() => setDialogOpen(false)} color="secondary">
+            Cancel
+          </Button>
+          <Button onClick={handleSave} variant="contained" color="primary">
             Save
           </Button>
-        </Box>
-      </Box>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
