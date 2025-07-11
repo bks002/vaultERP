@@ -15,6 +15,7 @@ import InboxIcon from "@mui/icons-material/MoveToInbox";
 import {Link} from "react-router-dom"
 import { ListSubheader } from '@mui/material';
 
+
 const drawerWidth = 240;
 const openedMixin = (theme) => ({
     width: drawerWidth,
@@ -132,6 +133,32 @@ export default function MiniDrawer({ drawer, handleDrawer}) {
                     <ListItemButton component={Link} to="/Inventory/PO"  >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
                         <ListItemText primary="Purchase Order" />
+                    </ListItemButton>
+                </ListItem>
+            </List>
+            <Divider />
+             <List>
+                {drawer && (
+                    <ListSubheader component="div" id="nested-list-subheader">
+                        Assset Management
+                    </ListSubheader>
+                )}
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Asset/AssetMaster"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Asset Master" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Asset/AssetOperation"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Asset Operation Master" />
+                    </ListItemButton>
+                </ListItem> 
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Asset/AssetType"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Asset Type Master" />
                     </ListItemButton>
                 </ListItem>
             </List>

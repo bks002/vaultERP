@@ -44,6 +44,7 @@ const Category = () => {
             const data = await getCategories(officeId);
             setCategories(data);
         } catch (error) {
+            setCategories([]);
             console.error(error.message);
         } finally {
             setLoading(false);
