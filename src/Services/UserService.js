@@ -1,6 +1,6 @@
 // src/services/userService.js
 
-const API_BASE = 'https://your-api-url/api/Users';
+const API_BASE = 'https://admin.urest.in:8089/api/Users';
 
 export const getAllUsers = async () => {
     const response = await fetch(`${API_BASE}/GetAll`);

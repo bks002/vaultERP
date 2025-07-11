@@ -1,8 +1,8 @@
-const Dashboard =()=>{
-    console.log("ItemMaster");
+import { useSelector } from "react-redux";
 
-    return (
-        <h1>Welcome Back!</h1>
-    )
-}
+const Dashboard = () => {
+  const userName = useSelector((state) => state.user.userName);
+  return <h1>Welcome Back {userName || "User"}!</h1>;
+};
+
 export default Dashboard;

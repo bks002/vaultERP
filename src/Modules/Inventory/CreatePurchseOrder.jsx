@@ -11,7 +11,6 @@ import {
     FormControl,
     InputLabel,
     Select,
-    CircularProgress,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import {
@@ -83,8 +82,7 @@ const CreatePurchaseOrder = ({ open, onClose, officeId }) => {
             return;
         }
         const poItems = Array.from(selectedItemIds.ids).map((itemId) => {
-            const item = items.find((i) => i.itemId === itemId);
-            console.log(item);
+            const item = items.find((i) => (i.id) === (itemId));
             return {
                 itemId,
                 itemName: item.itemName,
@@ -92,12 +90,11 @@ const CreatePurchaseOrder = ({ open, onClose, officeId }) => {
                 vendorName:item.vendorName,
                 description: item.description,
                 brandName: item.brandName,
-                quantity: 0, // Default quantity
+                quantity: 0,
                 rate: item.price,
                 lineTotal:0
             };
         });
-        console.log(poItems)
         setSelectedItemsForPO(poItems);
         setPoQuantityOpen(true);
     };
@@ -162,7 +159,7 @@ const CreatePurchaseOrder = ({ open, onClose, officeId }) => {
                                 },
                             }}
                             pageSizeOptions={[5]}
-                            getRowId={(row) => row.itemId}
+                            getRowId={(row) => row.id}
                             onRowSelectionModelChange={(newSelection) => {
                                 setSelectedItemIds(newSelection);
                             }}

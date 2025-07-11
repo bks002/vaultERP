@@ -31,11 +31,11 @@ import { useSelector } from 'react-redux';
 
 const Category = () => {
     const officeId = useSelector((state) => state.user.officeId);
-    console.log('Office ID:', officeId);
+    const userId = useSelector((state) => state.user.userId);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState({ name: '', description: '' });
+    const [selectedCategory, setSelectedCategory] = useState({ name: '', description: '',isActive:false,isApproved:false });
     const [isEdit, setIsEdit] = useState(false);
 
     const loadCategories = async () => {
@@ -71,7 +71,7 @@ const Category = () => {
         }
     };
     const handleCreateNew = () => {
-        setSelectedCategory({ name: '', description: '' }); // reset
+        setSelectedCategory({ name: '', description: '' }); 
         setIsEdit(false);
         setDialogOpen(true);
     };
@@ -81,14 +81,16 @@ const Category = () => {
                 await updateCategory(selectedCategory.id, {
                     name: selectedCategory.name,
                     description: selectedCategory.description,
-                }); // Edit case
+                    isActive:selectedCategory.isActive,
+                    isApproved:selectedCategory.isApproved
+                });
                 alert('Category updated successfully!');
             } else {
                 await createCategory({
                     officeId,
                     name: selectedCategory.name,
                     description: selectedCategory.description,
-                    createdBy: 1,
+                    createdBy: userId,
                 });
             }
             setDialogOpen(false);
