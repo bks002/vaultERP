@@ -5,7 +5,7 @@ const API_BASE = 'https://admin.urest.in:8089/api/Office';
 
 
 export const getAllOffices = async () => {
-    const response = await fetch(`${API_BASE}`);
+    const response = await fetch(`${API_BASE}`, {withCredentials: true});
     if (!response.ok) throw new Error('Failed to fetch offices');
     return await response.json();
 };

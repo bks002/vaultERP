@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import SearchIcon from "@mui/icons-material/Search";
 import {
     Table,
     TableBody,
@@ -18,6 +19,7 @@ import {
     DialogActions,
     TextField,
     Stack,
+    InputAdornment,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -35,8 +37,9 @@ const Category = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState({ name: '', description: '',isActive:false,isApproved:false });
+    const [selectedCategory, setSelectedCategory] = useState({ name: '', description: '', isActive: false, isApproved: false });
     const [isEdit, setIsEdit] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const loadCategories = async () => {
         try {
@@ -50,6 +53,7 @@ const Category = () => {
             setLoading(false);
         }
     };
+
     useEffect(() => {
         if (officeId > 0) loadCategories();
     }, [officeId]);
@@ -59,6 +63,7 @@ const Category = () => {
         setIsEdit(true);
         setDialogOpen(true);
     };
+
     const handleDelete = async (category) => {
         if (window.confirm(`Are you sure you want to delete "${category.name}"?`)) {
             try {
@@ -70,19 +75,21 @@ const Category = () => {
             }
         }
     };
+
     const handleCreateNew = () => {
-        setSelectedCategory({ name: '', description: '' }); 
+        setSelectedCategory({ name: '', description: '' });
         setIsEdit(false);
         setDialogOpen(true);
     };
+
     const handleSave = async () => {
         try {
             if (isEdit) {
                 await updateCategory(selectedCategory.id, {
                     name: selectedCategory.name,
                     description: selectedCategory.description,
-                    isActive:selectedCategory.isActive,
-                    isApproved:selectedCategory.isApproved
+                    isActive: selectedCategory.isActive,
+                    isApproved: selectedCategory.isApproved
                 });
                 alert('Category updated successfully!');
             } else {
@@ -100,20 +107,38 @@ const Category = () => {
         }
     };
 
+
+    const filteredCategories = categories.filter(category =>
+        category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        category.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
         <div className="col-12">
-            <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-                sx={{ mb: 2 }}
-            >
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                {/* Title on the left */}
                 <Typography variant="h4">Category Master</Typography>
-                <Button variant="contained" color="primary" onClick={handleCreateNew}>
-                    Create New Category
-                </Button>
-            </Box>
 
+                <Box display="flex" alignItems="center" gap={2}>
+                    <TextField
+                        placeholder="Search category..."
+                        variant="outlined"
+                        sx={{ width: 300 }} 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon />
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+                    <Button variant="contained" color="primary" onClick={handleCreateNew}>
+                        Create New Category
+                    </Button>
+                </Box>
+            </Box>
             {loading && <Typography>Loading data...</Typography>}
 
             {!loading && (
@@ -128,8 +153,8 @@ const Category = () => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {categories.length > 0 ? (
-                                categories.map((category, index) => (
+                            {filteredCategories.length > 0 ? (
+                                filteredCategories.map((category, index) => (
                                     <TableRow key={category.id}>
                                         <TableCell>{index + 1}</TableCell>
                                         <TableCell>{category.name}</TableCell>
@@ -157,7 +182,7 @@ const Category = () => {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={4} align="center">
-                                        No categories found.
+                                        No matching categories found.
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -166,7 +191,7 @@ const Category = () => {
                 </TableContainer>
             )}
 
-            {/* Dialog for Create/Edit */}
+            {/* Create/Edit Dialog */}
             <Dialog
                 open={dialogOpen}
                 onClose={() => setDialogOpen(false)}

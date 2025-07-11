@@ -77,6 +77,7 @@ const CreatePurchaseOrder = ({ open, onClose, officeId }) => {
     }, [officeId, selectedCategoryId, selectedVendorId, open]);
 
     const handleCreate = async () => {
+        console.log("Creating Purchase Order with selected items:", selectedItemIds);
         if (selectedItemIds.length === 0) {
             alert("Please select a vendor and at least one item.");
             return;
@@ -106,7 +107,9 @@ const CreatePurchaseOrder = ({ open, onClose, officeId }) => {
         { field: "price", headerName: "Price", flex: 1 },
         { field: "measurementUnit", headerName: "Unit", flex: 1 },
     ];
-
+        const filteredCreatePurchaseOrder = categories.filter(createpurchaseorder =>
+        createpurchaseorder.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
     return (
         <>
         <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
