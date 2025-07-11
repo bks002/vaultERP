@@ -33,6 +33,7 @@ import { useSelector } from 'react-redux';
 
 const Vendor = () => {
     const officeId = useSelector((state) => state.user.officeId);
+    const userId = useSelector((state) => state.user.userId);
     const [vendors, setVendors] = useState([]);
     const [loading, setLoading] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -97,7 +98,7 @@ const Vendor = () => {
                 await updateVendor(selectedVendor.id, selectedVendor);
                 alert('Vendor updated successfully!');
             } else {
-                await createVendor({ ...selectedVendor, officeId, createdBy: 1 });
+                await createVendor({ ...selectedVendor, officeId, createdBy: userId });
                 alert('Vendor created successfully!');
             }
             setDialogOpen(false);
