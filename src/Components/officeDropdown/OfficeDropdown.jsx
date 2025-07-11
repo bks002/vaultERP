@@ -2,11 +2,21 @@ import * as React from 'react';
 import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { setOfficeId } from "../../Redux/userSlice.js";
+import { getAllOffices } from "../../Services/OfficeService.js";
 
 const OfficeDropdown = () => {
     const dispatch = useDispatch();
     const officeId = useSelector((state) => state.user.officeId);
     const [selected, setSelected] = React.useState(officeId || '');
+    const [offices, setOffices] = React.useState([]);
+    React.useEffect(() => {
+        const fetchData = async () => {
+            const data = await getAllOffices();
+            setOffices(data);
+        };
+        fetchData();
+    }, [officeId]);
+
 
     return (
         <FormControl sx={{ m: 1, minWidth: 180 }} size="small" color="black" variant="outlined">
@@ -25,9 +35,11 @@ const OfficeDropdown = () => {
                 <MenuItem value="">
                     <em>None</em>
                 </MenuItem>
-                <MenuItem value={1}>Delhi</MenuItem>
-                <MenuItem value={2}>Gurgaon</MenuItem>
-                <MenuItem value={3}>Bangalore</MenuItem>
+                {offices && offices.map((office) => (
+                    <MenuItem key={office.officeId} value={office.officeId}>
+                        {office.officeName}
+                    </MenuItem>
+                ))}
             </Select>
         </FormControl>
     );
