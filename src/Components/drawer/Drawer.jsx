@@ -1,5 +1,5 @@
 import * as React from "react";
-import {styled, useTheme} from "@mui/material/styles";
+import { styled, useTheme } from "@mui/material/styles";
 import MuiDrawer from "@mui/material/Drawer";
 import Toolbar from "@mui/material/Toolbar";
 import List from "@mui/material/List";
@@ -12,7 +12,7 @@ import ListItemText from "@mui/material/ListItemText";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
-import {Link} from "react-router-dom"
+import { Link } from "react-router-dom"
 import { ListSubheader } from '@mui/material';
 
 
@@ -55,11 +55,11 @@ const Drawer = styled(MuiDrawer, {
     }),
 }));
 
-export default function MiniDrawer({ drawer, handleDrawer}) {
+export default function MiniDrawer({ drawer, handleDrawer }) {
     const theme = useTheme();
     return (
-        <Drawer variant="permanent" open={drawer}  onMouseEnter={()=>{!drawer && handleDrawer(true)}}
-                onMouseLeave={()=> {drawer && handleDrawer(false)}}>
+        <Drawer variant="permanent" open={drawer} onMouseEnter={() => { !drawer && handleDrawer(true) }}
+            onMouseLeave={() => { drawer && handleDrawer(false) }}>
             <Toolbar
                 sx={{
                     display: "flex",
@@ -137,10 +137,10 @@ export default function MiniDrawer({ drawer, handleDrawer}) {
                 </ListItem>
             </List>
             <Divider />
-             <List>
+            <List>
                 {drawer && (
                     <ListSubheader component="div" id="nested-list-subheader">
-                        Assset Management
+                        Asset Management
                     </ListSubheader>
                 )}
                 <ListItem disablePadding>
@@ -154,7 +154,7 @@ export default function MiniDrawer({ drawer, handleDrawer}) {
                         <ListItemIcon><InboxIcon /></ListItemIcon>
                         <ListItemText primary="Asset Operation Master" />
                     </ListItemButton>
-                </ListItem> 
+                </ListItem>
                 <ListItem disablePadding>
                     <ListItemButton component={Link} to="/Asset/AssetType"  >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
@@ -163,6 +163,19 @@ export default function MiniDrawer({ drawer, handleDrawer}) {
                 </ListItem>
             </List>
             <Divider />
+            <List>
+                {drawer && (
+                    <ListSubheader component="div" id="nested-list-subheader">
+                        Shift Management
+                    </ListSubheader>
+                )}
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Shift/ShiftMaster"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Shift Master" />
+                    </ListItemButton>
+                </ListItem>
+            </List>
         </Drawer>
     );
 }

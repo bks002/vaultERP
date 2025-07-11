@@ -1,8 +1,7 @@
 import React from "react";
 
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Dashboard from "./Modules/Dashboard/Dashboard.jsx";
-
 import OfficeMaster from "./Modules/OfficeMaster/OfficeMaster.jsx";
 import EmployeeMaster from "./Modules/Employee/EmployeeMaster.jsx";
 import ItemMaster from "./Modules/Inventory/Item.jsx";
@@ -14,13 +13,13 @@ import AssetTypeMaster from "./Modules/Asset Management/AssetTypeMaster.jsx";
 import AssetMaster from "./Modules/Asset Management/AssetMaster.jsx";
 import AssetOperationMaster from "./Modules/Asset Management/AssetOperationMaster.jsx";
 import SlotsSignIn from "./Components/login & signup/login.jsx";
+import ShiftMaster from "./Modules/Shift Management/ShiftMaster.jsx";
 import AuthWrapper from "./AuthWrapper";
 
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<SlotsSignIn />} />
-
       <Route path="/dashboard" element={<AuthWrapper><Dashboard /></AuthWrapper>} />
       <Route path="/office" element={<AuthWrapper><OfficeMaster /></AuthWrapper>} />
       <Route path="/employee" element={<AuthWrapper><EmployeeMaster /></AuthWrapper>} />
@@ -32,6 +31,7 @@ function AppRoutes() {
       <Route path="/Asset/AssetType" element={<AuthWrapper><AssetTypeMaster /></AuthWrapper>} />
       <Route path="/Asset/AssetMaster" element={<AuthWrapper><AssetMaster /></AuthWrapper>} />
       <Route path="/Asset/AssetOperation" element={<AuthWrapper><AssetOperationMaster /></AuthWrapper>} />
+      <Route path="/Shift/ShiftMaster" element={<AuthWrapper><ShiftMaster /></AuthWrapper>} />
     </Routes>
   );
 }

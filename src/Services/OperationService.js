@@ -45,3 +45,14 @@ export const getOperationbyEmployee = async (employeeId) => {
     throw new Error('Failed to fetch operations');
   }
 };
+
+//4. Post new operation
+export const createOperation = async (operationData) => {
+  try {
+    const response = await api.post(`/EmpOps/create`, operationData);
+    return response.data;
+  } catch (error) {
+    const message = error.response?.data?.message || 'Failed to create operation';
+    throw new Error(message);
+  }
+};
