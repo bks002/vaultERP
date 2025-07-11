@@ -20,8 +20,11 @@ import {
     Stack,
     Switch,
     FormControlLabel,
+     Container,
+    InputAdornment,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import SearchIcon from '@mui/icons-material/Search';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
     getVendors,
@@ -33,6 +36,7 @@ import { useSelector } from 'react-redux';
 
 const Vendor = () => {
     const officeId = useSelector((state) => state.user.officeId);
+     const [searchQuery, setSearchQuery] = useState('');
     const userId = useSelector((state) => state.user.userId);
     const [vendors, setVendors] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -85,6 +89,7 @@ const Vendor = () => {
     };
 
     const handleCreateNew = () => {
+        console.log('Creating new vendor');
         setSelectedVendor({
             name: '', contactPerson: '', contactNumber: '', email: '', address: '', gstNumber: '', panNumber: '', websiteUrl: '', isActive: true,
         });
@@ -107,14 +112,35 @@ const Vendor = () => {
             alert(error.message);
         }
     };
-
+ const filteredVendors = vendors.filter((v) =>
+        v.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.contactPerson?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.contactNumber?.includes(searchQuery) ||
+        v.email?.toLowerCase().includes(searchQuery.toLowerCase()) 
+ );
     return (
         <div className="col-12">
-            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Typography variant="h4">Vendor Master</Typography>
-                <Button variant="contained" color="primary" onClick={handleCreateNew}>
-                    Create New Vendor
-                </Button>
+                <Box display="flex" alignItems="center" gap={2}>
+                    <TextField
+                        placeholder="Search by name, person or number"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon />
+                                </InputAdornment>
+                            ),
+                        }}
+                        size="small"
+                        sx={{ width: 300 }}
+                    />
+                    <Button variant="contained" color="primary" onClick={handleCreateNew}>
+                        Create New Vendor
+                    </Button>
+                </Box>
             </Box>
 
             {loading && <Typography>Loading data...</Typography>}
@@ -133,8 +159,8 @@ const Vendor = () => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {vendors.length > 0 ? (
-                                vendors.map((vendor, index) => (
+                            {filteredVendors.length > 0 ? (
+                                filteredVendors.map((vendor, index) => (
                                     <TableRow key={vendor.id}>
                                         <TableCell>{index + 1}</TableCell>
                                         <TableCell>{vendor.name}</TableCell>

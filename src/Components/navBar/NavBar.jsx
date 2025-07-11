@@ -13,6 +13,8 @@ import MailIcon from "@mui/icons-material/Mail";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import MoreIcon from "@mui/icons-material/MoreVert";
 import OfficeDropdown from "../officeDropdown/OfficeDropdown.jsx";
+import { Link } from 'react-router-dom';
+
 import { useNavigate } from "react-router-dom";
 
 export default function PrimarySearchAppBar({ drawer, handleDrawer }) {
@@ -65,6 +67,13 @@ export default function PrimarySearchAppBar({ drawer, handleDrawer }) {
         >
             <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
             <MenuItem onClick={handleMenuClose}>My account</MenuItem>
+           <MenuItem
+  component={Link}
+  to="/AddUser/AddNewUser"
+  onClick={handleMenuClose}
+>
+  Add User
+</MenuItem>
             <MenuItem onClick={handleLogout}>Logout</MenuItem>
         </Menu>
     );

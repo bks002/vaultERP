@@ -1,7 +1,8 @@
 import React from "react";
 
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "./Modules/Dashboard/Dashboard.jsx";
+
 import OfficeMaster from "./Modules/OfficeMaster/OfficeMaster.jsx";
 import EmployeeMaster from "./Modules/Employee/EmployeeMaster.jsx";
 import ItemMaster from "./Modules/Inventory/Item.jsx";
@@ -15,6 +16,7 @@ import AssetOperationMaster from "./Modules/Asset Management/AssetOperationMaste
 import SlotsSignIn from "./Components/login & signup/login.jsx";
 import ShiftMaster from "./Modules/Shift Management/ShiftMaster.jsx";
 import AuthWrapper from "./AuthWrapper";
+import AddNewUser from "./Modules/User Registration/AddNewUser.jsx";  
 
 function AppRoutes() {
   return (
@@ -32,6 +34,9 @@ function AppRoutes() {
       <Route path="/Asset/AssetMaster" element={<AuthWrapper><AssetMaster /></AuthWrapper>} />
       <Route path="/Asset/AssetOperation" element={<AuthWrapper><AssetOperationMaster /></AuthWrapper>} />
       <Route path="/Shift/ShiftMaster" element={<AuthWrapper><ShiftMaster /></AuthWrapper>} />
+      <Route path="/AddUser/AddNewUser" element={<AuthWrapper><AddNewUser /></AuthWrapper>} />
+      
+      {/* Redirect to dashboard if no match */}
     </Routes>
   );
 }

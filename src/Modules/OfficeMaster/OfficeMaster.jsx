@@ -3,11 +3,11 @@ import {
     Container, Typography, Button, TextField, Dialog,
     DialogTitle, DialogContent, DialogActions, Box,
     IconButton, Tooltip, Table, TableHead, TableRow,
-    TableCell, TableBody, Stack
+    TableCell, TableBody, Stack, InputAdornment,
 } from '@mui/material';
 import { getAllOffices, createOffice, updateOffice, deleteOffice } from "../../Services/OfficeService";
 import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
-
+import SearchIcon from "@mui/icons-material/Search";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -17,6 +17,7 @@ const OfficeMasterPage = () => {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [viewOpen, setViewOpen] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const [selectedOffice, setSelectedOffice] = useState({
         officeName: '',
         city: '',
@@ -51,11 +52,11 @@ const OfficeMasterPage = () => {
         setAlert({ open: true, type, message });
     };
 
-    const handleCreate = () => {
-        setIsEdit(false);
-        setSelectedOffice({ officeName: '', city: '', state: '', latitude: '', longitude: '' });
-        setDialogOpen(true);
-    };
+    // const handleCreate = () => {
+    //     setIsEdit(false);
+    //     setSelectedOffice({ officeName: '', city: '', state: '', latitude: '', longitude: '' });
+    //     setDialogOpen(true);
+    // };
 
     const handleEdit = (office) => {
         setSelectedOffice(office);
@@ -99,14 +100,32 @@ const OfficeMasterPage = () => {
             showAlert('error', 'Failed to save office');
         }
     };
-
+    // const filteredOfficeMasters = officeMasters.filter(po =>
+    //     po.poNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    //     po.vendorName.toLowerCase().includes(searchQuery.toLowerCase())
+    // );
     return (
         <Container maxWidth={false}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }} color={'text-white'}>
-                <Typography variant="h4">Office Master</Typography>
-                <Button variant="contained" onClick={handleCreate}>
-                    Add Office
-                </Button>
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                <Box display="flex" alignItems="center" gap={2}>
+                    <TextField
+                        placeholder="Search Master"
+                        variant="outlined"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        sx={{ width: 300 }}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon />
+                                </InputAdornment>
+                            )
+                        }}
+                    />
+                    <Button variant="contained" color="primary" >
+                        Office Master
+                    </Button>
+                </Box>
             </Box>
                 <Table>
                     <TableHead>
