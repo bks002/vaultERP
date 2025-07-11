@@ -4,9 +4,7 @@ const API_BASE = "https://admin.urest.in:8089/api/asset/Asset";
 
 export const getAllAssets = async (officeId) => {
     try {
-        const response = await axios.get(`${API_BASE}`, {
-            params: { officeId }
-        });
+        const response = await axios.get(`${API_BASE}?officeId=${officeId}`);
         return response.data;
     } catch (error) {
         throw new Error(error.response?.data?.message || 'Failed to fetch assets');
@@ -16,7 +14,9 @@ export const getAllAssets = async (officeId) => {
 export const createAssets = async (data) => {
     try {
         const response = await axios.post(API_BASE, data, {
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+            withCredentials: false
         });
         return response.data;
     } catch (error) {

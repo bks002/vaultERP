@@ -90,7 +90,6 @@ const AssetMaster = () => {
       createdBy: String(userId),
       isActive: true
     };
-
     try {
       if (isEdit) {
         await EditAssets(payload, formData.assetId);
@@ -101,9 +100,9 @@ const AssetMaster = () => {
       }
 
       setDialogOpen(false);
-      loadEmployees();
+      loadAllassets();
     } catch {
-      showAlert('error', 'Failed to save employee');
+      showAlert('error', 'Failed to save asset');
     }
   };
 
@@ -149,6 +148,7 @@ const AssetMaster = () => {
   };
 
   const handleEdit = (asset) => {
+    setIsEdit(true)
     setFormData(asset);
     setDialogOpen(true);
   };
@@ -257,7 +257,7 @@ const AssetMaster = () => {
             <Grid item xs={12} md={6} size={6}>
               <TextField fullWidth label="Asset Name" name="assetName" value={formData.assetName} onChange={handleChange} />
               <TextField fullWidth label="Model Number" name="modelNumber" value={formData.modelNumber} onChange={handleChange} sx={{ mt: 2 }} />
-              <TextField fullWidth label="Purchase Date" name="purchaseDate" type="date" InputLabelProps={{ shrink: true }} value={formData.purchaseDate} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Purchase Date" name="purchaseDate" type="date" InputLabelProps={{ shrink: true }} value={formData.purchaseDate?.split("T")[0] || ""} onChange={handleChange} sx={{ mt: 2 }} />
               <TextField fullWidth label="Manufacturer" name="manufacturer" value={formData.manufacturer} onChange={handleChange} sx={{ mt: 2 }} />
               <TextField fullWidth label="Supplier" name="supplier" value={formData.supplier} onChange={handleChange} sx={{ mt: 2 }} />
             </Grid>
@@ -266,7 +266,7 @@ const AssetMaster = () => {
               <TextField fullWidth label="Asset Code" name="assetCode" value={formData.assetCode} onChange={handleChange} />
               <TextField fullWidth label="Asset Type Id" name="assetTypeId" type="number" value={formData.assetTypeId} onChange={handleChange} sx={{ mt: 2 }} />
               <TextField fullWidth label="Serial Number" name="serialNumber" value={formData.serialNumber} onChange={handleChange} sx={{ mt: 2 }} />
-              <TextField fullWidth label="Warranty Expiry" name="warrantyExpiry" type="date" InputLabelProps={{ shrink: true }} value={formData.warrantyExpiry} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Warranty Expiry" name="warrantyExpiry" type="date" InputLabelProps={{ shrink: true }} value={formData.warrantyExpiry?.split("T")[0] || ""} onChange={handleChange} sx={{ mt: 2 }} />
             </Grid>
           </Grid>
         </DialogContent>
@@ -327,8 +327,8 @@ const AssetMaster = () => {
             <TextField fullWidth label="Asset Type Id" value={formData.assetTypeId} disabled />
             <TextField fullWidth label="Manufacturer" value={formData.manufacturer} disabled />
             <TextField fullWidth label="Supplier" value={formData.supplier} disabled />
-            <TextField fullWidth label="Purchase Date" value={formData.purchaseDate} type="date" InputLabelProps={{ shrink: true }} disabled />
-            <TextField fullWidth label="Warranty Expiry" value={formData.warrantyExpiry} type="date" InputLabelProps={{ shrink: true }} disabled />
+            <TextField fullWidth label="Purchase Date" value={formData.purchaseDate?.split("T")[0] || ""} type="date" InputLabelProps={{ shrink: true }} disabled />
+            <TextField fullWidth label="Warranty Expiry" value={formData.warrantyExpiry?.split("T")[0] || ""} type="date" InputLabelProps={{ shrink: true }} disabled />
           </Stack>
         </DialogContent>
         <DialogActions>
