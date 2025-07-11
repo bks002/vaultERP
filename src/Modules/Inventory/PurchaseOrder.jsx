@@ -13,12 +13,15 @@ import {
     Box,
     Tooltip,
     CircularProgress, DialogActions, Dialog, DialogContent, DialogTitle,
+    TextField, 
+    InputAdornment,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PrintIcon from '@mui/icons-material/Print';
 import { useSelector } from 'react-redux';
 import { getPurchaseOrder } from '../../Services/InventoryService.jsx';
 import CreatePurchaseOrder from "./CreatePurchseOrder.jsx";
+import SearchIcon from '@mui/icons-material/Search';
 
 const PurchaseOrder = () => {
     const officeId = useSelector((state) => state.user.officeId);
@@ -28,10 +31,13 @@ const PurchaseOrder = () => {
     const [viewDialogOpen, setViewDialogOpen] = useState(false);
     const [printDialogOpen, setPrintDialogOpen] = useState(false);
     const [selectedPO, setSelectedPO] = useState(null);
+    const [searchQuery, setSearchQuery] = useState(''); 
 
 
     const loadPurchaseOrders = async () => {
+        console.log('Loading Purchase Orders for Office ID:', officeId);
         setLoading(true);
+
         try {
             const data = await getPurchaseOrder(officeId);
             setPurchaseOrders(data || []);
@@ -45,14 +51,34 @@ const PurchaseOrder = () => {
     useEffect(() => {
         if (officeId > 0) loadPurchaseOrders();
     }, [officeId]);
-
+        const filteredPOs = purchaseOrders.filter(po =>
+        po.poNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        po.vendorName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
     return (
         <div className="col-12">
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Typography variant="h4">Purchase Orders</Typography>
-                <Button variant="contained" color="primary" onClick={() => setCreateDialogOpen(true)}>
-                    Create New Purchase Order
-                </Button>
+                <Box display="flex" alignItems="center" gap={2}>
+                    {/* ✅ Search Bar */}
+                    <TextField
+                        placeholder="Search PO Number or Vendor..."
+                        variant="outlined"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        sx={{ width: 300 }}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon />
+                                </InputAdornment>
+                            )
+                        }}
+                    />
+                    <Button variant="contained" color="primary" onClick={() => setCreateDialogOpen(true)}>
+                        Create New Purchase Order
+                    </Button>
+                </Box>
             </Box>
 
             {loading && <CircularProgress />}
@@ -71,8 +97,8 @@ const PurchaseOrder = () => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {purchaseOrders.length > 0 ? (
-                                purchaseOrders.map((po, index) => (
+                            {filteredPOs.length > 0 ? (
+                                filteredPOs.map((po, index) => (
                                     <TableRow key={po.id}>
                                         <TableCell>{index + 1}</TableCell>
                                         <TableCell>{po.poNumber}</TableCell>

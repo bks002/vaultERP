@@ -2,15 +2,17 @@ import React, { useEffect, useState } from 'react';
 import {
     Container, Typography, Button, TextField, Dialog,
     DialogTitle, DialogContent, DialogActions, Box,
-    Table, TableHead, TableRow, TableCell, TableBody, Stack
+    Table, TableHead, TableRow, TableCell, TableBody, Stack, InputAdornment,
 } from '@mui/material';
 //import { createType, updateType, deleteType } from "../../Services/OfficeService";
 import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
+import SearchIcon from '@mui/icons-material/Search';
 
 const AssetTypeMaster = () => {
     const [type, setType] = useState([]);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [viewOpen, setViewOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const [isEdit, setIsEdit] = useState(false);
     const [selectedType, setSelectedType] = useState({
         typeName: '',
@@ -26,7 +28,7 @@ const AssetTypeMaster = () => {
 
     const handleCreate = () => {
         setIsEdit(false);
-        setSelectedType({ typeName: '', description: '', action: '' });
+        setSelectedType({ typeName: '', description: '',});
         setDialogOpen(true);
     };
 
@@ -58,7 +60,8 @@ const AssetTypeMaster = () => {
     };
 
     const handleSave = async () => {
-        try {
+        console.log('Saving type:', selectedType);
+       /* try {
             if (isEdit) {
                 await updateType(selectedType.typeId, selectedType);
                 showAlert('success', 'Type updated successfully');
@@ -70,17 +73,37 @@ const AssetTypeMaster = () => {
             // reload list if needed
         } catch {
             showAlert('error', 'Failed to save type');
-        }
+        } */
     };
-
+  const filteredTypes = type.filter((t) =>
+        t.typeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
     return (
         <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Typography variant="h4">Type Master</Typography>
-                <Button variant="contained" onClick={handleCreate}>
-                    Add Type
-                </Button>
+                <Box display="flex" gap={2}>
+                    {/* ✅ Search input */}
+                    <TextField
+                        placeholder="Search type or description"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        size="small"
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon />
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+                    <Button variant="contained" onClick={handleCreate}>
+                        Add Type
+                    </Button>
+                </Box>
             </Box>
+
 
             <Table>
                 <TableHead>
@@ -92,8 +115,8 @@ const AssetTypeMaster = () => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {type.length > 0 ? (
-                        type.map((item, index) => (
+                    {filteredTypes.length > 0 ? (
+                        filteredTypes.map((item, index) => (
                             <TableRow key={item.typeId}>
                                 <TableCell>{index + 1}</TableCell>
                                 <TableCell>{item.typeName}</TableCell>

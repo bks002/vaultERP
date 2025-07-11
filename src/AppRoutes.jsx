@@ -12,6 +12,8 @@ import EmployeeMaster from "./Modules/Employee/EmployeeMaster.jsx";
 import AssetTypeMaster from "./Modules/Asset Management/AssetTypeMaster.jsx";
 import AssetMaster from "./Modules/Asset Management/AssetMaster.jsx";
 import AssetOperationMaster from "./Modules/Asset Management/AssetOperationMaster.jsx";
+import AddNewUser from "./Modules/User Registration/AddNewUser.jsx";
+
 // Import all route components here
 
 function AppRoutes() {
@@ -28,6 +30,10 @@ function AppRoutes() {
             <Route path="/Asset/AssetType" element={<AssetTypeMaster />} />
             <Route path="/Asset/AssetMaster" element={<AssetMaster />} />
             <Route path="/Asset/AssetOperation" element={<AssetOperationMaster />} />
+            <Route path="/AddUser/AddNewUser" element={<AddNewUser />} />
+
+            
+            
 
             {/* Add more routes here */}
 

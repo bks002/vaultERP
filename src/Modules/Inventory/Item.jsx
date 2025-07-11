@@ -19,10 +19,12 @@ import {
     TextField,
     Stack,
     MenuItem,
+    InputAdornment,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import SearchIcon from '@mui/icons-material/Search';
 import {
     getAllItems,
     deleteItem,
@@ -39,6 +41,7 @@ const ItemMaster = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const [selectedItem, setSelectedItem] = useState({
         Name: '',
         Description: '',
@@ -110,6 +113,7 @@ const ItemMaster = () => {
         setDialogOpen(true);
     };
     const handleSave = async () => {
+        console.log('Saving item:', selectedItem);
         try {
             if (isEdit) {
                 await updateItem(selectedItem.Id, selectedItem);
@@ -125,17 +129,38 @@ const ItemMaster = () => {
         }
     };
     const getCategoryName = (categoryId) => {
-        return categories.find((cat) => cat.id === categoryId)?.name || 'N/A';
+       return categories.find((cat) => cat.id === categoryId)?.name || 'N/A';
     };
+const filteredItems = items.filter((item) =>
+    item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    getCategoryName(item.categoryId)?.toLowerCase().includes(searchQuery.toLowerCase())
+);
+
     return (
         <div className="col-12">
-            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Typography variant="h4">Item Master</Typography>
-                <Button variant="contained" color="primary" onClick={handleCreateNew}>
-                    Create New Item
-                </Button>
+                <Box display="flex" alignItems="center" gap={2}>
+                    <TextField
+                        placeholder="Search items..."
+                        variant="outlined"
+                        sx={{ width: 300 }} 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon />
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+                    <Button variant="contained" color="primary" onClick={handleCreateNew}>
+                        Create New Item
+                    </Button>
+                </Box>
             </Box>
-
             {loading && <Typography>Loading data...</Typography>}
 
             {!loading && (
@@ -151,8 +176,8 @@ const ItemMaster = () => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {items.length > 0 ? (
-                                items.map((item, index) => (
+                            {filteredItems.length > 0 ? (
+                                filteredItems.map((item, index) => (
                                     <TableRow key={item.Id}>
                                         <TableCell>{index + 1}</TableCell>
                                         <TableCell>{item.name}</TableCell>

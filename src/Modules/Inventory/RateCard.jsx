@@ -18,8 +18,10 @@ import {
     Stack,
     Box,
     MenuItem,
+    InputAdornment,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import SearchIcon from '@mui/icons-material/Search';
 import { useSelector } from 'react-redux';
 import { getRateCard, createRateCard } from '../../Services/InventoryService.jsx';
 import { getCategories } from '../../Services/InventoryService.jsx';
@@ -37,6 +39,7 @@ const RateCard = () => {
     const [filteredItems, setFilteredItems] = useState([]);
     const [loading, setLoading] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const [selectedRateCard, setSelectedRateCard] = useState({
         CategoryId: '', ItemId: '', VendorId: '', Price: '', ValidTill: ''
     });
@@ -123,14 +126,34 @@ const RateCard = () => {
             alert(error.message);
         }
     };
-
+ const filteredRateCards = rateCards.filter((rate) =>
+        rate.itemName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        rate.vendorName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+         rate.categoryName?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
     return (
         <div className="col-12">
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Typography variant="h4">Rate Card</Typography>
-                <Button variant="contained" color="primary" onClick={handleCreateNew}>
-                    Create New Rate Card
-                </Button>
+                <Box display="flex" alignItems="center" gap={2}>
+                    <TextField
+                        placeholder="Search by item or vendor"
+                        variant="outlined"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        sx={{ width: 300 }}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon />
+                                </InputAdornment>
+                            )
+                        }}
+                    />
+                    <Button variant="contained" color="primary" onClick={handleCreateNew}>
+                        Create New Rate Card
+                    </Button>
+                </Box>
             </Box>
 
             {loading && <Typography>Loading data...</Typography>}
@@ -150,8 +173,8 @@ const RateCard = () => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {rateCards.length > 0 ? (
-                                rateCards.map((rateCard, index) => (
+                            {filteredRateCards.length > 0 ? (
+                                filteredRateCards.map((rateCard, index) => (
                                     <TableRow key={rateCard.id}>
                                         <TableCell>{index + 1}</TableCell>
                                         <TableCell>{rateCard.categoryName}</TableCell>

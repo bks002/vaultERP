@@ -2,16 +2,17 @@ import React, { useEffect, useState } from 'react';
 import {
     Container, Typography, Button, TextField, Dialog,
     DialogTitle, DialogContent, DialogActions, Box,
-    Table, TableHead, TableRow, TableCell, TableBody, Stack
+    Table, TableHead, TableRow, TableCell, TableBody, Stack, InputAdornment,
 } from '@mui/material';
 //import { createType, updateType, deleteType } from "../../Services/OfficeService";
 import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
-
+import SearchIcon from '@mui/icons-material/Search';
 const AssetOperationMaster = () => {
     const [type, setType] = useState([]);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [viewOpen, setViewOpen] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
+     const [searchQuery, setSearchQuery] = useState('');
     const [selectedType, setSelectedType] = useState({
         typeName: '',
         description: '',
@@ -26,7 +27,7 @@ const AssetOperationMaster = () => {
 
     const handleCreate = () => {
         setIsEdit(false);
-        setSelectedType({ typeName: '', description: '', action: '' });
+        setSelectedType({ typeName: '', description: '', });
         setDialogOpen(true);
     };
 
@@ -58,28 +59,57 @@ const AssetOperationMaster = () => {
     };
 
     const handleSave = async () => {
-        try {
+        console.log('Saving type:', selectedType);
+       /* try {
             if (isEdit) {
-                await updateType(selectedType.typeId, selectedType);
+                await updateType(selectedType.typeId, {
+                    name: selectedType.typeName,
+                    description: selectedType.description,
+                });
                 showAlert('success', 'Type updated successfully');
             } else {
-                await createType(selectedType);
+                await createType({
+                    // Assuming officeId is a static value for now
+                    name: selectedType.typeName,
+                    description: selectedType.description,
+                    createdBy: 1, // Assuming createdBy is a static value for now
+
+                });
                 showAlert('success', 'Type added successfully');
             }
             setDialogOpen(false);
             // reload list if needed
         } catch {
             showAlert('error', 'Failed to save type');
-        }
+        }*/
     };
-
+ const filteredTypes = type.filter((t) =>
+        t.typeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
     return (
-        <Container maxWidth={false}>
+         <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Typography variant="h4">Asset Operation Master</Typography>
-                <Button variant="contained" onClick={handleCreate}>
-                    Add Type
-                </Button>
+                <Box display="flex" gap={2}>
+                    {/* ✅ Search input */}
+                    <TextField
+                        placeholder="Search by type or description"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        size="small"
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon />
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+                    <Button variant="contained" onClick={handleCreate}>
+                        Add Type
+                    </Button>
+                </Box>
             </Box>
 
             <Table>
@@ -92,26 +122,26 @@ const AssetOperationMaster = () => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {type.length > 0 ? (
-                        type.map((item, index) => (
+                    {filteredTypes.length > 0 ? (
+                        filteredTypes.map((item, index) => (
                             <TableRow key={item.typeId}>
                                 <TableCell>{index + 1}</TableCell>
                                 <TableCell>{item.typeName}</TableCell>
                                 <TableCell>{item.description}</TableCell>
                                 <TableCell align="center">
-                                      <Tooltip title="Edit">
-                                      <IconButton  color="primary" onClick={() => handleEdit(AssetTypeMaster)}
- >
-                                      <EditIcon />
-                                      </IconButton>
-                                      </Tooltip>
-                                     <Tooltip title="Delete">
-                                    <IconButton color="error" onClick={() => handleDelete(AssetTypeMaster)}
-                                                                               >
-                                    <DeleteIcon />
-                                                                               </IconButton>
-                                                                           </Tooltip>
-                                                                       </TableCell>
+                                    <Tooltip title="Edit">
+                                        <IconButton color="primary" onClick={() => handleEdit(AssetTypeMaster)}
+                                        >
+                                            <EditIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Delete">
+                                        <IconButton color="error" onClick={() => handleDelete(AssetTypeMaster)}
+                                        >
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                </TableCell>
                             </TableRow>
                         ))
                     ) : (

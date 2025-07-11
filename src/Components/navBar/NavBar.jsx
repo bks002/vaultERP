@@ -13,6 +13,8 @@ import MailIcon from "@mui/icons-material/Mail";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import MoreIcon from "@mui/icons-material/MoreVert";
 import OfficeDropdown from "../officeDropdown/OfficeDropdown.jsx";
+import { Link } from 'react-router-dom';
+
 
 export default function PrimarySearchAppBar({ drawer, handleDrawer }) {
     const [anchorEl, setAnchorEl] = React.useState(null);
@@ -51,6 +53,13 @@ export default function PrimarySearchAppBar({ drawer, handleDrawer }) {
         >
             <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
             <MenuItem onClick={handleMenuClose}>My account</MenuItem>
+           <MenuItem
+  component={Link}
+  to="/AddUser/AddNewUser"
+  onClick={handleMenuClose}
+>
+  Add User
+</MenuItem>
         </Menu>
     );
 
@@ -109,8 +118,8 @@ export default function PrimarySearchAppBar({ drawer, handleDrawer }) {
                         edge="start"
                         color="inherit"
                         aria-label="open drawer"
-                        onMouseEnter={()=>{!drawer && handleDrawer(true)}}
-                        onMouseLeave={()=> {drawer && handleDrawer(false)}}
+                        onMouseEnter={() => { !drawer && handleDrawer(true) }}
+                        onMouseLeave={() => { drawer && handleDrawer(false) }}
                         sx={{ mr: 2 }}
                     >
                         <MenuIcon />
