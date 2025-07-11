@@ -110,6 +110,7 @@ const CreatePurchaseOrder = ({ open, onClose, officeId }) => {
         // const filteredCreatePurchaseOrder = categories.filter(createpurchaseorder =>
         // createpurchaseorder.name.toLowerCase().includes(searchQuery.toLowerCase())
     //);
+
     return (
         <>
         <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
