@@ -18,6 +18,14 @@ import { AppProvider } from "@toolpad/core/AppProvider";
 import { SignInPage } from "@toolpad/core/SignInPage";
 import { useTheme } from "@mui/material/styles";
 import { login } from "../../Services/AuthService";
+import { useDispatch } from "react-redux";
+import {
+  setUserId,
+  setUserName,
+  setEmail,
+  setUserTypeId,
+} from "../../Redux/userSlice"; 
+import { useNavigate } from "react-router-dom";
 
 const providers = [{ id: "credentials", name: "Email and Password" }];
 
@@ -148,6 +156,8 @@ function RememberMeCheckbox() {
 
 export default function SlotsSignIn() {
   const theme = useTheme();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   return (
     <AppProvider theme={theme}>
@@ -165,16 +175,17 @@ export default function SlotsSignIn() {
               const loginTime = Date.now();
 
               storage.setItem("isAuthenticated", "true");
-              if (data.token) {
-                storage.setItem("token", data.token);
-              }
-              if (data.user) {
-                storage.setItem("user", JSON.stringify(data.user));
-              }
-              if (remember) {
-                storage.setItem("loginTime", loginTime.toString());
-              }
-              window.location.href = "/dashboard";
+              if (data.token) storage.setItem("token", data.token);
+              if (data.user) storage.setItem("user", JSON.stringify(data.user));
+              if (remember) storage.setItem("loginTime", loginTime.toString());
+
+              const user = data.user || {};
+              dispatch(setUserId(user.id || null));
+              dispatch(setUserName(user.username || null));
+              dispatch(setEmail(user.email || null));
+              dispatch(setUserTypeId(user.userTypeId || 0));
+
+              navigate("/dashboard");
             } else {
               alert(data.message || "Invalid credentials");
             }
@@ -182,6 +193,7 @@ export default function SlotsSignIn() {
             alert("Login failed: " + err.message);
           }
         }}
+
         slots={{
           title: Title,
           subtitle: Subtitle,

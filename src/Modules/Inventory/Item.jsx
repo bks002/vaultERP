@@ -34,7 +34,7 @@ import { useSelector } from 'react-redux';
 
 const ItemMaster = () => {
     const officeId = useSelector((state) => state.user.officeId);
-    const userId = useSelector((state) => state.user.id);
+    const userId = useSelector((state) => state.user.userId);
     const [items, setItems] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -105,7 +105,7 @@ const ItemMaster = () => {
             MinStockLevel: '',
             BrandName: '',
             HSNCode: '',
-        }); // reset
+        }); 
         setIsEdit(false);
         setDialogOpen(true);
     };

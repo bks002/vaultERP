@@ -11,7 +11,6 @@ import {
     FormControl,
     InputLabel,
     Select,
-    CircularProgress,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import {
@@ -91,7 +90,7 @@ const CreatePurchaseOrder = ({ open, onClose, officeId }) => {
                 vendorName:item.vendorName,
                 description: item.description,
                 brandName: item.brandName,
-                quantity: 0, // Default quantity
+                quantity: 0,
                 rate: item.price,
                 lineTotal:0
             };

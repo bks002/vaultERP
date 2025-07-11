@@ -31,6 +31,7 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 
 const RateCard = () => {
     const officeId = useSelector((state) => state.user.officeId);
+    const userId = useSelector((state) => state.user.userId);
     const [rateCards, setRateCards] = useState([]);
     const [categories, setCategories] = useState([]);
     const [items, setItems] = useState([]);
@@ -43,7 +44,6 @@ const RateCard = () => {
     const [vendors, setVendors] = useState([]);
 
 
-    // ---- Load data ----
     useEffect(() => {
         if (officeId > 0) {
             loadRateCards();

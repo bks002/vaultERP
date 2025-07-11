@@ -38,7 +38,6 @@ const POQuantity = ({ open, onClose, selectedItems = [] }) => {
         );
     };
 
-    // Group items by vendor
     const groupedPOs = useMemo(() => {
         const grouped = {};
         localItems.forEach((item) => {
@@ -71,7 +70,6 @@ const POQuantity = ({ open, onClose, selectedItems = [] }) => {
                 HSNCode: item.hsnCode,
             });
 
-            // Accumulate total
             grouped[item.vendorId].totalAmount += itemTotal;
         });
 
@@ -89,10 +87,8 @@ const POQuantity = ({ open, onClose, selectedItems = [] }) => {
     const handleCreatePO = async (finalPOs) => {
         try {
             console.log(finalPOs)
-            // Call the service with finalPOs
             const result = await createPurchaseOrder(finalPOs);
             console.log("Purchase Orders Created:", result);
-            // You can optionally alert the user
             alert("Purchase Orders Created Successfully!");
             setDialogOpen(false);
             onClose();

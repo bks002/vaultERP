@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import { clearUserData } from "./Redux/userSlice";
+import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-
-const EXPIRY_DURATION = 60 * 60 * 1000; 
 
 export default function AuthWrapper({ children }) {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const dispatch = useDispatch();
+
+  const EXPIRY_DURATION = 24 * 60 * 60 * 1000; 
 
   useEffect(() => {
     const storage = localStorage.getItem("loginTime") ? localStorage : sessionStorage;
@@ -18,6 +21,7 @@ export default function AuthWrapper({ children }) {
       if (loginTime && now - loginTime > EXPIRY_DURATION) {
         localStorage.clear();
         sessionStorage.clear();
+        dispatch(clearUserData());
         setIsAuthenticated(false);
       } else {
         setIsAuthenticated(true);
@@ -26,6 +30,7 @@ export default function AuthWrapper({ children }) {
 
     setIsCheckingAuth(false);
   }, []);
+
 
   if (isCheckingAuth) return null;
 

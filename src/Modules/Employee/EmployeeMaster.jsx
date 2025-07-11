@@ -23,6 +23,7 @@ import Checkbox from '@mui/material/Checkbox';
 
 const EmployeeMasterPage = () => {
     const officeId = useSelector((state) => state.user.officeId);
+    const userId = useSelector((state) => state.user.userId);
     const [employees, setEmployees] = useState([]);
     const [operations, setOperations] = useState([]);
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -128,7 +129,6 @@ const EmployeeMasterPage = () => {
             setSelectedIds(ids);
             setSettingOpen(true);
         } catch (err) {
-            console.error("Error loading mapped operations:", err);
             showAlert("error", "Failed to load mapped operations");
         }
     }
@@ -186,7 +186,7 @@ const EmployeeMasterPage = () => {
             ...selectedEmployee,
             officeId: parseInt(officeId),
             roleId: parseInt(selectedEmployee.roleId || 0),
-            createdBy: 1,
+            createdBy: userId,
             isActive: true
         };
 
@@ -211,7 +211,7 @@ const EmployeeMasterPage = () => {
             const payload = {
                 employeeId: selectedEmployee.employeeId,
                 operationIds: selectedIds,
-                updatedBy: 1
+                updatedBy: userId
             };
 
             await OperationMapping(payload);
@@ -219,7 +219,6 @@ const EmployeeMasterPage = () => {
             setSettingOpen(false);
             loadEmployees();
         } catch (error) {
-            console.error("Mapping failed:", error);
             showAlert("error", error.message || "Failed to map operations");
         }
     };
@@ -267,7 +266,7 @@ const EmployeeMasterPage = () => {
                                             <DeleteIcon />
                                         </IconButton>
                                     </Tooltip>
-                                    <Tooltip title="Settings">
+                                    <Tooltip title="Operations">
                                         <IconButton onClick={() => handleSettings(emp)} color="default">
                                             <SettingsIcon />
                                         </IconButton>
