@@ -176,7 +176,7 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                     </ListSubheader>
                 )}
                 <ListItem disablePadding>
-                    <ListItemButton component={Link} to="/dailyPlanningSheet"  >
+                    <ListItemButton component={Link} to="/attendance/shiftMaster"  >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
                         <ListItemText primary="Shift Master" />
                     </ListItemButton>
