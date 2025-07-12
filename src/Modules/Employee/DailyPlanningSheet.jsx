@@ -14,6 +14,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useSelector } from "react-redux";
+import { getAllShift } from '../../Services/ShiftService.js';
 
 const DailyPlanningSheet = () => {
     const officeId = useSelector((state) => state.user.officeId);
@@ -25,6 +26,7 @@ const DailyPlanningSheet = () => {
     const [Operations, setOperations] = useState([]);
     const [Assets, setAssets] = useState([]);
     const [shift, setShift] = useState([]);
+    const [shifts, setShifts] = useState([]);
     const [selectedShift, setSelectedShift] = useState({
         id: null,
         Item: '',
@@ -49,6 +51,7 @@ const DailyPlanningSheet = () => {
             loadOperations();
             loadItems();
             loadAssets();
+            loadShift();
         }
     }, [officeId]);
 
@@ -56,6 +59,15 @@ const DailyPlanningSheet = () => {
         try {
             const data = await getAllEmployees(officeId);
             setEmployees(data);
+        } catch {
+            showAlert('error', 'Failed to load employee list');
+        }
+    };
+
+    const loadShift = async () => {
+        try {
+            const data = await getAllShift(officeId);
+            setShifts(data);
         } catch {
             showAlert('error', 'Failed to load employee list');
         }
@@ -160,7 +172,7 @@ const DailyPlanningSheet = () => {
         <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Typography variant="h4">Daily Planning Sheet</Typography>
-                <Button variant="contained" onClick={handleCreate}>Add Shift</Button>
+                <Button variant="contained" onClick={handleCreate}>Create Planning</Button>
             </Box>
 
             <Table>
@@ -171,6 +183,7 @@ const DailyPlanningSheet = () => {
                         <TableCell>Operator Name</TableCell>
                         <TableCell>Manpower</TableCell>
                         <TableCell>Item</TableCell>
+                        <TableCell>Shift</TableCell>
                         <TableCell align="center">Actions</TableCell>
                     </TableRow>
                 </TableHead>
@@ -183,6 +196,7 @@ const DailyPlanningSheet = () => {
                                 <TableCell>{emp.EmployeeName}</TableCell>
                                 <TableCell>{emp.manpower}</TableCell>
                                 <TableCell>{emp.Item}</TableCell>
+                                <TableCell>{emp.shift}</TableCell>
                                 <TableCell align="center">
                                     <Tooltip title="Edit">
                                         <IconButton onClick={() => handleEdit(emp)} color="primary">
@@ -219,6 +233,21 @@ const DailyPlanningSheet = () => {
                                 fullWidth
                                 InputLabelProps={{ shrink: true }}
                             />
+                            <TextField
+                                select
+                                label="Shift"
+                                name="shift"
+                                value={selectedShift.shift}
+                                onChange={handleChange}
+                                fullWidth
+                                sx={{ mt: 2 }}
+                                SelectProps={{ native: true }}
+                            >
+                                <option value=""></option>
+                                {shifts.map((a) => (
+                                    <option key={a.shiftId} value={a.shiftName}>{a.shiftName}</option>
+                                ))}
+                            </TextField>
                             <TextField
                                 select
                                 label="Asset Name"

@@ -18,6 +18,7 @@ import ShiftMaster from "./Modules/Attendance Management/ShiftMaster.jsx";
 import AuthWrapper from "./AuthWrapper";
 import AddNewUser from "./Modules/User Registration/AddNewUser.jsx";
 import DailyPlanningSheet from "./Modules/Employee/DailyPlanningSheet.jsx";
+import EmployeeShift from "./Modules/Employee/EmployeeShift.jsx";
 
 function AppRoutes() {
   return (
@@ -37,7 +38,7 @@ function AppRoutes() {
       <Route path="/Attendance/ShiftMaster" element={<AuthWrapper><ShiftMaster /></AuthWrapper>} />
       <Route path="/dailyPlanningSheet" element={<AuthWrapper><DailyPlanningSheet/></AuthWrapper>} />
       <Route path="/AddUser/AddNewUser" element={<AuthWrapper><AddNewUser /></AuthWrapper>} />
-      
+      <Route path="/employeeshift" element={<AuthWrapper><EmployeeShift /></AuthWrapper>} />
       {/* Redirect to dashboard if no match */}
     </Routes>
   );

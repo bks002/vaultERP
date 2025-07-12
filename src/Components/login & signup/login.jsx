@@ -24,7 +24,7 @@ import {
   setUserName,
   setEmail,
   setUserTypeId,
-} from "../../Redux/userSlice"; 
+} from "../../Redux/userSlice";
 import { useNavigate } from "react-router-dom";
 
 
@@ -173,12 +173,10 @@ export default function SlotsSignIn() {
             if (data.success || data.token) {
               const remember = formData.get("remember") === "true";
               const storage = remember ? localStorage : sessionStorage;
-              const loginTime = Date.now();
 
               storage.setItem("isAuthenticated", "true");
               if (data.token) storage.setItem("token", data.token);
               if (data.user) storage.setItem("user", JSON.stringify(data.user));
-              if (remember) storage.setItem("loginTime", loginTime.toString());
 
               const user = data.user || {};
               dispatch(setUserId(user.id || null));

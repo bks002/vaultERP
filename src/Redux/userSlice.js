@@ -7,6 +7,7 @@ const initialState = {
     userName: null,
     email: null,
     userTypeId: 0,
+    officeName: null,
 };
 
 const userSlice = createSlice({
@@ -31,6 +32,9 @@ const userSlice = createSlice({
         setUserTypeId: (state, action) => {
             state.userTypeId = action.payload;
         },
+        setOfficeName: (state, action) => {
+            state.officeName = action.payload;
+        },
         clearUserData: (state) => {
             state.userId = null;
             state.userRole = null;
@@ -38,10 +42,11 @@ const userSlice = createSlice({
             state.userName = null;
             state.email = null;
             state.userTypeId = 0;
+            state.officeName= null;
         },
     },
 });
 
-export const { setUserId, setUserRole, setOfficeId, setUserName, setEmail, setUserTypeId, clearUserData } = userSlice.actions;
+export const { setUserId, setUserRole, setOfficeId, setUserName, setEmail, setUserTypeId, setOfficeName, clearUserData } = userSlice.actions;
 
 export default userSlice.reducer;

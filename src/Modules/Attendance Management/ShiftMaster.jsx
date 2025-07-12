@@ -62,12 +62,12 @@ const ShiftMaster = () => {
         const dtoPayload = {
             ...formData,
             shiftId: formData.shiftId ? parseInt(formData.shiftId) : 0,
-            startTime: formData.startTime ,
-            endTime: formData.endTime ,
+            startTime: formData.startTime,
+            endTime: formData.endTime,
             officeId: parseInt(officeId),
         };
 
-        const payload = { dto: dtoPayload };
+        const payload = dtoPayload;
 
         try {
             if (isEdit) {
@@ -114,14 +114,12 @@ const ShiftMaster = () => {
     };
 
     const handleDelete = async (shift) => {
-        if (window.confirm(`Are you sure you want to delete "${shift.shiftName}"?`)) {
-            try {
-                await deleteShift(shift.shiftId);
-                showAlert('success', 'shift deleted successfully');
-                loadAllassets();
-            } catch {
-                showAlert('error', 'Failed to delete shift');
-            }
+        try {
+            await deleteShift(shift.shiftId);
+            showAlert('success', 'shift deleted successfully');
+            loadAllShift();
+        } catch {
+            showAlert('error', 'Failed to delete shift');
         }
     };
 
