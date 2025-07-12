@@ -127,55 +127,54 @@ const OfficeMasterPage = () => {
                     </Button>
                 </Box>
             </Box>
-
-            <Table>
-                <TableHead>
-                    <TableRow>
-                        <TableCell>#</TableCell>
-                        <TableCell>Office Name</TableCell>
-                        <TableCell>City</TableCell>
-                        <TableCell>State</TableCell>
-                        <TableCell>Office Type</TableCell>
-                        <TableCell>Email</TableCell>
-                        <TableCell align="center">Actions</TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {offices.length > 0 ? (
-                        offices.map((office, index) => (
-                            <TableRow key={office.officeId}>
-                                <TableCell>{index + 1}</TableCell>
-                                <TableCell>{office.officeName}</TableCell>
-                                <TableCell>{office.city}</TableCell>
-                                <TableCell>{office.state}</TableCell>
-                                <TableCell>{office.officeType}</TableCell>
-                                <TableCell>{office.email}</TableCell>
-                                <TableCell align="center">
-                                    <Tooltip title="View">
-                                        <IconButton onClick={() => handleView(office)} color="info">
-                                            <VisibilityIcon />
-                                        </IconButton>
-                                    </Tooltip>
-                                    <Tooltip title="Edit">
-                                        <IconButton onClick={() => handleEdit(office)} color="primary">
-                                            <EditIcon />
-                                        </IconButton>
-                                    </Tooltip>
-                                    <Tooltip title="Delete">
-                                        <IconButton onClick={() => handleDelete(office)} color="error">
-                                            <DeleteIcon />
-                                        </IconButton>
-                                    </Tooltip>
-                                </TableCell>
-                            </TableRow>
-                        ))
-                    ) : (
+                <Table>
+                    <TableHead>
                         <TableRow>
-                            <TableCell colSpan={5} align="center">No offices found</TableCell>
+                            <TableCell>#</TableCell>
+                            <TableCell>Office Name</TableCell>
+                            <TableCell>City</TableCell>
+                            <TableCell>State</TableCell>
+                            <TableCell>Office Type</TableCell>
+                            <TableCell>Email</TableCell>
+                            <TableCell align="center">Actions</TableCell>
                         </TableRow>
-                    )}
-                </TableBody>
-            </Table>
+                    </TableHead>
+                    <TableBody>
+                        {offices.length > 0 ? (
+                            offices.map((office, index) => (
+                                <TableRow key={office.officeId}>
+                                    <TableCell>{index + 1}</TableCell>
+                                    <TableCell>{office.officeName}</TableCell>
+                                    <TableCell>{office.city}</TableCell>
+                                    <TableCell>{office.state}</TableCell>
+                                    <TableCell>{office.officeType}</TableCell>
+                                    <TableCell>{office.email}</TableCell>
+                                    <TableCell align="center">
+                                        <Tooltip title="View">
+                                            <IconButton onClick={() => handleView(office)} color="info">
+                                                <VisibilityIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="Edit">
+                                            <IconButton onClick={() => handleEdit(office)} color="primary">
+                                                <EditIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="Delete">
+                                            <IconButton onClick={() => handleDelete(office)} color="error">
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={5} align="center">No offices found</TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
 
             {/* Create/Edit Dialog */}
             <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">

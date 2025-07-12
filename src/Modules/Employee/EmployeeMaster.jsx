@@ -3,7 +3,7 @@ import {
     Container, Typography, Button, TextField, Dialog,
     DialogTitle, DialogContent, DialogActions, Box,
     IconButton, Tooltip, Table, TableHead, TableRow,
-    TableCell, TableBody, Stack, TableContainer
+    TableCell, TableBody, Stack, TableContainer,Paper
 } from '@mui/material';
 import {
     getAllEmployees,
@@ -18,7 +18,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useSelector } from "react-redux";
-import Paper from '@mui/material/Paper';
 import Checkbox from '@mui/material/Checkbox';
 
 const EmployeeMasterPage = () => {
@@ -33,13 +32,13 @@ const EmployeeMasterPage = () => {
     const [selectedIds, setSelectedIds] = useState([]);
 
     const [selectedEmployee, setSelectedEmployee] = useState({
-        employeeId:'',
+        employeeId: '',
         employeeName: '',
         email: '',
         phoneNumber: '',
         designation: '',
         roleId: 10,
-        department:'',
+        department: '',
         officeId: '',
         employeeCode: '',
         Image: '',
@@ -61,7 +60,6 @@ const EmployeeMasterPage = () => {
 
     const loadEmployees = async () => {
         try {
-            console.log(officeId)
             const data = await getAllEmployees(officeId);
             setEmployees(data);
         } catch {
@@ -229,7 +227,6 @@ const EmployeeMasterPage = () => {
                 <Typography variant="h4">Employee Master</Typography>
                 <Button variant="contained" onClick={handleCreate}>Add Employee</Button>
             </Box>
-
             <Table>
                 <TableHead>
                     <TableRow>
