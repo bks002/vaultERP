@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { setOfficeId } from "../../Redux/userSlice.js";
+import { setOfficeId, setOfficeName } from "../../Redux/userSlice.js";
 import { getAllOffices } from "../../Services/OfficeService.js";
 
 const OfficeDropdown = () => {
@@ -28,8 +28,13 @@ const OfficeDropdown = () => {
                 value={selected}
                 label="Select Office *"
                 onChange={(event) => {
-                    setSelected(event.target.value);
-                    dispatch(setOfficeId(event.target.value));
+                    const selectedId = event.target.value;
+                    setSelected(selectedId);
+                    dispatch(setOfficeId(selectedId));
+                    const selectedOffice = offices.find((office) => office.officeId === selectedId);
+                    if (selectedOffice) {
+                        dispatch(setOfficeName(selectedOffice.officeName));
+                    }
                 }}
             >
                 <MenuItem value="">

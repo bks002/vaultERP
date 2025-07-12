@@ -3,7 +3,7 @@ import {
     Container, Typography, Button, TextField, Dialog,
     DialogTitle, DialogContent, DialogActions, Box,
     IconButton, Tooltip, Table, TableHead, TableRow,
-    TableCell, TableBody, Stack, TableContainer,Paper
+    TableCell, TableBody, Stack, TableContainer, Paper, MenuItem
 } from '@mui/material';
 import {
     getAllEmployees,
@@ -19,9 +19,11 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useSelector } from "react-redux";
 import Checkbox from '@mui/material/Checkbox';
+import {employmentTypes, department, gender} from "../../Components/constant";
 
 const EmployeeMasterPage = () => {
     const officeId = useSelector((state) => state.user.officeId);
+    const officeName= useSelector((state)=> state.user.officeName);
     const userId = useSelector((state) => state.user.userId);
     const [employees, setEmployees] = useState([]);
     const [operations, setOperations] = useState([]);
@@ -33,6 +35,7 @@ const EmployeeMasterPage = () => {
 
     const [selectedEmployee, setSelectedEmployee] = useState({
         employeeId: '',
+        employementType: 'Permanent',
         employeeName: '',
         email: '',
         phoneNumber: '',
@@ -42,6 +45,14 @@ const EmployeeMasterPage = () => {
         officeId: '',
         employeeCode: '',
         Image: '',
+        dob: '',
+        pancard: '',
+        aadharcard: '',
+        address1: '',
+        address2: '',
+        city: '',
+        state: '',
+        gender: '',
         operationIds: [
             {
                 operationId: '',
@@ -84,13 +95,22 @@ const EmployeeMasterPage = () => {
         setIsEdit(false);
         setSelectedEmployee({
             employeeName: '',
+            employementType: 'Permanent',
             email: '',
             phoneNumber: '',
             designation: '',
             roleId: 9,
             department: '',
-            officeId: officeId || '',
-            employeeCode: ''
+            officeId: officeId ,
+            employeeCode: '',
+            dob: '',
+            pancard: '',
+            aadharcard: '',
+            address1: '',
+            address2: '',
+            city: '',
+            state: '',
+            gender: '',
         });
         setDialogOpen(true);
     };
@@ -121,7 +141,6 @@ const EmployeeMasterPage = () => {
     const handleSettings = async (emp) => {
         try {
             setSelectedEmployee({ ...emp });
-
             const mappedOps = await getOperationbyEmployee(emp.employeeId);
             const ids = mappedOps.map(op => (typeof op === "object" ? op.operationId : op));
             setSelectedIds(ids);
@@ -194,6 +213,7 @@ const EmployeeMasterPage = () => {
                 showAlert('success', 'Employee updated successfully');
             } else {
                 await createEmployee(payload);
+                console.log(payload);
                 showAlert('success', 'Employee created successfully');
             }
 
@@ -284,12 +304,40 @@ const EmployeeMasterPage = () => {
                 <DialogTitle>{isEdit ? 'Edit Employee' : 'Add Employee'}</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} mt={1}>
+                        <TextField label="Office Name" name="officeName" value={officeName}  fullWidth />
+                        <TextField label="Employee Code" name="employeeCode" value={selectedEmployee.employeeCode} onChange={handleChange} fullWidth />
                         <TextField label="Employee Name" name="employeeName" value={selectedEmployee.employeeName} onChange={handleChange} fullWidth />
+                        <TextField select label="Employment Type" name="employementType" value={selectedEmployee.employementType } onChange={handleChange} fullWidth >
+                            {employmentTypes.map((type) => (
+                                <MenuItem key={type} value={type}>
+                                    {type}
+                                </MenuItem>
+                            ))}
+                        </TextField>
                         <TextField label="Email" name="email" value={selectedEmployee.email} onChange={handleChange} fullWidth />
                         <TextField label="Phone Number" name="phoneNumber" value={selectedEmployee.phoneNumber} onChange={handleChange} fullWidth />
                         <TextField label="Designation" name="designation" value={selectedEmployee.designation} onChange={handleChange} fullWidth />
-                        <TextField label="Department" name="department" value={selectedEmployee.department} onChange={handleChange} fullWidth />
-                        <TextField label="Employee Code" name="employeeCode" value={selectedEmployee.employeeCode} onChange={handleChange} fullWidth />
+                        <TextField select label="Department" name="department" value={selectedEmployee.department} onChange={handleChange} fullWidth >
+                            {department.map((type) => (
+                                <MenuItem key={type} value={type}>
+                                    {type}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+                        <TextField select label="Gender" name="gender" value={selectedEmployee.gender} onChange={handleChange} fullWidth >
+                            {gender.map((type) => (
+                                <MenuItem key={type} value={type}>
+                                    {type}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+                        <TextField label="Date of Birth" name="dob" type="date" value={selectedEmployee.dob } onChange={handleChange} fullWidth InputLabelProps={{ shrink: true,}} />
+                        <TextField label="Pan Card" name="pancard" value={selectedEmployee.pancard} onChange={handleChange} fullWidth />
+                        <TextField label="Aadhar Card" name="aadharcard" value={selectedEmployee.aadharcard} onChange={handleChange} fullWidth />
+                        <TextField label="Address Line 1" name="address1" value={selectedEmployee.address1} onChange={handleChange} fullWidth />
+                        <TextField label="Address Line 2" name="address2" value={selectedEmployee.address2} onChange={handleChange} fullWidth />
+                        <TextField label="City" name="city" value={selectedEmployee.city} onChange={handleChange} fullWidth />
+                        <TextField label="State" name="state" value={selectedEmployee.state} onChange={handleChange} fullWidth />
                         {/* <TextField type="file" name="image" onChange={handleFileChange} fullWidth InputLabelProps={{ shrink: true }} /> */}
                     </Stack>
                 </DialogContent>
@@ -304,13 +352,22 @@ const EmployeeMasterPage = () => {
                 <DialogTitle>View Employee</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} mt={1}>
+                        <TextField label="Office Name" value={officeName} fullWidth disabled />
+                        <TextField label="Employee Code" value={selectedEmployee.employeeCode} fullWidth disabled />
                         <TextField label="Employee Name" value={selectedEmployee.employeeName} fullWidth disabled />
+                        <TextField label="Employement Type" value={selectedEmployee.employementType} fullWidth disabled />
                         <TextField label="Email" value={selectedEmployee.email} fullWidth disabled />
                         <TextField label="Phone Number" value={selectedEmployee.phoneNumber} fullWidth disabled />
                         <TextField label="Designation" value={selectedEmployee.designation} fullWidth disabled />
                         <TextField label="Department" value={selectedEmployee.department} fullWidth disabled />
-                        <TextField label="Office ID" value={selectedEmployee.officeId} fullWidth disabled />
-                        <TextField label="Employee Code" value={selectedEmployee.employeeCode} fullWidth disabled />
+                        <TextField label="Gender" value={selectedEmployee.gender} fullWidth disabled />
+                        <TextField label="Date of Birth" value={selectedEmployee.dob} fullWidth disabled />
+                        <TextField label="Pan Card" value={selectedEmployee.pancard} fullWidth disabled/>
+                        <TextField label="Aadhar Card" value={selectedEmployee.aadharcard} fullWidth disabled/>
+                        <TextField label="Address Line 1" value={selectedEmployee.address1} fullWidth disabled/>
+                        <TextField label="Address Line 2" value={selectedEmployee.address2} fullWidth disabled/>
+                        <TextField label="City" value={selectedEmployee.city} fullWidth disabled/>
+                        <TextField label="State" value={selectedEmployee.state} fullWidth disabled/>
                         {/* <TextField label="Image" value={selectedEmployee.Image} fullWidth disabled /> */}
                     </Stack>
                 </DialogContent>
