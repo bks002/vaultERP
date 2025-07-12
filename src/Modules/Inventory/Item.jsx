@@ -113,7 +113,6 @@ const ItemMaster = () => {
         setDialogOpen(true);
     };
     const handleSave = async () => {
-        console.log('Saving item:', selectedItem);
         try {
             if (isEdit) {
                 await updateItem(selectedItem.id, selectedItem);
