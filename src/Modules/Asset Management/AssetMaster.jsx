@@ -3,14 +3,14 @@ import SearchIcon from "@mui/icons-material/Search";
 import { useSelector } from "react-redux";
 import {
   Container, Typography, Grid, TextField, Box, Button, Dialog, DialogTitle, DialogContent, DialogActions,
-  MenuItem, FormControl, InputLabel, Select, Table, TableBody, TableCell, TableContainer, TableHead,
+  MenuItem, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, InputAdornment, IconButton, Tooltip, Stack, Paper, Checkbox
 } from "@mui/material";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SettingsIcon from '@mui/icons-material/Settings';
-
+import {assetTypes} from "../../Components/constant";
 import { getAllAssets, createAssets, EditAssets, deleteAsset } from "../../Services/AssetService";
 import { getAllOperation } from "../../Services/OperationService";
 import { getAssetOperation, OperationMapping } from "../../Services/AssetOperation";
@@ -264,7 +264,13 @@ const AssetMaster = () => {
 
             <Grid item xs={12} md={6} size={6}>
               <TextField fullWidth label="Asset Code" name="assetCode" value={formData.assetCode} onChange={handleChange} />
-              <TextField fullWidth label="Asset Type Id" name="assetTypeId" type="number" value={formData.assetTypeId} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField select fullWidth label="Asset Type Id" name="assetTypeId" type="number" value={formData.assetTypeId} onChange={handleChange} sx={{ mt: 2 }} >
+                {assetTypes.map((type) => (
+                  <MenuItem key={type.id} value={type.id}>
+                    {type.type}
+                  </MenuItem>
+                ))}
+              </TextField>
               <TextField fullWidth label="Serial Number" name="serialNumber" value={formData.serialNumber} onChange={handleChange} sx={{ mt: 2 }} />
               <TextField fullWidth label="Warranty Expiry" name="warrantyExpiry" type="date" InputLabelProps={{ shrink: true }} value={formData.warrantyExpiry?.split("T")[0] || ""} onChange={handleChange} sx={{ mt: 2 }} />
             </Grid>
