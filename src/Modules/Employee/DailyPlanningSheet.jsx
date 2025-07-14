@@ -181,7 +181,7 @@ const DailyPlanningSheet = () => {
                 <Typography variant="h4">Daily Planning Sheet</Typography>
                 <Box display="flex" alignItems="center" gap={2}>
                     <TextField
-                        placeholder="Search by machine, operator, manpower, or item"
+                        placeholder="Search by Machine Name, Operator Name, Manpower, Item"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         InputProps={{

@@ -121,7 +121,7 @@ const Category = () => {
 
                 <Box display="flex" alignItems="center" gap={2}>
                     <TextField
-                        placeholder="Category Name,	Description, Actions"
+                        placeholder="Search by Category Name, Description"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         InputProps={{

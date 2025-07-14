@@ -137,7 +137,7 @@ const RateCard = () => {
                 <Typography variant="h4">Rate Card</Typography>
                 <Box display="flex" alignItems="center" gap={2}>
                     <TextField
-                        placeholder="Item Name, Vendor Name , Category Name"
+                        placeholder="Search by Category, Item, Vendor"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         InputProps={{

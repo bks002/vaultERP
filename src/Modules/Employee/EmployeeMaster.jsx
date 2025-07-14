@@ -252,7 +252,7 @@ const EmployeeMasterPage = () => {
                 <Typography variant="h4">Employee Master</Typography>
                 <Box display="flex" alignItems="center" gap={2}>
                     <TextField
-                        placeholder="Employee Name, Email"
+                        placeholder="Search by Employee Name, Email"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         InputProps={{

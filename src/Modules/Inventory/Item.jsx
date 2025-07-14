@@ -156,7 +156,7 @@ const ItemMaster = () => {
                 <Typography variant="h4">Item Master</Typography>
                 <Box display="flex" alignItems="center" gap={2}>
                    <TextField
-                        placeholder="Item Name, Description or Category"
+                        placeholder="Search by Item Name, Description or Category"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         InputProps={{

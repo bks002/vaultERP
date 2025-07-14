@@ -184,8 +184,7 @@ const AssetMaster = () => {
   };
     const filteredAssets = assets.filter((v) =>
         v.assetName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.manufacturer?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.action?.toLowerCase().includes(searchQuery.toLowerCase()) 
+        v.manufacturer?.toLowerCase().includes(searchQuery.toLowerCase())
  );
   return (
     <Container maxWidth={false}>
@@ -194,7 +193,7 @@ const AssetMaster = () => {
                 <Typography variant="h4">Asset Master</Typography>
                 <Box display="flex" alignItems="center" gap={2}>
                     <TextField
-                        placeholder="Search by asset name, manufacturer or action"
+                        placeholder="Search by Asset name, Manufacturer"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         InputProps={{

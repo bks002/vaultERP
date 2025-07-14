@@ -148,7 +148,7 @@ const EmployeeShiftPage = () => {
                 <Typography variant="h4">Employee Shift</Typography>
                 <Box display="flex" alignItems="center" gap={2}>
                     <TextField
-                        placeholder="Search Employee or Shift"
+                        placeholder="Search by Employee or Shift"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         InputProps={{

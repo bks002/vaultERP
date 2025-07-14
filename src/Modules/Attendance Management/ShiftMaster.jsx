@@ -120,9 +120,7 @@ const ShiftMaster = () => {
     };
     const filteredShift = shift.filter((v) =>
         v.shiftName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.shiftCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.manpower?.includes(searchQuery) ||
-        v.item?.toLowerCase().includes(searchQuery.toLowerCase())
+        v.shiftCode?.toLowerCase().includes(searchQuery.toLowerCase())
     );
     return (
         <Container maxWidth={false}>
@@ -131,7 +129,7 @@ const ShiftMaster = () => {
                 <Typography variant="h4">Shift Master</Typography>
                 <Box display="flex" alignItems="center" gap={2}>
                     <TextField
-                        placeholder="Search by machine, operator, manpower, or item"
+                        placeholder="Search by Shift Name, Shift Code"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         InputProps={{
