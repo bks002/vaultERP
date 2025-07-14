@@ -62,126 +62,144 @@ const StyledDrawer = styled(MuiDrawer, {
   }),
 }));
 
-export default function MiniDrawer({ drawer, handleDrawer, variant }) {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-
-  const DrawerComponent = variant === "temporary" ? MuiDrawer : StyledDrawer;
-
-  return (
-    <DrawerComponent
-      variant={variant}
-      open={drawer}
-      onClose={() => handleDrawer(false)}
-      ModalProps={{
-        keepMounted: true, // Improves mobile performance
-      }}
-    >
-      <DrawerHeader>
-        <IconButton onClick={() => handleDrawer(false)}>
-          {theme.direction === "rtl" ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-        </IconButton>
-      </DrawerHeader>
-      <Divider />
-      <List>
-        <ListItem disablePadding>
-          <ListItemButton component={Link} to="/dashboard" onClick={() => isMobile && handleDrawer(false)}>
-            <ListItemIcon><InboxIcon /></ListItemIcon>
-            <ListItemText primary="Dashboard" />
-          </ListItemButton>
-        </ListItem>
-      </List>
-      <Divider />
-      <List>
-        <ListItem disablePadding>
-          <ListItemButton component={Link} to="/office" onClick={() => isMobile && handleDrawer(false)}>
-            <ListItemIcon><InboxIcon /></ListItemIcon>
-            <ListItemText primary="Office Master" />
-          </ListItemButton>
-        </ListItem>
-      </List>
-      <Divider />
-      <List>
-        {drawer && <ListSubheader>Employee Management</ListSubheader>}
-        <ListItem disablePadding>
-          <ListItemButton component={Link} to="/employee" onClick={() => isMobile && handleDrawer(false)}>
-            <ListItemIcon><InboxIcon /></ListItemIcon>
-            <ListItemText primary="Employee Master" />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton component={Link} to="/employeeshift" onClick={() => isMobile && handleDrawer(false)}>
-            <ListItemIcon><InboxIcon /></ListItemIcon>
-            <ListItemText primary="Employee Shift" />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton component={Link} to="/dailyPlanningSheet" onClick={() => isMobile && handleDrawer(false)}>
-            <ListItemIcon><InboxIcon /></ListItemIcon>
-            <ListItemText primary="Planning Sheet" />
-          </ListItemButton>
-        </ListItem>
-      </List>
-      <Divider />
-      <List>
-        {drawer && <ListSubheader>Inventory Management</ListSubheader>}
-        <ListItem disablePadding>
-          <ListItemButton component={Link} to="/Inventory/Category" onClick={() => isMobile && handleDrawer(false)}>
-            <ListItemIcon><InboxIcon /></ListItemIcon>
-            <ListItemText primary="Category Master" />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton component={Link} to="/Inventory/Item" onClick={() => isMobile && handleDrawer(false)}>
-            <ListItemIcon><InboxIcon /></ListItemIcon>
-            <ListItemText primary="Item Master" />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton component={Link} to="/Inventory/Vendor" onClick={() => isMobile && handleDrawer(false)}>
-            <ListItemIcon><InboxIcon /></ListItemIcon>
-            <ListItemText primary="Vendor Master" />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton component={Link} to="/Inventory/RateCard" onClick={() => isMobile && handleDrawer(false)}>
-            <ListItemIcon><InboxIcon /></ListItemIcon>
-            <ListItemText primary="Rate Card" />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton component={Link} to="/Inventory/PO" onClick={() => isMobile && handleDrawer(false)}>
-            <ListItemIcon><InboxIcon /></ListItemIcon>
-            <ListItemText primary="Purchase Order" />
-          </ListItemButton>
-        </ListItem>
-      </List>
-      <Divider />
-      <List>
-        {drawer && <ListSubheader>Asset Management</ListSubheader>}
-        <ListItem disablePadding>
-          <ListItemButton component={Link} to="/Asset/AssetMaster" onClick={() => isMobile && handleDrawer(false)}>
-            <ListItemIcon><InboxIcon /></ListItemIcon>
-            <ListItemText primary="Asset Master" />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton component={Link} to="/Asset/AssetOperation" onClick={() => isMobile && handleDrawer(false)}>
-            <ListItemIcon><InboxIcon /></ListItemIcon>
-            <ListItemText primary="Asset Operation Master" />
-          </ListItemButton>
-        </ListItem>
-      </List>
-      <Divider />
-      <List>
-        {drawer && <ListSubheader>Attendance Management</ListSubheader>}
-        <ListItem disablePadding>
-          <ListItemButton component={Link} to="/Attendance/ShiftMaster" onClick={() => isMobile && handleDrawer(false)}>
-            <ListItemIcon><InboxIcon /></ListItemIcon>
-            <ListItemText primary="Shift Master" />
-          </ListItemButton>
-        </ListItem>
-      </List>
-    </DrawerComponent>
-  );
+export default function MiniDrawer({ drawer, handleDrawer }) {
+    const theme = useTheme();
+    return (
+        <Drawer variant="permanent" open={drawer} onMouseEnter={() => { !drawer && handleDrawer(true) }}
+            onMouseLeave={() => { drawer && handleDrawer(false) }}>
+            <Toolbar
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "flex-end",
+                    px: [1],
+                }}
+            >
+                <IconButton onClick={handleDrawer}>
+                    {theme.direction === "rtl" ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+                </IconButton>
+            </Toolbar>
+            <List>
+                <ListItem disablePadding>
+                    <ListItemButton href="/dashboard"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Dashboard" />
+                    </ListItemButton>
+                </ListItem>
+            </List>
+            <Divider />
+            <List>
+                <ListItem disablePadding>
+                    <ListItemButton href="/office"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Office Master" />
+                    </ListItemButton>
+                </ListItem>
+            </List>
+            <Divider />
+            <List>
+                {drawer && (
+                    <ListSubheader component="div" id="nested-list-subheader">
+                        Employee Management
+                    </ListSubheader>
+                )}
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/employee" >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Employee Master" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/employeeshift" >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Employee Shift" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/dailyPlanningSheet"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Planning Sheet" />
+                    </ListItemButton>
+                </ListItem>
+            </List>
+            <Divider />
+            <List>
+                {drawer && (
+                    <ListSubheader component="div" id="nested-list-subheader">
+                        Inventory Management
+                    </ListSubheader>
+                )}
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Inventory/Category"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Category Master" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Inventory/Item"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Item Master" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Inventory/Vendor"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Vendor Master" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Inventory/RateCard"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Rate Card" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Inventory/PO"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Purchase Order" />
+                    </ListItemButton>
+                </ListItem>
+            </List>
+            <Divider />
+            <List>
+                {drawer && (
+                    <ListSubheader component="div" id="nested-list-subheader">
+                        Asset Management
+                    </ListSubheader>
+                )}
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Asset/AssetMaster"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Asset Master" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Asset/AssetOperation"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Asset Operation Master" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Asset/AssetType"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Asset Type Master" />
+                    </ListItemButton>
+                </ListItem>
+            </List>
+            <Divider />
+            <List>
+                {drawer && (
+                    <ListSubheader component="div" id="nested-list-subheader">
+                        Attendance Management
+                    </ListSubheader>
+                )}
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Attendance/ShiftMaster"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Shift Master" />
+                    </ListItemButton>
+                </ListItem>
+            </List>
+        </Drawer>
+    );
 }
