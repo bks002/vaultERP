@@ -45,13 +45,101 @@ const DailyPlanningSheet = () => {
 
     const [alert, setAlert] = useState({ open: false, type: 'success', message: '' });
 
+    // 1. Define a configuration for form fields at the top of the component
+    const formFields = [
+        {
+            label: 'Shift Date',
+            name: 'Date',
+            type: 'date',
+            required: true,
+            grid: { xs: 12, md: 6 },
+        },
+        {
+            label: 'Shift',
+            name: 'shift',
+            type: 'select',
+            optionsKey: 'shifts',
+            optionLabel: 'shiftName',
+            optionValue: 'shiftName',
+            required: true,
+            grid: { xs: 12, md: 6 },
+        },
+        {
+            label: 'Machine Name',
+            name: 'asset',
+            type: 'select',
+            optionsKey: 'Assets',
+            optionLabel: 'assetName',
+            optionValue: 'assetName',
+            required: true,
+            grid: { xs: 12, md: 6 },
+        },
+        {
+            label: 'Manpower',
+            name: 'manpower',
+            type: 'text',
+            grid: { xs: 12, md: 6 },
+        },
+        {
+            label: 'Operation Name',
+            name: 'operationName',
+            type: 'select',
+            optionsKey: 'Operations',
+            optionLabel: 'operationName',
+            optionValue: 'operationName',
+            grid: { xs: 12, md: 6 },
+        },
+        {
+            label: 'Employee Name',
+            name: 'EmployeeName',
+            type: 'select',
+            optionsKey: 'Employees',
+            optionLabel: 'employeeName',
+            optionValue: 'employeeName',
+            required: true,
+            grid: { xs: 12, md: 6 },
+        },
+        {
+            label: 'Item Name',
+            name: 'Item',
+            type: 'select',
+            optionsKey: 'Items',
+            optionLabel: 'name',
+            optionValue: 'name',
+            required: true,
+            grid: { xs: 12, md: 6 },
+        },
+        {
+            label: 'Target',
+            name: 'target',
+            type: 'text',
+            grid: { xs: 12, md: 6 },
+        },
+        {
+            label: 'Back Feed',
+            name: 'backfeed',
+            type: 'text',
+            grid: { xs: 12, md: 6 },
+        },
+    ];
+
     useEffect(() => {
         if (officeId) {
-            loadEmployees();
-            loadOperations();
-            loadItems();
-            loadAssets();
-            loadShift();
+            Promise.all([
+                getAllEmployees(officeId),
+                getAllOperation(officeId),
+                getAllItems(officeId),
+                getAllAssets(officeId),
+                getAllShift(officeId),
+            ]).then(([employees, operations, items, assets, shifts]) => {
+                setEmployees(employees);
+                setOperations(operations);
+                setItems(items);
+                setAssets(assets);
+                setShifts(shifts);
+            }).catch((err) => {
+                showAlert('error', 'Failed to load dropdown data');
+            });
         }
     }, [officeId]);
 
@@ -223,118 +311,43 @@ const DailyPlanningSheet = () => {
                 <DialogTitle>{isEdit ? 'Edit Shift' : 'Add Shift'}</DialogTitle>
                 <DialogContent>
                     <Grid container spacing={2} sx={{ mt: 1 }}>
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                label="Shift Date"
-                                name="Date"
-                                type="date"
-                                value={selectedShift.Date}
-                                onChange={handleChange}
-                                fullWidth
-                                InputLabelProps={{ shrink: true }}
-                            />
-                            <TextField
-                                select
-                                label="Shift"
-                                name="shift"
-                                value={selectedShift.shift}
-                                onChange={handleChange}
-                                fullWidth
-                                sx={{ mt: 2 }}
-                                SelectProps={{ native: true }}
-                            >
-                                <option value=""></option>
-                                {shifts.map((a) => (
-                                    <option key={a.shiftId} value={a.shiftName}>{a.shiftName}</option>
-                                ))}
-                            </TextField>
-                            <TextField
-                                select
-                                label="Machine Name"
-                                name="asset"
-                                value={selectedShift.asset}
-                                onChange={handleChange}
-                                fullWidth
-                                sx={{ mt: 2 }}
-                                SelectProps={{ native: true }}
-                            >
-                                <option value=""></option>
-                                {Assets.map((a) => (
-                                    <option key={a.assetId} value={a.assetName}>{a.assetName}</option>
-                                ))}
-                            </TextField>
-                            <TextField
-                                fullWidth
-                                label="Manpower"
-                                name="manpower"
-                                value={selectedShift.manpower}
-                                onChange={handleChange}
-                                sx={{ mt: 2 }}
-                            />
-                            <TextField
-                                select
-                                label="Operation Name"
-                                name="operationName"
-                                value={selectedShift.operationName}
-                                onChange={handleChange}
-                                fullWidth
-                                sx={{ mt: 2 }}
-                                SelectProps={{ native: true }}
-                            >
-                                <option value=""></option>
-                                {Operations.map((op) => (
-                                    <option key={op.operationId} value={op.operationName}>{op.operationName}</option>
-                                ))}
-                            </TextField>
-                        </Grid>
-
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                select
-                                label="Employee Name"
-                                name="EmployeeName"
-                                value={selectedShift.EmployeeName}
-                                onChange={handleChange}
-                                fullWidth
-                                SelectProps={{ native: true }}
-                            >
-                                <option value=""></option>
-                                {Employees.map((emp) => (
-                                    <option key={emp.employeeId} value={emp.employeeName}>{emp.employeeName}</option>
-                                ))}
-                            </TextField>
-                            <TextField
-                                select
-                                label="Item Name"
-                                name="Item"
-                                value={selectedShift.Item}
-                                onChange={handleChange}
-                                fullWidth
-                                sx={{ mt: 2 }}
-                                SelectProps={{ native: true }}
-                            >
-                                <option value=""></option>
-                                {Items.map((i) => (
-                                    <option key={i.id} value={i.name}>{i.name}</option>
-                                ))}
-                            </TextField>
-                            <TextField
-                                fullWidth
-                                label="Target"
-                                name="target"
-                                value={selectedShift.target}
-                                onChange={handleChange}
-                                sx={{ mt: 2 }}
-                            />
-                            <TextField
-                                fullWidth
-                                label="Back Feed"
-                                name="backfeed"
-                                value={selectedShift.backfeed}
-                                onChange={handleChange}
-                                sx={{ mt: 2 }}
-                            />
-                        </Grid>
+                        {formFields.map((field) => (
+                            <Grid item key={field.name} xs={field.grid.xs} md={field.grid.md}>
+                                {field.type === 'select' ? (
+                                    <TextField
+                                        select
+                                        label={field.label}
+                                        name={field.name}
+                                        value={selectedShift[field.name] || ''}
+                                        onChange={handleChange}
+                                        fullWidth
+                                        sx={{ mt: 2 }}
+                                        SelectProps={{ native: true }}
+                                    >
+                                        <option value=""></option>
+                                        {(field.optionsKey ? (eval(field.optionsKey) || []) : []).map((option) => (
+                                            <option
+                                                key={option[field.optionValue] || option.id}
+                                                value={option[field.optionValue]}
+                                            >
+                                                {option[field.optionLabel]}
+                                            </option>
+                                        ))}
+                                    </TextField>
+                                ) : (
+                                    <TextField
+                                        label={field.label}
+                                        name={field.name}
+                                        type={field.type}
+                                        value={selectedShift[field.name] || ''}
+                                        onChange={handleChange}
+                                        fullWidth
+                                        sx={{ mt: 2 }}
+                                        InputLabelProps={field.type === 'date' ? { shrink: true } : undefined}
+                                    />
+                                )}
+                            </Grid>
+                        ))}
                     </Grid>
                 </DialogContent>
                 <DialogActions>
