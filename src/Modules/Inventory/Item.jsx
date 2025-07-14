@@ -1,58 +1,49 @@
 import React, { useEffect, useState } from 'react';
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
-    TableContainer,
-    IconButton,
-    Paper,
-    Typography,
-    Tooltip,
-    Box,
-    Button,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    TextField,
-    Stack,
-    MenuItem,
-    InputAdornment,
+    Table, TableBody, TableCell, TableHead, TableRow, TableContainer,
+    IconButton, Paper, Typography, Tooltip, Box, Button, Dialog,
+    DialogTitle, DialogContent, DialogActions, TextField, Stack,
+    MenuItem, InputAdornment
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SearchIcon from '@mui/icons-material/Search';
 import {
-    getAllItems,
-    deleteItem,
-    createItem,
-    updateItem,
-    getCategories,
+    getAllItems, deleteItem, createItem, updateItem, getCategories
 } from '../../Services/InventoryService';
 import { useSelector } from 'react-redux';
 
 const ItemMaster = () => {
     const officeId = useSelector((state) => state.user.officeId);
     const userId = useSelector((state) => state.user.userId);
+
     const [items, setItems] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [selectedItem, setSelectedItem] = useState({
-        Name: '',
-        Description: '',
-        CategoryId: '',
-        MeasurementUnit: '',
-        MinStockLevel: '',
-        BrandName: '',
-        HSNCode: '',
-    });
-    const [isEdit, setIsEdit] = useState(false);
     const [viewOpen, setViewOpen] = useState(false);
+    const [isEdit, setIsEdit] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const [selectedItem, setSelectedItem] = useState({
+        id: '',
+        name: '',
+        description: '',
+        categoryId: '',
+        measurementUnit: '',
+        minStockLevel: '',
+        brandName: '',
+        hsnCode: '',
+    });
+
+    useEffect(() => {
+        if (officeId > 0) {
+            loadItems();
+            loadCategories();
+        }
+    }, [officeId]);
+
     const loadItems = async () => {
         try {
             setLoading(true);
@@ -64,34 +55,65 @@ const ItemMaster = () => {
             setLoading(false);
         }
     };
+
     const loadCategories = async () => {
         try {
             const data = await getCategories(officeId);
             setCategories(data);
-            console.log(data);
         } catch (error) {
             console.error(error.message);
         }
     };
-    useEffect(() => {
-        if (officeId > 0) {
-            loadItems();
-            loadCategories();
-        }
-    }, [officeId]);
+
+    const getCategoryName = (categoryId) => {
+        return categories.find((cat) => cat.id === categoryId)?.name || 'N/A';
+    };
+
+    const filteredItems = items.filter((item) =>
+        item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        getCategoryName(item.categoryId)?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const handleCreateNew = () => {
+        setSelectedItem({
+            id: '',
+            name: '',
+            description: '',
+            categoryId: '',
+            measurementUnit: '',
+            minStockLevel: '',
+            brandName: '',
+            hsnCode: '',
+        });
+        setIsEdit(false);
+        setDialogOpen(true);
+    };
+
     const handleEdit = (item) => {
-        setSelectedItem(item);
+        setSelectedItem({
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            categoryId: item.categoryId,
+            measurementUnit: item.measurementUnit,
+            minStockLevel: item.minStockLevel,
+            brandName: item.brandName,
+            hsnCode: item.hsnCode,
+        });
         setIsEdit(true);
         setDialogOpen(true);
     };
+
     const handleView = (item) => {
         setSelectedItem(item);
         setViewOpen(true);
     };
+
     const handleDelete = async (item) => {
-        if (window.confirm(`Are you sure you want to delete "${item.Name}"?`)) {
+        if (window.confirm(`Are you sure you want to delete "${item.name}"?`)) {
             try {
-                await deleteItem(item.Id);
+                await deleteItem(item.id);
                 alert('Item deleted successfully!');
                 loadItems();
             } catch (error) {
@@ -99,27 +121,26 @@ const ItemMaster = () => {
             }
         }
     };
-    const handleCreateNew = () => {
-        setSelectedItem({
-            Name: '',
-            Description: '',
-            CategoryId: '',
-            MeasurementUnit: '',
-            MinStockLevel: '',
-            BrandName: '',
-            HSNCode: '',
-        }); 
-        setIsEdit(false);
-        setDialogOpen(true);
-    };
+
     const handleSave = async () => {
-        console.log('Saving item:', selectedItem);
+        const payload = {
+            name: selectedItem.name,
+            description: selectedItem.description,
+            categoryId: selectedItem.categoryId,
+            measurementUnit: selectedItem.measurementUnit,
+            minStockLevel: selectedItem.minStockLevel,
+            brandName: selectedItem.brandName,
+            hsnCode: selectedItem.hsnCode,
+            officeId,
+            createdBy: userId,
+        };
+
         try {
             if (isEdit) {
-                await updateItem(selectedItem.id, selectedItem);
+                await updateItem(selectedItem.id, payload);
                 alert('Item updated successfully!');
             } else {
-                await createItem({ ...selectedItem, OfficeId: officeId, CreatedBy: userId });
+                await createItem(payload);
                 alert('Item created successfully!');
             }
             setDialogOpen(false);
@@ -128,24 +149,16 @@ const ItemMaster = () => {
             alert(error.message);
         }
     };
-    const getCategoryName = (categoryId) => {
-       return categories.find((cat) => cat.id === categoryId)?.name || 'N/A';
-    };
-const filteredItems = items.filter((item) =>
-    item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    getCategoryName(item.categoryId)?.toLowerCase().includes(searchQuery.toLowerCase())
-);
 
     return (
         <div className="col-12">
-             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Typography variant="h4">Item Master</Typography>
                 <Box display="flex" alignItems="center" gap={2}>
                     <TextField
                         placeholder="Search items..."
                         variant="outlined"
-                        sx={{ width: 300 }} 
+                        sx={{ width: 300 }}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         InputProps={{
@@ -161,6 +174,7 @@ const filteredItems = items.filter((item) =>
                     </Button>
                 </Box>
             </Box>
+
             {loading && <Typography>Loading data...</Typography>}
 
             {!loading && (
@@ -178,7 +192,7 @@ const filteredItems = items.filter((item) =>
                         <TableBody>
                             {filteredItems.length > 0 ? (
                                 filteredItems.map((item, index) => (
-                                    <TableRow key={item.Id}>
+                                    <TableRow key={item.id}>
                                         <TableCell>{index + 1}</TableCell>
                                         <TableCell>{item.name}</TableCell>
                                         <TableCell>{item.description}</TableCell>
@@ -204,9 +218,7 @@ const filteredItems = items.filter((item) =>
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={5} align="center">
-                                        No items found.
-                                    </TableCell>
+                                    <TableCell colSpan={5} align="center">No items found.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
@@ -223,74 +235,27 @@ const filteredItems = items.filter((item) =>
                             select
                             label="Category"
                             value={selectedItem.categoryId || ''}
-                            onChange={(e) =>
-                                setSelectedItem({ ...selectedItem, categoryId: e.target.value })
-                            }
+                            onChange={(e) => setSelectedItem({ ...selectedItem, categoryId: e.target.value })}
                             fullWidth
                         >
                             <MenuItem value="">Select Category</MenuItem>
-                            {categories.length > 0 ? (
-                                categories.map((cat) => (
-                                    <MenuItem key={cat.id} value={cat.id}>
-                                        {cat.name}
-                                    </MenuItem>
-                                ))
-                            ) : (
-                                <MenuItem disabled>No Categories Available</MenuItem>
-                            )}
+                            {categories.map((cat) => (
+                                <MenuItem key={cat.id} value={cat.id}>
+                                    {cat.name}
+                                </MenuItem>
+                            ))}
                         </TextField>
-                        <TextField
-                            label="Item Name"
-                            value={selectedItem.name}
-                            onChange={(e) => setSelectedItem({ ...selectedItem, name: e.target.value })}
-                            fullWidth
-                        />
-                        <TextField
-                            label="Description"
-                            value={selectedItem.description}
-                            onChange={(e) => setSelectedItem({ ...selectedItem, description: e.target.value })}
-                            fullWidth
-                        />
-                        <TextField
-                            label="Measurement Unit"
-                            value={selectedItem.measurementUnit}
-                            onChange={(e) =>
-                                setSelectedItem({ ...selectedItem, measurementUnit: e.target.value })
-                            }
-                            fullWidth
-                        />
-                        <TextField
-                            label="Minimum Stock Level"
-                            value={selectedItem.minStockLevel}
-                            onChange={(e) =>
-                                setSelectedItem({ ...selectedItem, minStockLevel: e.target.value })
-                            }
-                            fullWidth
-                        />
-                        <TextField
-                            label="Brand Name"
-                            value={selectedItem.brandName}
-                            onChange={(e) => setSelectedItem({ ...selectedItem, brandName: e.target.value })}
-                            fullWidth
-                        />
-                        <TextField
-                            label="HSN Code"
-                            value={selectedItem.hsnCode}
-                            onChange={(e) => setSelectedItem({ ...selectedItem, hsnCode: e.target.value })}
-                            fullWidth
-                        />
+                        <TextField label="Item Name" value={selectedItem.name} onChange={(e) => setSelectedItem({ ...selectedItem, name: e.target.value })} fullWidth />
+                        <TextField label="Description" value={selectedItem.description} onChange={(e) => setSelectedItem({ ...selectedItem, description: e.target.value })} fullWidth />
+                        <TextField label="Measurement Unit" value={selectedItem.measurementUnit} onChange={(e) => setSelectedItem({ ...selectedItem, measurementUnit: e.target.value })} fullWidth />
+                        <TextField label="Minimum Stock Level" value={selectedItem.minStockLevel} onChange={(e) => setSelectedItem({ ...selectedItem, minStockLevel: e.target.value })} fullWidth />
+                        <TextField label="Brand Name" value={selectedItem.brandName} onChange={(e) => setSelectedItem({ ...selectedItem, brandName: e.target.value })} fullWidth />
+                        <TextField label="HSN Code" value={selectedItem.hsnCode} onChange={(e) => setSelectedItem({ ...selectedItem, hsnCode: e.target.value })} fullWidth />
                     </Stack>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setDialogOpen(false)} color="secondary">
-                        Cancel
-                    </Button>
-                    <Button
-                        onClick={handleSave}
-                        variant="contained"
-                        color="primary"
-                        disabled={!selectedItem.name?.trim()}
-                    >
+                    <Button onClick={() => setDialogOpen(false)} color="secondary">Cancel</Button>
+                    <Button onClick={handleSave} variant="contained" color="primary" disabled={!selectedItem.name?.trim()}>
                         {isEdit ? 'Update' : 'Create'}
                     </Button>
                 </DialogActions>
@@ -311,9 +276,7 @@ const filteredItems = items.filter((item) =>
                     </Stack>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setViewOpen(false)} color="secondary">
-                        Close
-                    </Button>
+                    <Button onClick={() => setViewOpen(false)} color="secondary">Close</Button>
                 </DialogActions>
             </Dialog>
         </div>

@@ -250,7 +250,7 @@ const DailyPlanningSheet = () => {
                             </TextField>
                             <TextField
                                 select
-                                label="Asset Name"
+                                label="Machine Name"
                                 name="asset"
                                 value={selectedShift.asset}
                                 onChange={handleChange}
