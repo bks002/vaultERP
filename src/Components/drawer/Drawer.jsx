@@ -12,11 +12,11 @@ import ListItemText from "@mui/material/ListItemText";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
-import { Link } from "react-router-dom"
-import { ListSubheader } from '@mui/material';
-
+import { Link } from "react-router-dom";
+import { ListSubheader, useMediaQuery } from "@mui/material";
 
 const drawerWidth = 240;
+
 const openedMixin = (theme) => ({
     width: drawerWidth,
     transition: theme.transitions.create("width", {
@@ -91,10 +91,21 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
             </List>
             <Divider />
             <List>
+                {drawer && (
+                    <ListSubheader component="div" id="nested-list-subheader">
+                        Employee Management
+                    </ListSubheader>
+                )}
                 <ListItem disablePadding>
                     <ListItemButton component={Link} to="/employee" >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
                         <ListItemText primary="Employee Master" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/employeeshift" >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Employee Shift" />
                     </ListItemButton>
                 </ListItem>
                 <ListItem disablePadding>
@@ -176,7 +187,7 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                     </ListSubheader>
                 )}
                 <ListItem disablePadding>
-                    <ListItemButton component={Link} to="/attendance/shiftMaster"  >
+                    <ListItemButton component={Link} to="/Attendance/ShiftMaster"  >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
                         <ListItemText primary="Shift Master" />
                     </ListItemButton>

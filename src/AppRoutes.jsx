@@ -14,10 +14,11 @@ import AssetTypeMaster from "./Modules/Asset Management/AssetTypeMaster.jsx";
 import AssetMaster from "./Modules/Asset Management/AssetMaster.jsx";
 import AssetOperationMaster from "./Modules/Asset Management/AssetOperationMaster.jsx";
 import SlotsSignIn from "./Components/login & signup/login.jsx";
+import ShiftMaster from "./Modules/Attendance Management/ShiftMaster.jsx";
 import AuthWrapper from "./AuthWrapper";
 import AddNewUser from "./Modules/User Registration/AddNewUser.jsx";
 import DailyPlanningSheet from "./Modules/Employee/DailyPlanningSheet.jsx";
-import ShiftMaster from "./Modules/Attendance Management/ShiftMaster.jsx";
+import EmployeeShift from "./Modules/Employee/EmployeeShift.jsx";
 
 function AppRoutes() {
   return (
@@ -34,10 +35,10 @@ function AppRoutes() {
       <Route path="/Asset/AssetType" element={<AuthWrapper><AssetTypeMaster /></AuthWrapper>} />
       <Route path="/Asset/AssetMaster" element={<AuthWrapper><AssetMaster /></AuthWrapper>} />
       <Route path="/Asset/AssetOperation" element={<AuthWrapper><AssetOperationMaster /></AuthWrapper>} />
-      <Route path="/attendance/shiftMaster" element={<AuthWrapper><ShiftMaster/></AuthWrapper>} />
+      <Route path="/Attendance/ShiftMaster" element={<AuthWrapper><ShiftMaster /></AuthWrapper>} />
       <Route path="/dailyPlanningSheet" element={<AuthWrapper><DailyPlanningSheet/></AuthWrapper>} />
       <Route path="/AddUser/AddNewUser" element={<AuthWrapper><AddNewUser /></AuthWrapper>} />
-      
+      <Route path="/employeeshift" element={<AuthWrapper><EmployeeShift /></AuthWrapper>} />
       {/* Redirect to dashboard if no match */}
     </Routes>
   );

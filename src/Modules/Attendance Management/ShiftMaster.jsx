@@ -1,147 +1,158 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import SearchIcon from "@mui/icons-material/Search";
+import { useSelector } from "react-redux";
 import {
-    Table, TableBody, TableCell, TableHead, TableRow,
-    TableContainer, IconButton, Paper, Typography,
-    Tooltip, Box, Button, Dialog, DialogTitle,
-    DialogContent, DialogActions, TextField, Stack,
-    InputAdornment,
-} from '@mui/material';
-import ViewIcon from '@mui/icons-material/Visibility';
+    Container, Typography, Grid, TextField, Box, Button, Dialog, DialogTitle, DialogContent, DialogActions,
+    Table, TableBody, TableCell, TableContainer, TableHead, TableRow, InputAdornment, IconButton, Tooltip, Stack, Paper, Checkbox
+} from "@mui/material";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useSelector } from 'react-redux';
-import { getAllShift, createShifts, editShifts, deleteShifts } from '../../Services/ShiftService';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
+import { createShift, deleteShift, EditShift, getAllShift } from "../../Services/ShiftService";
 
 const ShiftMaster = () => {
     const officeId = useSelector((state) => state.user.officeId);
-    const userId = useSelector((state) => state.user.userId);
-    const [categories, setCategories] = useState([]);
-    const [loading, setLoading] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState({
-        shiftId: '',
-        shiftName: '',
-        shiftCode: '',
-        startTime: '',
-        endTime: ''
-    });
-    const [isEdit, setIsEdit] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [shift, setShift] = useState([]);
+    const [isEdit, setIsEdit] = useState(false);
+    const [alert, setAlert] = useState({ open: false, type: 'success', message: '' });
+    const [viewOpen, setViewOpen] = useState(false);
 
-    const loadCategories = async () => {
+    const defaultFormData = {
+        shiftId: "",
+        shiftName: "",
+        shiftCode: "",
+        startTime: "",
+        endTime: "",
+    };
+
+    const [formData, setFormData] = useState(defaultFormData);
+
+    const showAlert = (type, message) => {
+        setAlert({ open: true, type, message });
+    };
+
+    useEffect(() => {
+        if (officeId) {
+            loadAllShift();
+        }
+    }, [officeId]);
+
+    const loadAllShift = async () => {
         try {
             setLoading(true);
             const data = await getAllShift(officeId);
-            setCategories(Array.isArray(data) ? data : []);
-        } catch (error) {
-            setCategories([]);
-            console.error(error.message);
+            setShift(data);
+        } catch {
+            showAlert('error', 'Failed to load Shift');
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        if (officeId > 0) loadCategories();
-    }, [officeId]);
-
-    const handleEdit = (category) => {
-        setSelectedCategory(category);
-        setIsEdit(true);
-        setDialogOpen(true);
-    };
-
-    const handleView = (category) => {
-        alert(`Viewing Shift:\nName: ${category.shiftName}\nCode: ${category.shiftCode}\nStart: ${category.startTime}\nEnd: ${category.endTime}`);
-    };
-
-    const handleDelete = async (category) => {
-        if (window.confirm(`Are you sure you want to delete "${category.shiftName}"?`)) {
-            try {
-                await deleteShifts(category.id || category.shiftId);
-                alert('Shift deleted successfully!');
-                loadCategories();
-            } catch (error) {
-                alert(error.message);
-            }
-        }
-    };
-
-    const handleCreateNew = () => {
-        setSelectedCategory({ shiftName: '', shiftCode: '', startTime: '', endTime: '' });
-        setIsEdit(false);
-        setDialogOpen(true);
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
     };
 
     const handleSave = async () => {
-        try {
-            const payload = {
-                shiftName: selectedCategory.shiftName,
-                shiftCode: selectedCategory.shiftCode,
-                startTime: selectedCategory.startTime,
-                endTime: selectedCategory.endTime,
-                officeId,
-                createdBy: userId
-            };
+        const dtoPayload = {
+            ...formData,
+            shiftId: formData.shiftId ? parseInt(formData.shiftId) : 0,
+            startTime: formData.startTime,
+            endTime: formData.endTime,
+            officeId: parseInt(officeId),
+        };
 
+        const payload = dtoPayload;
+
+        try {
             if (isEdit) {
-                await editShifts(selectedCategory.shiftId || selectedCategory.id, payload);
-                alert('Shift updated successfully!');
+                await EditShift(payload, dtoPayload.shiftId);
+                showAlert('success', 'Shift updated successfully');
             } else {
-                await createShifts(payload);
-                alert('Shift created successfully!');
+                await createShift(payload);
+                showAlert('success', 'Shift created successfully');
             }
 
             setDialogOpen(false);
-            loadCategories();
-        } catch (error) {
-            console.error("Error saving shift:", error);
-            alert("Error saving shift: " + error.message);
+            loadAllShift();
+        } catch {
+            showAlert('error', 'Failed to save shift');
         }
     };
 
-    const filteredCategories = categories.filter((category) => {
-        const shiftName = category.shiftName || '';
-        const shiftCode = category.shiftCode || '';
-        return (
-            shiftName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            shiftCode.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-    });
+    const filteredShift = shift.filter((shift) =>
+        shift.shiftName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        shift.shiftCode?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const handleEdit = (shift) => {
+        setIsEdit(true)
+        setFormData(shift);
+        setDialogOpen(true);
+    };
+
+    const handleCreate = () => {
+        setIsEdit(false);
+        setFormData({
+            shiftId: "",
+            shiftName: "",
+            shiftCode: "",
+            startTime: "",
+            endTime: "",
+        });
+        setDialogOpen(true);
+    };
+
+    const handleView = (shift) => {
+        setFormData(shift);
+        setViewOpen(true);
+    };
+
+    const handleDelete = async (shift) => {
+        try {
+            await deleteShift(shift.shiftId);
+            showAlert('success', 'shift deleted successfully');
+            loadAllShift();
+        } catch {
+            showAlert('error', 'Failed to delete shift');
+        }
+    };
 
     return (
-        <div className="col-12">
+        <Container maxWidth={false}>
+            {/* Header */}
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                <Typography variant="h4" sx={{fontSize: {xs: '1.5rem', sm: '1.8rem',  md: '2rem' },
-                 }}   >Shift Master</Typography>
-
+                <Typography variant="h4">Shift Master</Typography>
                 <Box display="flex" alignItems="center" gap={2}>
                     <TextField
-                        placeholder="Search shift..."
+                        placeholder="Search Shift..."
                         variant="outlined"
-                        sx={{ width: 200 }}
-                        size="small"
+                        sx={{ width: 300 }}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
-                                    <SearchIcon fontSize="small" />
+                                    <SearchIcon />
                                 </InputAdornment>
                             ),
                         }}
                     />
-                    <Button variant="contained" color="primary" onClick={handleCreateNew} sx={{ width: 200 }}>
-                        ADD SHIFT
+                    <Button variant="contained" color="primary" onClick={handleCreate}>
+                        Add Shift
                     </Button>
                 </Box>
-
             </Box>
 
-            {loading && <Typography>Loading data...</Typography>}
-
-            {!loading && (
+            {/* Table */}
+            {loading ? (
+                <Typography>Loading data...</Typography>
+            ) : (
                 <TableContainer component={Paper}>
                     <Table>
                         <TableHead>
@@ -155,96 +166,70 @@ const ShiftMaster = () => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {filteredCategories.length > 0 ? (
-                                filteredCategories.map((category, index) => (
-                                    <TableRow key={category.shiftId || category.id}>
+                            {filteredShift.length > 0 ? (
+                                filteredShift.map((shift, index) => (
+                                    <TableRow key={index}>
                                         <TableCell>{index + 1}</TableCell>
-                                        <TableCell>{category.shiftName}</TableCell>
-                                        <TableCell>{category.shiftCode}</TableCell>
-                                        <TableCell>{category.startTime}</TableCell>
-                                        <TableCell>{category.endTime}</TableCell>
+                                        <TableCell>{shift.shiftName}</TableCell>
+                                        <TableCell>{shift.shiftCode}</TableCell>
+                                        <TableCell>{shift.startTime}</TableCell>
+                                        <TableCell>{shift.endTime}</TableCell>
                                         <TableCell align="center">
-                                            <Tooltip title="View">
-                                                <IconButton color="info" onClick={() => handleView(category)}>
-                                                    <ViewIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                            <Tooltip title="Edit">
-                                                <IconButton color="primary" onClick={() => handleEdit(category)}>
-                                                    <EditIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                            <Tooltip title="Delete">
-                                                <IconButton color="error" onClick={() => handleDelete(category)}>
-                                                    <DeleteIcon />
-                                                </IconButton>
-                                            </Tooltip>
+                                            <Tooltip title="View"><IconButton onClick={() => handleView(shift)} color="info"><VisibilityIcon /></IconButton></Tooltip>
+                                            <Tooltip title="Edit"><IconButton onClick={() => handleEdit(shift)} color="primary"><EditIcon /></IconButton></Tooltip>
+                                            <Tooltip title="Delete"><IconButton onClick={() => handleDelete(shift)} color="error"><DeleteIcon /></IconButton></Tooltip>
                                         </TableCell>
                                     </TableRow>
                                 ))
                             ) : (
-                                <TableRow>
-                                    <TableCell colSpan={6} align="center">
-                                        No matching shift found.
-                                    </TableCell>
-                                </TableRow>
+                                <TableRow><TableCell colSpan={4} align="center">No shift records found.</TableCell></TableRow>
                             )}
                         </TableBody>
                     </Table>
                 </TableContainer>
             )}
 
+            {/* Add/Edit Dialog */}
             <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
-                <DialogTitle>{isEdit ? 'Edit Shift' : 'Create New Shift'}</DialogTitle>
+                <DialogTitle>{isEdit ? "Edit Shift" : "Add New Shift"}</DialogTitle>
+                <DialogContent>
+                    <Grid spacing={2} mt={1}>
+                        <Grid xs={6} md={2}>
+                            <TextField fullWidth label="Shift Name" name="shiftName" value={formData.shiftName} onChange={handleChange} />
+                            <TextField fullWidth label="Shift Code" name="shiftCode" value={formData.shiftCode} onChange={handleChange} sx={{ mt: 2 }} />
+                            <TextField fullWidth label="Start Time" name="startTime" type="time" InputLabelProps={{ shrink: true }} inputProps={{ step: 1 }} value={formData.startTime || ""} onChange={handleChange} sx={{ mt: 2 }} />
+                            <TextField fullWidth label="End Time" name="endTime" type="time" InputLabelProps={{ shrink: true }} inputProps={{ step: 1 }} value={formData.endTime || ""} onChange={handleChange} sx={{ mt: 2 }} />
+                        </Grid>
+                    </Grid>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDialogOpen(false)} color="secondary">Cancel</Button>
+                    <Button onClick={handleSave} variant="contained" color="primary">Save</Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={viewOpen} onClose={() => setViewOpen(false)} fullWidth maxWidth="sm">
+                <DialogTitle>View Shift</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} mt={1}>
-                        <TextField
-                            label="Shift Name"
-                            value={selectedCategory.shiftName}
-                            onChange={(e) => setSelectedCategory({ ...selectedCategory, shiftName: e.target.value })}
-                            fullWidth
-                        />
-                        <TextField
-                            label="Shift Code"
-                            value={selectedCategory.shiftCode}
-                            onChange={(e) => setSelectedCategory({ ...selectedCategory, shiftCode: e.target.value })}
-                            fullWidth
-                        />
-                        <TextField
-                            label="Start Time"
-                            type="time"
-                            InputLabelProps={{ shrink: true }}
-                            inputProps={{ step: 1 }}
-                            value={selectedCategory.startTime}
-                            onChange={(e) => setSelectedCategory({ ...selectedCategory, startTime: e.target.value })}
-                            fullWidth
-                        />
-                        <TextField
-                            label="End Time"
-                            type="time"
-                            InputLabelProps={{ shrink: true }}
-                            inputProps={{ step: 1 }}
-                            value={selectedCategory.endTime}
-                            onChange={(e) => setSelectedCategory({ ...selectedCategory, endTime: e.target.value })}
-                            fullWidth
-                        />
+                        <TextField fullWidth label="Shift Name" value={formData.shiftName} disabled />
+                        <TextField fullWidth label="Shift Code" value={formData.shiftCode} disabled />
+                        <TextField fullWidth label="Start Time" value={formData.startTime} disabled />
+                        <TextField fullWidth label="End Time" value={formData.endTime} disabled />
                     </Stack>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setDialogOpen(false)} color="secondary">
-                        Cancel
-                    </Button>
-                    <Button
-                        onClick={handleSave}
-                        variant="contained"
-                        color="primary"
-                        disabled={!selectedCategory.shiftName.trim() || !selectedCategory.shiftCode.trim()}
-                    >
-                        {isEdit ? 'Update' : 'Create'}
-                    </Button>
+                    <Button onClick={() => setViewOpen(false)}>Close</Button>
                 </DialogActions>
             </Dialog>
-        </div>
+
+            <AlertSnackbar
+                open={alert.open}
+                type={alert.type}
+                message={alert.message}
+                onClose={() => setAlert({ ...alert, open: false })}
+            />
+        </Container>
     );
 };
 

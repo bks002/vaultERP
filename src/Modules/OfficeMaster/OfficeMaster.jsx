@@ -52,11 +52,15 @@ const OfficeMasterPage = () => {
         setAlert({ open: true, type, message });
     };
 
-    // const handleCreate = () => {
-    //     setIsEdit(false);
-    //     setSelectedOffice({ officeName: '', city: '', state: '', latitude: '', longitude: '' });
-    //     setDialogOpen(true);
-    // };
+    const handleCreate = () => {
+        setIsEdit(false);
+        setSelectedOffice({ officeName: '', city: '', state: '', latitude: '', longitude: '' ,email: '',region:'', pincode: '',
+        officeType: '',
+        addressLine1: '',
+        addressLine2: '',
+        contactNumber: '',});
+        setDialogOpen(true);
+    };
 
     const handleEdit = (office) => {
         setSelectedOffice(office);
@@ -100,13 +104,17 @@ const OfficeMasterPage = () => {
             showAlert('error', 'Failed to save office');
         }
     };
-    // const filteredOfficeMasters = officeMasters.filter(po =>
-    //     po.poNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    //     po.vendorName.toLowerCase().includes(searchQuery.toLowerCase())
-    // );
+    const filteredOfficeMasters = offices.filter(po =>
+        po.officeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        po.officeType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        po.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        po.state.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        po.email.toLowerCase().includes(searchQuery.toLowerCase())
+    );
     return (
         <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                <Typography variant="h4">Office Master</Typography>
                 <Box display="flex" alignItems="center" gap={2}>
                     <TextField
                         placeholder="Search Master"
@@ -122,8 +130,8 @@ const OfficeMasterPage = () => {
                             )
                         }}
                     />
-                    <Button variant="contained" color="primary" >
-                        Office Master
+                    <Button variant="contained" color="primary" onClick={handleCreate} >
+                        Add Office Master
                     </Button>
                 </Box>
             </Box>
@@ -140,8 +148,8 @@ const OfficeMasterPage = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {offices.length > 0 ? (
-                            offices.map((office, index) => (
+                        {filteredOfficeMasters.length > 0 ? (
+                            filteredOfficeMasters.map((office, index) => (
                                 <TableRow key={office.officeId}>
                                     <TableCell>{index + 1}</TableCell>
                                     <TableCell>{office.officeName}</TableCell>
