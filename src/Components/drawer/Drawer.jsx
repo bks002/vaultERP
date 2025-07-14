@@ -172,7 +172,6 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemText primary="Asset Operation Master" />
                     </ListItemButton>
                 </ListItem>
-                <ListItem disablePadding>
 
             </List>
             <Divider />
