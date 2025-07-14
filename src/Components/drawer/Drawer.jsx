@@ -18,48 +18,41 @@ import { ListSubheader, useMediaQuery } from "@mui/material";
 const drawerWidth = 240;
 
 const openedMixin = (theme) => ({
-  width: drawerWidth,
-  transition: theme.transitions.create("width", {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.enteringScreen,
-  }),
-  overflowX: "hidden",
+    width: drawerWidth,
+    transition: theme.transitions.create("width", {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.enteringScreen,
+    }),
+    overflowX: "hidden",
 });
 
 const closedMixin = (theme) => ({
-  transition: theme.transitions.create("width", {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  overflowX: "hidden",
-  width: `calc(${theme.spacing(7)} + 1px)`,
-  [theme.breakpoints.up("sm")]: {
-    width: `calc(${theme.spacing(8)} + 1px)`,
-  },
+    transition: theme.transitions.create("width", {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.leavingScreen,
+    }),
+    overflowX: "hidden",
+    width: `calc(${theme.spacing(7)} + 1px)`,
+    [theme.breakpoints.up("sm")]: {
+        width: `calc(${theme.spacing(8)} + 1px)`,
+    },
 });
 
-const DrawerHeader = styled(Toolbar)(({ theme }) => ({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "flex-end",
-  padding: theme.spacing(0, 1),
-}));
-
-const StyledDrawer = styled(MuiDrawer, {
-  shouldForwardProp: (prop) => prop !== "open",
+const Drawer = styled(MuiDrawer, {
+    shouldForwardProp: (prop) => prop !== "open",
 })(({ theme, open }) => ({
-  width: drawerWidth,
-  flexShrink: 0,
-  whiteSpace: "nowrap",
-  boxSizing: "border-box",
-  ...(open && {
-    ...openedMixin(theme),
-    "& .MuiDrawer-paper": openedMixin(theme),
-  }),
-  ...(!open && {
-    ...closedMixin(theme),
-    "& .MuiDrawer-paper": closedMixin(theme),
-  }),
+    width: drawerWidth,
+    flexShrink: 0,
+    whiteSpace: "nowrap",
+    boxSizing: "border-box",
+    ...(open && {
+        ...openedMixin(theme),
+        "& .MuiDrawer-paper": openedMixin(theme),
+    }),
+    ...(!open && {
+        ...closedMixin(theme),
+        "& .MuiDrawer-paper": closedMixin(theme),
+    }),
 }));
 
 export default function MiniDrawer({ drawer, handleDrawer }) {
@@ -180,11 +173,7 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                     </ListItemButton>
                 </ListItem>
                 <ListItem disablePadding>
-                    <ListItemButton component={Link} to="/Asset/AssetType"  >
-                        <ListItemIcon><InboxIcon /></ListItemIcon>
-                        <ListItemText primary="Asset Type Master" />
-                    </ListItemButton>
-                </ListItem>
+
             </List>
             <Divider />
             <List>
