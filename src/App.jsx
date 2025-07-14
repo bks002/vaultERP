@@ -19,9 +19,6 @@ function AppContent() {
 
   const isLoginPage = location.pathname === "/";
 
-  // Drawer width
-  const drawerWidth = openDrawer ? 240 : 56;
-
   return (
     <>
       {!isLoginPage && (
@@ -37,13 +34,13 @@ function AppContent() {
 
       <div
         style={{
-          marginLeft: isLoginPage || isMobile ? 0 : drawerWidth,
-          padding: isMobile ? "12px" : "16px 24px",
-          transition: "margin-left 0.3s",
+          marginLeft: isMobile || isLoginPage ? 0 : openDrawer ? 240 : 56,
           minHeight: "100vh",
-          width: "100%",
+          width: "100vw",
+          maxWidth: openDrawer ? "81vw" : "94vw",
+          transition: "margin-left 0.3s",
           boxSizing: "border-box",
-          overflowX: "hidden",
+          padding: "16px",
         }}
       >
         <AppRoutes />
