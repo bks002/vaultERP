@@ -3,7 +3,7 @@ import {
     Container, Typography, Button, TextField, Dialog,
     DialogTitle, DialogContent, DialogActions, Box,
     IconButton, Tooltip, Table, TableHead, TableRow,
-    TableCell, TableBody, Stack, TableContainer, Paper, MenuItem
+    TableCell, TableBody, Stack, TableContainer, Paper, MenuItem, InputAdornment,
 } from '@mui/material';
 import {
     getAllEmployees,
@@ -13,6 +13,7 @@ import {
 } from "../../Services/EmployeeService";
 import { getAllOperation, OperationMapping, getOperationbyEmployee } from "../../Services/OperationService";
 import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
+import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -24,6 +25,7 @@ import {employmentTypes, department, gender} from "../../Components/constant";
 const EmployeeMasterPage = () => {
     const officeId = useSelector((state) => state.user.officeId);
     const officeName= useSelector((state)=> state.user.officeName);
+     const [searchQuery, setSearchQuery] = useState('');
     const userId = useSelector((state) => state.user.userId);
     const [employees, setEmployees] = useState([]);
     const [operations, setOperations] = useState([]);
@@ -240,12 +242,31 @@ const EmployeeMasterPage = () => {
             showAlert("error", error.message || "Failed to map operations");
         }
     };
-
+      const filteredEmployee = employees.filter((rate) =>
+        rate.employeeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+         rate.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
     return (
         <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Typography variant="h4">Employee Master</Typography>
+                <Box display="flex" alignItems="center" gap={2}>
+                    <TextField
+                        placeholder="Employee Name, Email"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon />
+                                </InputAdornment>
+                            ),
+                        }}
+                        size="small"
+                        sx={{ width: 300 }}
+                    />
                 <Button variant="contained" onClick={handleCreate}>Add Employee</Button>
+            </Box>
             </Box>
             <Table>
                 <TableHead>
@@ -259,8 +280,8 @@ const EmployeeMasterPage = () => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {employees.length > 0 ? (
-                        employees.map((emp, index) => (
+                    {filteredEmployee.length > 0 ? (
+                        filteredEmployee.map((emp, index) => (
                             <TableRow key={emp.id}>
                                 <TableCell>{index + 1}</TableCell>
                                 <TableCell>{emp.employeeName}</TableCell>

@@ -3,7 +3,7 @@ import {
     Container, Typography, Button, TextField, Dialog,
     DialogTitle, DialogContent, DialogActions, Box,
     IconButton, Tooltip, Table, TableHead, TableRow,
-    TableCell, TableBody, Grid
+    TableCell, TableBody, Grid, InputAdornment,
 } from '@mui/material';
 import { getAllEmployees } from '../../Services/EmployeeService.js';
 import { getAllOperation } from '../../Services/OperationService.js';
@@ -15,6 +15,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useSelector } from "react-redux";
 import { getAllShift } from '../../Services/ShiftService.js';
+import SearchIcon from '@mui/icons-material/Search';
 
 const DailyPlanningSheet = () => {
     const officeId = useSelector((state) => state.user.officeId);
@@ -25,6 +26,7 @@ const DailyPlanningSheet = () => {
     const [Items, setItems] = useState([]);
     const [Operations, setOperations] = useState([]);
     const [Assets, setAssets] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
     const [shift, setShift] = useState([]);
     const [shifts, setShifts] = useState([]);
     const [selectedShift, setSelectedShift] = useState({
@@ -167,12 +169,35 @@ const DailyPlanningSheet = () => {
 
         setDialogOpen(false);
     };
-
+        const filteredSheets = shift.filter((v) =>
+        v.machineName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.operationName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.manpower?.includes(searchQuery) ||
+        v.item?.toLowerCase().includes(searchQuery.toLowerCase()) 
+ );
     return (
         <Container maxWidth={false}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+           <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Typography variant="h4">Daily Planning Sheet</Typography>
-                <Button variant="contained" onClick={handleCreate}>Create Planning</Button>
+                <Box display="flex" alignItems="center" gap={2}>
+                    <TextField
+                        placeholder="Search by machine, operator, manpower, or item"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon />
+                                </InputAdornment>
+                            ),
+                        }}
+                        size="small"
+                        sx={{ width: 300 }}
+                    />
+                    <Button variant="contained" color="primary" onClick={handleCreate}>
+                        Create Planning
+                    </Button>
+                </Box>
             </Box>
 
             <Table>
@@ -188,8 +213,8 @@ const DailyPlanningSheet = () => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {shift.length > 0 ? (
-                        shift.map((emp, index) => (
+                    {filteredSheets > 0 ? (
+                       filteredSheets.map((emp, index) => (
                             <TableRow key={emp.id}>
                                 <TableCell>{index + 1}</TableCell>
                                 <TableCell>{emp.asset}</TableCell>
@@ -248,21 +273,22 @@ const DailyPlanningSheet = () => {
                                     <option key={a.shiftId} value={a.shiftName}>{a.shiftName}</option>
                                 ))}
                             </TextField>
-                            <TextField
-                                select
-                                label="Machine Name"
-                                name="asset"
-                                value={selectedShift.asset}
-                                onChange={handleChange}
-                                fullWidth
-                                sx={{ mt: 2 }}
-                                SelectProps={{ native: true }}
-                            >
-                                <option value=""></option>
-                                {Assets.map((a) => (
-                                    <option key={a.assetId} value={a.assetName}>{a.assetName}</option>
-                                ))}
-                            </TextField>
+                           <TextField
+                          select
+                          label="Machine Name"
+                          name="asset"
+                         value={selectedShift.asset}
+                         onChange={handleChange}
+                          fullWidth
+                        sx={{ mt: 2 }}
+                         SelectProps={{ native: true }}
+                        >
+                          <option value=""></option>
+                          {Assets.filter((a) => a.assetTypeId === 1).map((a) => (
+                           <option key={a.assetId} value={a.assetName}>{a.assetName}</option>
+                  ))}
+                        </TextField>
+
                             <TextField
                                 fullWidth
                                 label="Manpower"

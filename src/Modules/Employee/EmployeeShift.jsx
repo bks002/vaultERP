@@ -3,28 +3,28 @@ import {
     Container, Typography, Button, TextField, Dialog,
     DialogTitle, DialogContent, DialogActions, Box,
     IconButton, Tooltip, Table, TableHead, TableRow,
-    TableCell, TableBody, Stack, MenuItem
+    TableCell, TableBody, Stack, MenuItem, InputAdornment
 } from '@mui/material';
-import {
-    getAllEmployees
-} from "../../Services/EmployeeService";
-import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
-// import EditIcon from '@mui/icons-material/Edit';
+import SearchIcon from '@mui/icons-material/Search';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useSelector } from "react-redux";
-import { getAllShift } from '../../Services/ShiftService';
-import { getAllEmployeeShift, createEmployeeShift, updateEmployeeShift, deleteEmployeeShift } from '../../Services/EmployeeShift';
+import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
+import { getAllEmployees } from "../../Services/EmployeeService";
+import { getAllShift } from "../../Services/ShiftService";
+import { getAllEmployeeShift, createEmployeeShift, deleteEmployeeShift } from "../../Services/EmployeeShift";
 
 const EmployeeShiftPage = () => {
     const officeId = useSelector((state) => state.user.officeId);
     const userId = useSelector((state) => state.user.userId);
+
+    const [searchQuery, setSearchQuery] = useState('');
+    const [employeeShifts, setEmployeeShifts] = useState([]);
     const [employees, setEmployees] = useState([]);
-    const [shift, setShift] = useState([]);
-    const [employeeShiftList, setEmployeeShiftList] = useState([]);
+    const [shifts, setShifts] = useState([]);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [viewOpen, setViewOpen] = useState(false);
-    // const [isEdit, setIsEdit] = useState(false);
+    const [alert, setAlert] = useState({ open: false, type: 'success', message: '' });
 
     const [selectedEmployee, setSelectedEmployee] = useState({
         employeeId: '',
@@ -36,22 +36,20 @@ const EmployeeShiftPage = () => {
         mobileNo: ''
     });
 
-    const [alert, setAlert] = useState({ open: false, type: 'success', message: '' });
-
     useEffect(() => {
         if (officeId) {
-            loadEmployeeShift();
+            loadEmployeeShifts();
             loadEmployees();
-            loadShift();
+            loadShifts();
         }
     }, [officeId]);
 
-    const loadEmployeeShift = async () => {
+    const loadEmployeeShifts = async () => {
         try {
             const data = await getAllEmployeeShift(officeId);
-            setEmployeeShiftList(data);
+            setEmployeeShifts(data);
         } catch {
-            showAlert('error', 'Failed to load employee shift');
+            showAlert('error', 'Failed to load employee shifts');
         }
     };
 
@@ -60,16 +58,16 @@ const EmployeeShiftPage = () => {
             const data = await getAllEmployees(officeId);
             setEmployees(data);
         } catch {
-            showAlert('error', 'Failed to load employee list');
+            showAlert('error', 'Failed to load employees');
         }
     };
 
-    const loadShift = async () => {
+    const loadShifts = async () => {
         try {
             const data = await getAllShift(officeId);
-            setShift(data);
+            setShifts(data);
         } catch {
-            showAlert('error', 'Failed to load Shift');
+            showAlert('error', 'Failed to load shifts');
         }
     };
 
@@ -78,7 +76,6 @@ const EmployeeShiftPage = () => {
     };
 
     const handleCreate = () => {
-        // setIsEdit(false);
         setSelectedEmployee({
             employeeId: '',
             employeeName: '',
@@ -91,23 +88,17 @@ const EmployeeShiftPage = () => {
         setDialogOpen(true);
     };
 
-    // const handleEdit = (emp) => {
-    //     setSelectedEmployee({ ...emp });
-    //     setIsEdit(true);
-    //     setDialogOpen(true);
-    // };
-
     const handleView = (emp) => {
-        setSelectedEmployee({ ...emp });
+        setSelectedEmployee(emp);
         setViewOpen(true);
     };
 
     const handleDelete = async (emp) => {
-        if (window.confirm(`Are you sure you want to delete "${emp.employeeName}"?`)) {
+        if (window.confirm(`Are you sure you want to delete ${emp.employeeName}?`)) {
             try {
                 await deleteEmployeeShift(emp.employeeId, emp.shiftId);
                 showAlert('success', 'Employee shift deleted successfully');
-                loadEmployeeShift();
+                loadEmployeeShifts();
             } catch {
                 showAlert('error', 'Failed to delete employee shift');
             }
@@ -120,42 +111,58 @@ const EmployeeShiftPage = () => {
     };
 
     const handleSave = async () => {
-        const employee = employees.find(emp => emp.employeeId === parseInt(selectedEmployee.employeeId));
-        const shiftData = shift.find(sh => sh.shiftId === parseInt(selectedEmployee.shiftId));
+        const employee = employees.find(e => e.employeeId === parseInt(selectedEmployee.employeeId));
+        const shift = shifts.find(s => s.shiftId === parseInt(selectedEmployee.shiftId));
 
         const payload = {
             employeeId: parseInt(selectedEmployee.employeeId),
             employeeName: employee?.employeeName || '',
             shiftId: parseInt(selectedEmployee.shiftId),
-            shiftName: shiftData?.shiftName || '',
+            shiftName: shift?.shiftName || '',
             dateFrom: new Date(selectedEmployee.dateFrom).toISOString(),
             dateTo: new Date(selectedEmployee.dateTo).toISOString(),
             isActive: true,
             mobileNo: selectedEmployee.mobileNo,
             createdBy: parseInt(userId),
-            updatedBy:  0
+            updatedBy: 0
         };
 
         try {
-            // if (isEdit) {
-            //     await updateEmployeeShift(payload.employeeId, payload.shiftId, payload);
-            //     showAlert('success', 'Employee shift updated successfully');
-            // } else {
-                await createEmployeeShift(payload);
-                showAlert('success', 'Employee shift created successfully');
-            // }
+            await createEmployeeShift(payload);
+            showAlert('success', 'Employee shift created successfully');
             setDialogOpen(false);
-            loadEmployeeShift();
+            loadEmployeeShifts();
         } catch {
             showAlert('error', 'Failed to save employee shift');
         }
     };
 
+    const filteredList = employeeShifts.filter((item) =>
+        item.employeeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.shiftName?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
         <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Typography variant="h4">Employee Shift</Typography>
-                <Button variant="contained" onClick={handleCreate}>Add Employee Shift</Button>
+                <Box display="flex" alignItems="center" gap={2}>
+                    <TextField
+                        placeholder="Search Employee or Shift"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon />
+                                </InputAdornment>
+                            )
+                        }}
+                        size="small"
+                        sx={{ width: 300 }}
+                    />
+                    <Button variant="contained" onClick={handleCreate}>Add Employee Shift</Button>
+                </Box>
             </Box>
 
             <Table>
@@ -163,16 +170,16 @@ const EmployeeShiftPage = () => {
                     <TableRow>
                         <TableCell>#</TableCell>
                         <TableCell>Employee Name</TableCell>
-                        <TableCell>Shift</TableCell>
+                        <TableCell>Shift Name</TableCell>
                         <TableCell>Date From</TableCell>
                         <TableCell>Date To</TableCell>
                         <TableCell align="center">Actions</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {employeeShiftList.length > 0 ? (
-                        employeeShiftList.map((emp, index) => (
-                            <TableRow key={emp.id || index}>
+                    {filteredList.length > 0 ? (
+                        filteredList.map((emp, index) => (
+                            <TableRow key={index}>
                                 <TableCell>{index + 1}</TableCell>
                                 <TableCell>{emp.employeeName}</TableCell>
                                 <TableCell>{emp.shiftName}</TableCell>
@@ -184,11 +191,6 @@ const EmployeeShiftPage = () => {
                                             <VisibilityIcon />
                                         </IconButton>
                                     </Tooltip>
-                                    {/* <Tooltip title="Edit">
-                                        <IconButton onClick={() => handleEdit(emp)} color="primary">
-                                            <EditIcon />
-                                        </IconButton>
-                                    </Tooltip> */}
                                     <Tooltip title="Delete">
                                         <IconButton onClick={() => handleDelete(emp)} color="error">
                                             <DeleteIcon />
@@ -199,33 +201,31 @@ const EmployeeShiftPage = () => {
                         ))
                     ) : (
                         <TableRow>
-                            <TableCell colSpan={6} align="center">No employee shift found</TableCell>
+                            <TableCell colSpan={6} align="center">No employee shifts found</TableCell>
                         </TableRow>
                     )}
                 </TableBody>
             </Table>
 
             <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
-                <DialogTitle>{ 'Add Employee shift'}</DialogTitle>
+                <DialogTitle>Add Employee Shift</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} mt={1}>
-                        <TextField select label="Employee Name" name="employeeId" value={selectedEmployee.employeeId} onChange={handleChange} fullWidth >
-                            {employees.map((type) => (
-                                <MenuItem key={type.employeeId} value={type.employeeId}>
-                                    {type.employeeName}
-                                </MenuItem>
+                        <TextField select label="Employee Name" name="employeeId" value={selectedEmployee.employeeId} onChange={handleChange} fullWidth>
+                            {employees.map((e) => (
+                                <MenuItem key={e.employeeId} value={e.employeeId}>{e.employeeName}</MenuItem>
                             ))}
                         </TextField>
-                        <TextField select label="Shift" name="shiftId" value={selectedEmployee.shiftId} onChange={handleChange} fullWidth >
-                            {shift.map((type) => (
-                                <MenuItem key={type.shiftId} value={type.shiftId}>
-                                    {type.shiftName}
-                                </MenuItem>
+
+                        <TextField select label="Shift Name" name="shiftId" value={selectedEmployee.shiftId} onChange={handleChange} fullWidth>
+                            {shifts.map((s) => (
+                                <MenuItem key={s.shiftId} value={s.shiftId}>{s.shiftName}</MenuItem>
                             ))}
                         </TextField>
-                        <TextField label="Date From" name="dateFrom" type="date" value={selectedEmployee.dateFrom?.split('T')[0]} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
-                        <TextField label="Date To" name="dateTo" type="date" value={selectedEmployee.dateTo?.split('T')[0]} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
-                        <TextField label="Mobile Number" name="mobileNo" value={selectedEmployee.mobileNo} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
+
+                        <TextField type="date" label="Date From" name="dateFrom" value={selectedEmployee.dateFrom?.split('T')[0]} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
+                        <TextField type="date" label="Date To" name="dateTo" value={selectedEmployee.dateTo?.split('T')[0]} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
+                        <TextField label="Mobile Number" name="mobileNo" value={selectedEmployee.mobileNo} onChange={handleChange} fullWidth />
                     </Stack>
                 </DialogContent>
                 <DialogActions>
@@ -235,11 +235,11 @@ const EmployeeShiftPage = () => {
             </Dialog>
 
             <Dialog open={viewOpen} onClose={() => setViewOpen(false)} fullWidth maxWidth="sm">
-                <DialogTitle>View Employee</DialogTitle>
+                <DialogTitle>Employee Shift Details</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} mt={1}>
                         <TextField label="Employee Name" value={selectedEmployee.employeeName} fullWidth disabled />
-                        <TextField label="Shift" value={selectedEmployee.shiftName} fullWidth disabled />
+                        <TextField label="Shift Name" value={selectedEmployee.shiftName} fullWidth disabled />
                         <TextField label="Date From" value={selectedEmployee.dateFrom?.split('T')[0]} fullWidth disabled />
                         <TextField label="Date To" value={selectedEmployee.dateTo?.split('T')[0]} fullWidth disabled />
                         <TextField label="Mobile Number" value={selectedEmployee.mobileNo} fullWidth disabled />

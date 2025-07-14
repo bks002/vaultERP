@@ -52,28 +52,27 @@ const PurchaseOrder = () => {
         if (officeId > 0) loadPurchaseOrders();
     }, [officeId]);
         const filteredPOs = purchaseOrders.filter(po =>
-        po.poNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        po.vendorName.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+         po.poNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        po.vendorName?.toLowerCase().includes(searchQuery.toLowerCase()) 
+    );  
     return (
         <div className="col-12">
-            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                <Typography variant="h4">Purchase Orders</Typography>
+           <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                <Typography variant="h4">Purchase Order</Typography>
                 <Box display="flex" alignItems="center" gap={2}>
-                    {/* ✅ Search Bar */}
                     <TextField
-                        placeholder="Search PO Number or Vendor..."
-                        variant="outlined"
+                        placeholder="Search by PO Number, Vendor Name or Actions"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        sx={{ width: 300 }}
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
                                     <SearchIcon />
                                 </InputAdornment>
-                            )
+                            ),
                         }}
+                        size="small"
+                        sx={{ width: 300 }}
                     />
                     <Button variant="contained" color="primary" onClick={() => setCreateDialogOpen(true)}>
                         Create New Purchase Order

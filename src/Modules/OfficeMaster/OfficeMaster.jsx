@@ -117,18 +117,18 @@ const OfficeMasterPage = () => {
                 <Typography variant="h4">Office Master</Typography>
                 <Box display="flex" alignItems="center" gap={2}>
                     <TextField
-                        placeholder="Search Master"
-                        variant="outlined"
+                        placeholder="Employee Name, Shift"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        sx={{ width: 300 }}
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
                                     <SearchIcon />
                                 </InputAdornment>
-                            )
+                            ),
                         }}
+                        size="small"
+                        sx={{ width: 300 }}
                     />
                     <Button variant="contained" color="primary" onClick={handleCreate} >
                         Add Office Master
