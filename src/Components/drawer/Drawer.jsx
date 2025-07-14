@@ -172,12 +172,8 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemText primary="Asset Operation Master" />
                     </ListItemButton>
                 </ListItem>
-                {/* <ListItem disablePadding>
-                    <ListItemButton component={Link} to="/Asset/AssetType"  >
-                        <ListItemIcon><InboxIcon /></ListItemIcon>
-                        <ListItemText primary="Asset Type Master" />
-                    </ListItemButton>
-                </ListItem> */}
+                <ListItem disablePadding>
+
             </List>
             <Divider />
             <List>

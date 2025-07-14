@@ -13,8 +13,9 @@ import {
     Box,
     Tooltip,
     CircularProgress, DialogActions, Dialog, DialogContent, DialogTitle,
-    TextField, 
+    TextField,
     InputAdornment,
+    Grid,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PrintIcon from '@mui/icons-material/Print';
@@ -31,7 +32,7 @@ const PurchaseOrder = () => {
     const [viewDialogOpen, setViewDialogOpen] = useState(false);
     const [printDialogOpen, setPrintDialogOpen] = useState(false);
     const [selectedPO, setSelectedPO] = useState(null);
-    const [searchQuery, setSearchQuery] = useState(''); 
+    const [searchQuery, setSearchQuery] = useState('');
 
 
     const loadPurchaseOrders = async () => {
@@ -51,7 +52,7 @@ const PurchaseOrder = () => {
     useEffect(() => {
         if (officeId > 0) loadPurchaseOrders();
     }, [officeId]);
-        const filteredPOs = purchaseOrders.filter(po =>
+    const filteredPOs = purchaseOrders.filter(po =>
         po.poNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
         po.vendorName.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -162,19 +163,29 @@ const PurchaseOrder = () => {
                 <DialogContent dividers>
                     {selectedPO ? (
                         <Box>
-                            <Typography variant="h6">PO Number: {selectedPO.poNumber}</Typography>
-                            <Typography variant="body1">Date: {new Date(selectedPO.poDateTime).toLocaleString()}</Typography>
-                            <Typography variant="body1">Vendor: {selectedPO.vendorName}</Typography>
-                            <Typography variant="body1">Shipping: {selectedPO.shippingAddress}</Typography>
-                            <Typography variant="body1">Billing: {selectedPO.billingAddress}</Typography>
-                            <Typography variant="body1" mt={2}>Items:</Typography>
-                            <ul>
-                                {selectedPO.items?.map((item, idx) => (
-                                    <li key={idx}>
-                                        {item.itemName} - Qty: {item.quantity}, Rate: ₹{item.rate}, Total: ₹{item.lineTotal}
-                                    </li>
-                                ))}
-                            </ul>
+                            <Grid container spacing={4}>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="h6">PO Number: {selectedPO.poNumber}</Typography>
+                                    <Typography variant="body1">Date: {new Date(selectedPO.poDateTime).toLocaleString()}</Typography>
+                                    <Typography variant="body1">Shipping: {selectedPO.shippingAddress}</Typography>
+                                    <Typography variant="body1">Billing: {selectedPO.billingAddress}</Typography>
+                                    <Typography variant="body1" mt={2}>Items:</Typography>
+                                    <ul>
+                                        {selectedPO.items?.map((item, idx) => (
+                                            <li key={idx}>
+                                                {item.itemName} - Qty: {item.quantity}, Rate: ₹{item.rate}, Total: ₹{item.lineTotal}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </Grid>
+
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="h6" gutterBottom>Vendor Details</Typography>
+                                    <Typography variant="body1"><strong>Name:</strong> {selectedPO.contactPerson}</Typography>
+                                    <Typography variant="body1"><strong>Email:</strong> {selectedPO.email}</Typography>
+                                    <Typography variant="body1"><strong>Contact:</strong> {selectedPO.contactNumber}</Typography>
+                                </Grid>
+                            </Grid>
                         </Box>
                     ) : (
                         <Typography>No data available.</Typography>
