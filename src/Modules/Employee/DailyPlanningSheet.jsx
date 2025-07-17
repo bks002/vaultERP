@@ -21,6 +21,7 @@ import {
     getAllPlanningByOffice,
     updatePlanning
 } from "../../Services/PlanningService.js";
+import * as XLSX from 'xlsx';
 
 const DailyPlanningSheet = () => {
     const officeId = useSelector((state) => state.user.officeId);
@@ -187,13 +188,46 @@ const DailyPlanningSheet = () => {
             showAlert('error', err.message || 'Error occurred');
         }
     };
+    const handleExport = () => {
+        if (!planningData || planningData.length === 0) {
+            showAlert('error', 'No data to export');
+            return;
+        }
+
+        const exportData = planningData.map((p, index) => ({
+            '#': index + 1,
+            'Plan Date': p.planDate ? `${p.planDate.substring(0, 10)}` : '',
+            'Machine Name': Assets.find(a => a.assetId === p.assetId)?.assetName,
+            'Operator Name': Employees.find(e => e.employeeId === p.employeeId)?.employeeName,
+            'Manpower': p.manpower,
+            'Item Name': Items.find(i => i.id === p.itemId)?.name,
+            'Shift Name': shifts.find(s => s.shiftId === p.shiftId)?.shiftName,
+            'Target': p.target,
+            'Backfeed': p.backfeed,
+            'Remarks': p.remark
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Planning Sheet');
+
+        XLSX.writeFile(workbook, 'DailyPlanningSheet.xlsx');
+    };
 
     return (
         <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Typography variant="h4">Daily Planning Sheet</Typography>
-                <Button variant="contained" onClick={handleCreate}>Create Planning</Button>
+                <Box>
+                    <Button variant="outlined" onClick={handleExport} sx={{ mr: 1 }}>
+                        Export to Excel
+                    </Button>
+                    <Button variant="contained" onClick={handleCreate}>
+                        Create Planning
+                    </Button>
+                </Box>
             </Box>
+
 
             <Table>
                 <TableHead>
@@ -212,8 +246,8 @@ const DailyPlanningSheet = () => {
                         planningData.map((emp, index) => (
                             <TableRow key={emp.id}>
                                 <TableCell>{index + 1}</TableCell>
-                                <TableCell>{Assets.find(a => a.assetId === emp.assetId)?.assetName || ''}</TableCell>
-                                <TableCell>{Employees.find(e => e.employeeId === emp.employeeId)?.employeeName || ''}</TableCell>
+                                <TableCell>{Assets.find(a => a.assetId === emp.assetId)?.assetName}</TableCell>
+                                <TableCell>{Employees.find(e => e.employeeId === emp.employeeId)?.employeeName}</TableCell>
                                 <TableCell>{emp.manpower}</TableCell>
                                 <TableCell>{Items.find(i => i.id === emp.itemId)?.name}</TableCell>
                                 <TableCell>{shifts.find(s => s.shiftId === emp.shiftId)?.shiftName}</TableCell>
