@@ -15,6 +15,12 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useSelector } from "react-redux";
 import { getAllShift } from '../../Services/ShiftService.js';
+import {
+    createPlanning,
+    deletePlanning,
+    getAllPlanningByOffice,
+    updatePlanning
+} from "../../Services/PlanningService.js";
 
 const DailyPlanningSheet = () => {
     const officeId = useSelector((state) => state.user.officeId);
@@ -25,28 +31,29 @@ const DailyPlanningSheet = () => {
     const [Items, setItems] = useState([]);
     const [Operations, setOperations] = useState([]);
     const [Assets, setAssets] = useState([]);
-    const [shift, setShift] = useState([]);
+    const [planningData, setPlanningData] = useState([]);
     const [shifts, setShifts] = useState([]);
     const [selectedShift, setSelectedShift] = useState({
-        id: null,
-        Item: '',
-        Date: '',
-        operationName: '',
-        EmployeeName: '',
-        process: '',
-        asset: '',
-        shift: '',
+        officeId:0,
+        id: 0,
+        itemId: 0,
+        planDate: '',
+        operationId: 0,
+        employeeId: 0,
+        assetId: 0,
+        shiftId: 0,
         manpower: '',
         target: '',
-        achieved: '',
+        achieved: 0,
         backfeed: '',
         remark: '',
+        created_by: userId || 0
     });
-
     const [alert, setAlert] = useState({ open: false, type: 'success', message: '' });
 
     useEffect(() => {
         if (officeId) {
+            loadPlanningData();
             loadEmployees();
             loadOperations();
             loadItems();
@@ -54,6 +61,16 @@ const DailyPlanningSheet = () => {
             loadShift();
         }
     }, [officeId]);
+
+    const loadPlanningData = async()=>{
+        try {
+            const data = await getAllPlanningByOffice(officeId);
+            setPlanningData(data);
+        }
+        catch {
+            showAlert('error','Failed to load planning data')
+        }
+    }
 
     const loadEmployees = async () => {
         try {
@@ -107,19 +124,20 @@ const DailyPlanningSheet = () => {
     const handleCreate = () => {
         setIsEdit(false);
         setSelectedShift({
-            id: null,
-            Item: '',
-            Date: '',
-            operationName: '',
-            EmployeeName: '',
-            process: '',
-            asset: '',
-            shift: '',
+            officeId: officeId,
+            id: 0,
+            itemId: 0,
+            planDate: '',
+            operationId: 0,
+            employeeId: 0,
+            assetId: 0,
+            shiftId: 0,
             manpower: '',
             target: '',
-            achieved: '',
+            achieved: 0,
             backfeed: '',
             remark: '',
+            created_by: userId || 0
         });
         setDialogOpen(true);
     };
@@ -130,42 +148,44 @@ const DailyPlanningSheet = () => {
         setDialogOpen(true);
     };
 
-    const handleDelete = (entry) => {
-        if (window.confirm(`Are you sure you want to delete "${entry.EmployeeName}" shift?`)) {
-            setShift(prev => prev.filter(p => p.id !== entry.id));
-            showAlert('success', 'Shift deleted successfully');
+    const handleDelete = async (entry) => {
+        if (window.confirm(`Are you sure you want to delete this shift?`)) {
+            try {
+                await deletePlanning(entry.id);
+                showAlert('success', 'Shift deleted successfully');
+                loadPlanningData(); // reload after delete
+            } catch (err) {
+                showAlert('error', err.message || 'Failed to delete');
+            }
         }
     };
 
+
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setSelectedShift(prev => ({ ...prev, [name]: value }));
+        setSelectedShift((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSave = () => {
-        const newEntry = {
-            ...selectedShift,
-            id: selectedShift.id || Date.now(), // use existing ID or assign new one
-        };
-
-        if (!selectedShift.EmployeeName || !selectedShift.Item || !selectedShift.asset || !selectedShift.Date) {
+    const handleSave = async () => {
+        console.log(selectedShift)
+        if (!selectedShift.employeeId || !selectedShift.itemId || !selectedShift.assetId || !selectedShift.planDate) {
             showAlert('error', 'Please fill required fields');
             return;
         }
 
-        if (isEdit) {
-            setShift(prev =>
-                prev.map(entry =>
-                    entry.id === newEntry.id ? newEntry : entry
-                )
-            );
-            showAlert('success', 'Shift updated successfully');
-        } else {
-            setShift(prev => [...prev, newEntry]);
-            showAlert('success', 'Shift added successfully');
+        try {
+            if (isEdit) {
+                await updatePlanning(selectedShift.id, selectedShift);
+                showAlert('success', 'Shift updated successfully');
+            } else {
+                await createPlanning(selectedShift);
+                showAlert('success', 'Shift added successfully');
+            }
+            loadPlanningData(); // reload after save
+            setDialogOpen(false);
+        } catch (err) {
+            showAlert('error', err.message || 'Error occurred');
         }
-
-        setDialogOpen(false);
     };
 
     return (
@@ -188,15 +208,15 @@ const DailyPlanningSheet = () => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {shift.length > 0 ? (
-                        shift.map((emp, index) => (
+                    {planningData.length > 0 ? (
+                        planningData.map((emp, index) => (
                             <TableRow key={emp.id}>
                                 <TableCell>{index + 1}</TableCell>
-                                <TableCell>{emp.asset}</TableCell>
-                                <TableCell>{emp.EmployeeName}</TableCell>
+                                <TableCell>{Assets.find(a => a.assetId === emp.assetId)?.assetName || ''}</TableCell>
+                                <TableCell>{Employees.find(e => e.employeeId === emp.employeeId)?.employeeName || ''}</TableCell>
                                 <TableCell>{emp.manpower}</TableCell>
-                                <TableCell>{emp.Item}</TableCell>
-                                <TableCell>{emp.shift}</TableCell>
+                                <TableCell>{Items.find(i => i.id === emp.itemId)?.name}</TableCell>
+                                <TableCell>{shifts.find(s => s.shiftId === emp.shiftId)?.shiftName}</TableCell>
                                 <TableCell align="center">
                                     <Tooltip title="Edit">
                                         <IconButton onClick={() => handleEdit(emp)} color="primary">
@@ -225,10 +245,10 @@ const DailyPlanningSheet = () => {
                     <Grid container spacing={2} sx={{ mt: 1 }}>
                         <Grid item xs={12} md={6}>
                             <TextField
-                                label="Shift Date"
-                                name="Date"
+                                label="Plan Date"
+                                name="planDate"
                                 type="date"
-                                value={selectedShift.Date}
+                                value={selectedShift.planDate ? selectedShift.planDate.substring(0, 10) : ''}
                                 onChange={handleChange}
                                 fullWidth
                                 InputLabelProps={{ shrink: true }}
@@ -236,8 +256,8 @@ const DailyPlanningSheet = () => {
                             <TextField
                                 select
                                 label="Shift"
-                                name="shift"
-                                value={selectedShift.shift}
+                                name="shiftId"
+                                value={selectedShift.shiftId}
                                 onChange={handleChange}
                                 fullWidth
                                 sx={{ mt: 2 }}
@@ -245,14 +265,14 @@ const DailyPlanningSheet = () => {
                             >
                                 <option value=""></option>
                                 {shifts.map((a) => (
-                                    <option key={a.shiftId} value={a.shiftName}>{a.shiftName}</option>
+                                    <option key={a.shiftId} value={a.shiftId}>{a.shiftName}</option>
                                 ))}
                             </TextField>
                             <TextField
                                 select
                                 label="Machine Name"
-                                name="asset"
-                                value={selectedShift.asset}
+                                name="assetId"
+                                value={selectedShift.assetId}
                                 onChange={handleChange}
                                 fullWidth
                                 sx={{ mt: 2 }}
@@ -260,7 +280,7 @@ const DailyPlanningSheet = () => {
                             >
                                 <option value=""></option>
                                 {Assets.map((a) => (
-                                    <option key={a.assetId} value={a.assetName}>{a.assetName}</option>
+                                    <option key={a.assetId} value={a.assetId}>{a.assetName}</option>
                                 ))}
                             </TextField>
                             <TextField
@@ -274,8 +294,8 @@ const DailyPlanningSheet = () => {
                             <TextField
                                 select
                                 label="Operation Name"
-                                name="operationName"
-                                value={selectedShift.operationName}
+                                name="operationId"
+                                value={selectedShift.operationId}
                                 onChange={handleChange}
                                 fullWidth
                                 sx={{ mt: 2 }}
@@ -283,7 +303,7 @@ const DailyPlanningSheet = () => {
                             >
                                 <option value=""></option>
                                 {Operations.map((op) => (
-                                    <option key={op.operationId} value={op.operationName}>{op.operationName}</option>
+                                    <option key={op.operationId} value={op.operationId}>{op.operationName}</option>
                                 ))}
                             </TextField>
                         </Grid>
@@ -292,22 +312,22 @@ const DailyPlanningSheet = () => {
                             <TextField
                                 select
                                 label="Employee Name"
-                                name="EmployeeName"
-                                value={selectedShift.EmployeeName}
+                                name="employeeId"
+                                value={selectedShift.employeeId}
                                 onChange={handleChange}
                                 fullWidth
                                 SelectProps={{ native: true }}
                             >
                                 <option value=""></option>
                                 {Employees.map((emp) => (
-                                    <option key={emp.employeeId} value={emp.employeeName}>{emp.employeeName}</option>
+                                    <option key={emp.employeeId} value={emp.employeeId}>{emp.employeeName}</option>
                                 ))}
                             </TextField>
                             <TextField
                                 select
                                 label="Item Name"
-                                name="Item"
-                                value={selectedShift.Item}
+                                name="itemId"
+                                value={selectedShift.itemId}
                                 onChange={handleChange}
                                 fullWidth
                                 sx={{ mt: 2 }}
@@ -315,12 +335,12 @@ const DailyPlanningSheet = () => {
                             >
                                 <option value=""></option>
                                 {Items.map((i) => (
-                                    <option key={i.id} value={i.name}>{i.name}</option>
+                                    <option key={i.id} value={i.id}>{i.name}</option>
                                 ))}
                             </TextField>
                             <TextField
                                 fullWidth
-                                label="Target"
+                                label="Target (KM)"
                                 name="target"
                                 value={selectedShift.target}
                                 onChange={handleChange}
@@ -328,9 +348,17 @@ const DailyPlanningSheet = () => {
                             />
                             <TextField
                                 fullWidth
-                                label="Back Feed"
+                                label="Back Feed (KM)"
                                 name="backfeed"
                                 value={selectedShift.backfeed}
+                                onChange={handleChange}
+                                sx={{ mt: 2 }}
+                            />
+                            <TextField
+                                fullWidth
+                                label="Remarks"
+                                name="remark"
+                                value={selectedShift.remark}
                                 onChange={handleChange}
                                 sx={{ mt: 2 }}
                             />
@@ -351,6 +379,7 @@ const DailyPlanningSheet = () => {
             />
         </Container>
     );
+
 };
 
 export default DailyPlanningSheet;
