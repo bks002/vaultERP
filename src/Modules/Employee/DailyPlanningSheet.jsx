@@ -3,7 +3,7 @@ import {
     Container, Typography, Button, TextField, Dialog,
     DialogTitle, DialogContent, DialogActions, Box,
     IconButton, Tooltip, Table, TableHead, TableRow,
-    TableCell, TableBody, Grid
+    TableCell, TableBody, Grid, InputAdornment,
 } from '@mui/material';
 import { getAllEmployees } from '../../Services/EmployeeService.js';
 import { getAllOperation } from '../../Services/OperationService.js';
@@ -15,6 +15,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useSelector } from "react-redux";
 import { getAllShift } from '../../Services/ShiftService.js';
+<<<<<<< HEAD
 import {
     createPlanning,
     deletePlanning,
@@ -22,6 +23,9 @@ import {
     updatePlanning
 } from "../../Services/PlanningService.js";
 import * as XLSX from 'xlsx';
+=======
+import SearchIcon from '@mui/icons-material/Search';
+>>>>>>> 2eb65136e3e7ee9f9bdea1e52d76dad07a06f6a2
 
 const DailyPlanningSheet = () => {
     const officeId = useSelector((state) => state.user.officeId);
@@ -32,7 +36,12 @@ const DailyPlanningSheet = () => {
     const [Items, setItems] = useState([]);
     const [Operations, setOperations] = useState([]);
     const [Assets, setAssets] = useState([]);
+<<<<<<< HEAD
     const [planningData, setPlanningData] = useState([]);
+=======
+    const [searchQuery, setSearchQuery] = useState('');
+    const [shift, setShift] = useState([]);
+>>>>>>> 2eb65136e3e7ee9f9bdea1e52d76dad07a06f6a2
     const [shifts, setShifts] = useState([]);
     const [selectedShift, setSelectedShift] = useState({
         officeId:0,
@@ -213,16 +222,40 @@ const DailyPlanningSheet = () => {
 
         XLSX.writeFile(workbook, 'DailyPlanningSheet.xlsx');
     };
-
+        const filteredSheets = shift.filter((v) =>
+        v.machineName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.operationName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.manpower?.includes(searchQuery) ||
+        v.item?.toLowerCase().includes(searchQuery.toLowerCase()) 
+ );
     return (
         <Container maxWidth={false}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+           <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Typography variant="h4">Daily Planning Sheet</Typography>
+<<<<<<< HEAD
                 <Box>
                     <Button variant="outlined" onClick={handleExport} sx={{ mr: 1 }}>
                         Export to Excel
                     </Button>
                     <Button variant="contained" onClick={handleCreate}>
+=======
+                <Box display="flex" alignItems="center" gap={2}>
+                    <TextField
+                        placeholder="Search by Machine Name, Operator Name, Manpower, Item"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon />
+                                </InputAdornment>
+                            ),
+                        }}
+                        size="small"
+                        sx={{ width: 300 }}
+                    />
+                    <Button variant="contained" color="primary" onClick={handleCreate}>
+>>>>>>> 2eb65136e3e7ee9f9bdea1e52d76dad07a06f6a2
                         Create Planning
                     </Button>
                 </Box>
@@ -242,8 +275,13 @@ const DailyPlanningSheet = () => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
+<<<<<<< HEAD
                     {planningData.length > 0 ? (
                         planningData.map((emp, index) => (
+=======
+                    {filteredSheets > 0 ? (
+                       filteredSheets.map((emp, index) => (
+>>>>>>> 2eb65136e3e7ee9f9bdea1e52d76dad07a06f6a2
                             <TableRow key={emp.id}>
                                 <TableCell>{index + 1}</TableCell>
                                 <TableCell>{Assets.find(a => a.assetId === emp.assetId)?.assetName}</TableCell>
@@ -302,6 +340,7 @@ const DailyPlanningSheet = () => {
                                     <option key={a.shiftId} value={a.shiftId}>{a.shiftName}</option>
                                 ))}
                             </TextField>
+<<<<<<< HEAD
                             <TextField
                                 select
                                 label="Machine Name"
@@ -317,6 +356,24 @@ const DailyPlanningSheet = () => {
                                     <option key={a.assetId} value={a.assetId}>{a.assetName}</option>
                                 ))}
                             </TextField>
+=======
+                           <TextField
+                          select
+                          label="Machine Name"
+                          name="asset"
+                         value={selectedShift.asset}
+                         onChange={handleChange}
+                          fullWidth
+                        sx={{ mt: 2 }}
+                         SelectProps={{ native: true }}
+                        >
+                          <option value=""></option>
+                          {Assets.filter((a) => a.assetTypeId === 1).map((a) => (
+                           <option key={a.assetId} value={a.assetName}>{a.assetName}</option>
+                  ))}
+                        </TextField>
+
+>>>>>>> 2eb65136e3e7ee9f9bdea1e52d76dad07a06f6a2
                             <TextField
                                 fullWidth
                                 label="Manpower"

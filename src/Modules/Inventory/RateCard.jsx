@@ -137,18 +137,18 @@ const RateCard = () => {
                 <Typography variant="h4">Rate Card</Typography>
                 <Box display="flex" alignItems="center" gap={2}>
                     <TextField
-                        placeholder="Search by item or vendor"
-                        variant="outlined"
+                        placeholder="Search by Category, Item, Vendor"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        sx={{ width: 300 }}
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
                                     <SearchIcon />
                                 </InputAdornment>
-                            )
+                            ),
                         }}
+                        size="small"
+                        sx={{ width: 300 }}
                     />
                     <Button variant="contained" color="primary" onClick={handleCreateNew}>
                         Create New Rate Card

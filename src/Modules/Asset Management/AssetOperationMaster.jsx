@@ -2,15 +2,17 @@ import React, { useEffect, useState } from 'react';
 import {
     Container, Typography, Button, TextField, Dialog,
     DialogTitle, DialogContent, DialogActions, Box,
-    Table, TableHead, TableRow, TableCell, TableBody, Stack
+    Table, TableHead, TableRow, TableCell, TableBody, Stack, InputAdornment,
 } from '@mui/material';
 import { getAllOperation, createOperation } from '../../Services/OperationService';
 import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
 import { useSelector } from 'react-redux';
+import SearchIcon from '@mui/icons-material/Search';
 
 const AssetOperationMaster = () => {
     const [type, setType] = useState([]);
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const [selectedType, setSelectedType] = useState({
         operationName: '',
         description: '',
@@ -54,14 +56,35 @@ const AssetOperationMaster = () => {
             showAlert('error', 'Failed to save operation');
         }
     };
-
+     const filteredOperation = type.filter((v) =>
+        v.machineName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.operationName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.manpower?.includes(searchQuery) ||
+        v.item?.toLowerCase().includes(searchQuery.toLowerCase()) 
+ );
     return (
         <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Typography variant="h4">Asset Operation Master</Typography>
-                <Button variant="contained" onClick={handleCreate}>
-                    Add Operation
-                </Button>
+                <Box display="flex" alignItems="center" gap={2}>
+                    <TextField
+                        placeholder="Search by name, description"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon />
+                                </InputAdornment>
+                            ),
+                        }}
+                        size="small"
+                        sx={{ width: 300 }}
+                    />
+                    <Button variant="contained" color="primary" onClick={handleCreate}>
+                        Add Operation
+                    </Button>
+                </Box>
             </Box>
             <Table>
                 <TableHead>
@@ -72,8 +95,8 @@ const AssetOperationMaster = () => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {type.length > 0 ? (
-                        type.map((item, index) => (
+                    {filteredOperation.length > 0 ? (
+                        filteredOperation.map((item, index) => (
                             <TableRow key={item.typeId}>
                                 <TableCell>{index + 1}</TableCell>
                                 <TableCell>{item.operationName}</TableCell>
