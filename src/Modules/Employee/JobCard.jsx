@@ -4,25 +4,32 @@ import { useSelector } from "react-redux";
 import {
   Container, Typography, Grid, TextField, Box, Button, Dialog, DialogTitle, DialogContent, DialogActions,
   MenuItem, Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, InputAdornment, IconButton, Tooltip, Stack, Paper, Checkbox
+  TableRow, InputAdornment, IconButton, Tooltip, Stack, Paper, Checkbox, FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
 } from "@mui/material";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SettingsIcon from '@mui/icons-material/Settings';
-// import {assetTypes} from "../../Components/constant";
+import {assetTypes} from "../../Components/constant";
 import { getAllAssets, createAssets, EditAssets, deleteAsset } from "../../Services/AssetService";
 import { getAllOperation } from "../../Services/OperationService";
 import { getAssetOperation, OperationMapping } from "../../Services/AssetOperation";
 import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
+import { getAllShift } from "../../Services/ShiftService";
 
-const AssetMaster = () => {
+
+const JobCard = () => {
   const officeId = useSelector((state) => state.user.officeId);
   const userId = useSelector((state) => state.user.userId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [assets, setAssets] = useState([]);
+  const [shift, setShift] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [settingOpen, setSettingOpen] = useState(false);
   const [operations, setOperations] = useState([]);
@@ -31,17 +38,23 @@ const AssetMaster = () => {
   const [viewOpen, setViewOpen] = useState(false);
 
   const defaultFormData = {
-    assetId: "",
-    assetCode: "",
+    nameId: "",
+    isCode: "",
     assetName: "",
-    assetTypeId: "",
-    manufacturer: "",
-    modelNumber: "",
-    serialNumber: "",
-    purchaseDate: "",
-    warrantyExpiry: "",
-    supplier: "",
-    operationIds: [],
+    shift: "",
+    operation: "",
+    size: "",
+    noStands: "",
+    isCompleted: "",
+    compound: "",
+    color: "",
+    thickness: "",
+    length: "",
+    dayWork:"",
+    dayD: "",
+    damSize: "",
+    embossing:"",
+    remarks: "",
   };
 
   const [formData, setFormData] = useState(defaultFormData);
@@ -54,8 +67,18 @@ const AssetMaster = () => {
     if (officeId) {
       loadAllassets();
       loadAllOperations();
+       loadAllShift();
     }
   }, [officeId]);
+
+  const loadAllShift = async () => {
+  try {
+    const data = await getAllShift(officeId);
+    setShift(data); // contains shiftName, shiftCode, etc.
+  } catch {
+    showAlert('error', 'Failed to load shifts');
+  }
+};
 
   const loadAllassets = async () => {
     try {
@@ -85,11 +108,28 @@ const AssetMaster = () => {
 
   const handleSave = async () => {
     const payload = {
-      ...formData,
-      officeId: parseInt(officeId),
-      createdBy: String(userId),
-      isActive: true
+    assetId: formData.assetId || 0,           // only if updating
+    assetName: formData.assetName || "",
+    color: formData.color || "",
+    compound: formData.compound || "",
+    damSize: formData.damSize || "",
+    dayD: formData.dayD || "",
+    dayWork: formData.dayWork || "",
+    embossing: formData.embossing || "",
+    isCode: formData.isCode || "",
+    isCompleted: formData.isCompleted || "no",
+    length: formData.length || "",
+    nameId: formData.nameId || "",
+    noStands: formData.noStands || "",
+    officeId: parseInt(officeId),
+    operation: formData.operation || "",
+    remarks: formData.remarks || "",
+    shift: formData.shift || "",
+    size: formData.size || "",
+    thickness: formData.thickness || "",
+    createdBy: String(userId),
     };
+    console.log(payload)
     try {
       if (isEdit) {
         await EditAssets(payload, formData.assetId);
@@ -156,15 +196,23 @@ const AssetMaster = () => {
   const handleCreate = () => {
     setIsEdit(false);
     setFormData({
-      assetCode: "",
-      assetName: "",
-      assetTypeId: "",
-      manufacturer: "",
-      modelNumber: "",
-      serialNumber: "",
-      purchaseDate: "",
-      warrantyExpiry: "",
-      supplier: "",
+       nameId: "",
+    isCode: "",
+    assetName: "",
+    shift: "",
+    operation: "",
+    size: "",
+    noStands: "",
+    isCompleted: "",
+    compound: "",
+    color: "",
+    thickness: "",
+    length: "",
+    dayWork:"",
+    dayD: "",
+    damSize: "",
+    embossing:"",
+    remarks: "",
     });
     setDialogOpen(true);
   };
@@ -190,7 +238,7 @@ const AssetMaster = () => {
     <Container maxWidth={false}>
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-        <Typography variant="h4">Asset Master</Typography>
+        <Typography variant="h4">Job Card</Typography>
         <Box display="flex" alignItems="center" gap={2}>
           <TextField
             placeholder="Search Assets..."
@@ -207,7 +255,7 @@ const AssetMaster = () => {
             }}
           />
           <Button variant="contained" color="primary" onClick={handleCreate}>
-            Add Asset Master
+            Create Job Card
           </Button>
         </Box>
       </Box>
@@ -221,8 +269,8 @@ const AssetMaster = () => {
             <TableHead>
               <TableRow>
                 <TableCell>#</TableCell>
-                <TableCell>Asset Name</TableCell>
-                <TableCell>Manufacturer</TableCell>
+                <TableCell>Job Name</TableCell>
+                <TableCell>Description</TableCell>
                 <TableCell align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -230,15 +278,8 @@ const AssetMaster = () => {
               {filteredAssets.length > 0 ? (
                 filteredAssets.map((asset, index) => (
                   <TableRow key={index}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{asset.assetName}</TableCell>
-                    <TableCell>{asset.manufacturer}</TableCell>
-                    <TableCell align="center">
-                      <Tooltip title="View"><IconButton onClick={() => handleView(asset)} color="info"><VisibilityIcon /></IconButton></Tooltip>
-                      <Tooltip title="Edit"><IconButton onClick={() => handleEdit(asset)} color="primary"><EditIcon /></IconButton></Tooltip>
-                      <Tooltip title="Delete"><IconButton onClick={() => handleDelete(asset)} color="error"><DeleteIcon /></IconButton></Tooltip>
-                      <Tooltip title="Operations"><IconButton onClick={() => handleSettings(asset)}><SettingsIcon /></IconButton></Tooltip>
-                    </TableCell>
+                    
+                  
                   </TableRow>
                 ))
               ) : (
@@ -251,28 +292,99 @@ const AssetMaster = () => {
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="md">
-        <DialogTitle>{isEdit ? "Edit Asset" : "Add New Asset"}</DialogTitle>
+        <DialogTitle>{isEdit ? "Edit Job Card" : "Create Job Card"}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} mt={1}>
             <Grid item xs={12} md={6} size={6}>
-              <TextField fullWidth label="Asset Name" name="getAllAssets" value={formData.assetName} onChange={handleChange} />
-              <TextField fullWidth label="Model Number" name="modelNumber" value={formData.modelNumber} onChange={handleChange} sx={{ mt: 2 }} />
-              <TextField fullWidth label="Purchase Date" name="purchaseDate" type="date" InputLabelProps={{ shrink: true }} value={formData.purchaseDate?.split("T")[0] || ""} onChange={handleChange} sx={{ mt: 2 }} />
-              <TextField fullWidth label="Manufacturer" name="manufacturer" value={formData.manufacturer} onChange={handleChange} sx={{ mt: 2 }} />
-              <TextField fullWidth label="Supplier" name="supplier" value={formData.supplier} onChange={handleChange} sx={{ mt: 2 }} />
-            </Grid>
+            <TextField fullWidth label="Order No./ Name" name="nameId" value={formData.nameId} onChange={handleChange} sx={{ mt: 2 }} />
 
-            <Grid item xs={12} md={6} size={6}>
-              <TextField fullWidth label="Asset Code" name="assetCode" value={formData.assetCode} onChange={handleChange} />
-              <TextField select fullWidth label="Asset Type Id" name="assetName" type="number" value={formData.assetName} onChange={handleChange} sx={{ mt: 2 }} >
-                {getAllAssets.map((type) => (
-                  <MenuItem key={type.id} value={type.id}>
-                    {type.type}
+              <TextField fullWidth label="Is Code" name="isCode" value={formData.isCode} onChange={handleChange} sx={{ mt: 2 }} />
+            <TextField
+                select
+                fullWidth
+                label="Asset Name"
+                name="assetId"
+                value={formData.assetId}
+                onChange={(e) => {
+                  const selectedId = e.target.value;
+                  const selectedAsset = assets.find((a) => a.assetId === selectedId);
+                  setFormData((prev) => ({
+                    ...prev,
+                    assetId: selectedId,
+                    assetName: selectedAsset?.assetName || ""
+                  }));
+                }}
+                sx={{ mt: 2 }}
+              >
+                {assets.map((asset) => (
+                  <MenuItem key={asset.assetId} value={asset.assetId}>
+                    {asset.assetName}
                   </MenuItem>
                 ))}
-              </TextField>
-              <TextField fullWidth label="Serial Number" name="serialNumber" value={formData.serialNumber} onChange={handleChange} sx={{ mt: 2 }} />
-              <TextField fullWidth label="Warranty Expiry" name="warrantyExpiry" type="date" InputLabelProps={{ shrink: true }} value={formData.warrantyExpiry?.split("T")[0] || ""} onChange={handleChange} sx={{ mt: 2 }} />
+              </TextField>            
+               <TextField
+  select
+  fullWidth
+  label="Shift"
+  name="shift"
+  value={formData.shift}
+  onChange={handleChange}
+  sx={{ mt: 2 }}
+>
+  {shift.map((s) => (
+    <MenuItem key={s.shiftId} value={s.shiftId}>
+      {s.shiftName}
+    </MenuItem>
+  ))}
+</TextField>
+
+<TextField
+  select
+  fullWidth
+  label="Operation"
+  name="operation"
+  value={formData.operation}
+  onChange={handleChange}
+  sx={{ mt: 2 }}
+>
+  {operations.map((op) => (
+    <MenuItem key={op.operationId} value={op.operationId}>
+      {op.operationName}
+    </MenuItem>
+  ))}
+</TextField>
+              <TextField fullWidth label="Size" name="size" value={formData.size} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="No of Stands" name="noStands" value={formData.noStands} onChange={handleChange} sx={{ mt: 2 }} />
+            <FormControl fullWidth sx={{ mt: 1 }}>
+                 <FormLabel id="is-completed-label">Is Completed</FormLabel>
+                     <RadioGroup
+                      row // optional: removes to stack vertically
+                     aria-labelledby="is-completed-label"
+                      name="isCompleted"
+                     value={formData.isCompleted}
+                     onChange={handleChange}
+                     >
+                      <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+                      <FormControlLabel value="no" control={<Radio />} label="No" />
+                     </RadioGroup>
+                </FormControl>     
+         <TextField fullWidth label="Compound" name="compound" value={formData.compound} onChange={handleChange} sx={{ mt: 2 }} />
+            </Grid>
+
+            <Grid item xs={12} md={6} size={6}>  
+              <TextField fullWidth label="Color" name="color" value={formData.color} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Thickness" name="thickness" value={formData.thickness} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Length" name="length" value={formData.length} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="No of Day of Work" name="dayWork" value={formData.dayWork} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Day of D.No" name="dayD" value={formData.dayD} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Takeup Dam Size" name="damSize" value={formData.damSize} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Embossing" name="embossing" value={formData.embossing} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Remarks" name="remarks" value={formData.remarks} onChange={handleChange} sx={{ mt: 2 }} />
+
+
+
+
+
             </Grid>
           </Grid>
         </DialogContent>
@@ -323,20 +435,29 @@ const AssetMaster = () => {
       </Dialog>
 
       <Dialog open={viewOpen} onClose={() => setViewOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>View Asset</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} mt={1}>
-            <TextField fullWidth label="Asset Name" value={formData.assetName} disabled />
-            <TextField fullWidth label="Asset Code" value={formData.assetCode} disabled />
-            <TextField fullWidth label="Model Number" value={formData.modelNumber} disabled />
-            <TextField fullWidth label="Serial Number" value={formData.serialNumber} disabled />
-            <TextField fullWidth label="Asset Type Id" value={formData.assetTypeId} disabled />
-            <TextField fullWidth label="Manufacturer" value={formData.manufacturer} disabled />
-            <TextField fullWidth label="Supplier" value={formData.supplier} disabled />
-            <TextField fullWidth label="Purchase Date" value={formData.purchaseDate?.split("T")[0] || ""} type="date" InputLabelProps={{ shrink: true }} disabled />
-            <TextField fullWidth label="Warranty Expiry" value={formData.warrantyExpiry?.split("T")[0] || ""} type="date" InputLabelProps={{ shrink: true }} disabled />
-          </Stack>
-        </DialogContent>
+        <DialogTitle>View Job Card</DialogTitle>
+       <DialogContent> 
+  <Stack spacing={2} mt={1}>
+    <TextField fullWidth label="Order No./ Name" value={formData.nameId} disabled />
+    <TextField fullWidth label="Is Code" value={formData.isCode} disabled />
+    <TextField fullWidth label="Asset Name" value={formData.assetName} disabled />
+    <TextField fullWidth label="Shift" value={formData.shiftName || ''} disabled />
+    <TextField fullWidth label="Operation" value={formData.operationName || ''} disabled />
+    <TextField fullWidth label="Size" value={formData.size} disabled />
+    <TextField fullWidth label="No of Stands" value={formData.noStands} disabled />
+    <TextField fullWidth label="Is Completed" value={formData.isCompleted === 'yes' ? 'Yes' : 'No'} disabled />
+    <TextField fullWidth label="Compound" value={formData.compound} disabled />
+    <TextField fullWidth label="Color" value={formData.color} disabled />
+    <TextField fullWidth label="Thickness" value={formData.thickness} disabled />
+    <TextField fullWidth label="Length" value={formData.length} disabled />
+    <TextField fullWidth label="No of Day of Work" value={formData.dayWork} disabled />
+    <TextField fullWidth label="Day of D.No" value={formData.dayD} disabled />
+    <TextField fullWidth label="Takeup Dam Size" value={formData.damSize} disabled />
+    <TextField fullWidth label="Embossing" value={formData.embossing} disabled />
+    <TextField fullWidth label="Remarks" value={formData.remarks} disabled />
+  </Stack>
+</DialogContent>
+
         <DialogActions>
           <Button onClick={() => setViewOpen(false)}>Close</Button>
         </DialogActions>
@@ -352,4 +473,4 @@ const AssetMaster = () => {
   );
 };
 
-export default AssetMaster;
+export default JobCard;
