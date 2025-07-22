@@ -52,35 +52,29 @@ const PurchaseOrder = () => {
     useEffect(() => {
         if (officeId > 0) loadPurchaseOrders();
     }, [officeId]);
-<<<<<<< HEAD
     const filteredPOs = purchaseOrders.filter(po =>
         po.poNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
         po.vendorName.toLowerCase().includes(searchQuery.toLowerCase())
     );
-=======
-        const filteredPOs = purchaseOrders.filter(po =>
-         po.poNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        po.vendorName?.toLowerCase().includes(searchQuery.toLowerCase()) 
-    );  
->>>>>>> 2eb65136e3e7ee9f9bdea1e52d76dad07a06f6a2
     return (
         <div className="col-12">
-           <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                <Typography variant="h4">Purchase Order</Typography>
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                <Typography variant="h4">Purchase Orders</Typography>
                 <Box display="flex" alignItems="center" gap={2}>
+                    {/* ✅ Search Bar */}
                     <TextField
-                        placeholder="Search by PO Number, Vendor Name or Actions"
+                        placeholder="Search PO Number or Vendor..."
+                        variant="outlined"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+                        sx={{ width: 300 }}
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
                                     <SearchIcon />
                                 </InputAdornment>
-                            ),
+                            )
                         }}
-                        size="small"
-                        sx={{ width: 300 }}
                     />
                     <Button variant="contained" color="primary" onClick={() => setCreateDialogOpen(true)}>
                         Create New Purchase Order
