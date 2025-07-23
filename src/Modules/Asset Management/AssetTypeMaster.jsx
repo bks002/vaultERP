@@ -86,7 +86,7 @@ const AssetTypeMaster = () => {
                 <Box display="flex" gap={2}>
                     {/* ✅ Search input */}
                     <TextField
-                        placeholder="Search type or description"
+                        placeholder="Search by type or description"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         size="small"

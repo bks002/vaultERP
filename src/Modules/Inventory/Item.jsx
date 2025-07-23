@@ -155,10 +155,8 @@ const ItemMaster = () => {
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Typography variant="h4">Item Master</Typography>
                 <Box display="flex" alignItems="center" gap={2}>
-                    <TextField
-                        placeholder="Search items..."
-                        variant="outlined"
-                        sx={{ width: 300 }}
+                   <TextField
+                        placeholder="Search by Item Name, Description or Category"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         InputProps={{
@@ -168,6 +166,8 @@ const ItemMaster = () => {
                                 </InputAdornment>
                             ),
                         }}
+                        size="small"
+                        sx={{ width: 300 }}
                     />
                     <Button variant="contained" color="primary" onClick={handleCreateNew}>
                         Create New Item

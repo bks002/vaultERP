@@ -15,6 +15,13 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useSelector } from "react-redux";
 import { getAllShift } from '../../Services/ShiftService.js';
+import {
+    createPlanning,
+    deletePlanning,
+    getAllPlanningByOffice,
+    updatePlanning
+} from "../../Services/PlanningService.js";
+import * as XLSX from 'xlsx';
 
 const DailyPlanningSheet = () => {
     const officeId = useSelector((state) => state.user.officeId);
@@ -25,123 +32,46 @@ const DailyPlanningSheet = () => {
     const [Items, setItems] = useState([]);
     const [Operations, setOperations] = useState([]);
     const [Assets, setAssets] = useState([]);
-    const [shift, setShift] = useState([]);
+    const [planningData, setPlanningData] = useState([]);
     const [shifts, setShifts] = useState([]);
     const [selectedShift, setSelectedShift] = useState({
-        id: null,
-        Item: '',
-        Date: '',
-        operationName: '',
-        EmployeeName: '',
-        process: '',
-        asset: '',
-        shift: '',
+        officeId:0,
+        id: 0,
+        itemId: 0,
+        planDate: '',
+        operationId: 0,
+        employeeId: 0,
+        assetId: 0,
+        shiftId: 0,
         manpower: '',
         target: '',
-        achieved: '',
+        achieved: 0,
         backfeed: '',
         remark: '',
+        created_by: userId || 0
     });
-
     const [alert, setAlert] = useState({ open: false, type: 'success', message: '' });
-
-    // 1. Define a configuration for form fields at the top of the component
-    const formFields = [
-        {
-            label: 'Shift Date',
-            name: 'Date',
-            type: 'date',
-            required: true,
-            grid: { xs: 12, md: 6 },
-        },
-        {
-            label: 'Shift',
-            name: 'shift',
-            type: 'select',
-            optionsKey: 'shifts',
-            optionLabel: 'shiftName',
-            optionValue: 'shiftName',
-            required: true,
-            grid: { xs: 12, md: 6 },
-        },
-        {
-            label: 'Machine Name',
-            name: 'asset',
-            type: 'select',
-            optionsKey: 'Assets',
-            optionLabel: 'assetName',
-            optionValue: 'assetName',
-            required: true,
-            grid: { xs: 12, md: 6 },
-        },
-        {
-            label: 'Manpower',
-            name: 'manpower',
-            type: 'text',
-            grid: { xs: 12, md: 6 },
-        },
-        {
-            label: 'Operation Name',
-            name: 'operationName',
-            type: 'select',
-            optionsKey: 'Operations',
-            optionLabel: 'operationName',
-            optionValue: 'operationName',
-            grid: { xs: 12, md: 6 },
-        },
-        {
-            label: 'Employee Name',
-            name: 'EmployeeName',
-            type: 'select',
-            optionsKey: 'Employees',
-            optionLabel: 'employeeName',
-            optionValue: 'employeeName',
-            required: true,
-            grid: { xs: 12, md: 6 },
-        },
-        {
-            label: 'Item Name',
-            name: 'Item',
-            type: 'select',
-            optionsKey: 'Items',
-            optionLabel: 'name',
-            optionValue: 'name',
-            required: true,
-            grid: { xs: 12, md: 6 },
-        },
-        {
-            label: 'Target',
-            name: 'target',
-            type: 'text',
-            grid: { xs: 12, md: 6 },
-        },
-        {
-            label: 'Back Feed',
-            name: 'backfeed',
-            type: 'text',
-            grid: { xs: 12, md: 6 },
-        },
-    ];
 
     useEffect(() => {
         if (officeId) {
-            Promise.all([
-                getAllEmployees(officeId),
-                getAllOperation(officeId),
-                getAllItems(officeId),
-                getAllAssets(officeId),
-                getAllShift(officeId),
-            ]).then(([employees, operations, items, assets, shifts]) => {
-                setEmployees(employees);
-                setOperations(operations);
-                setItems(items);
-                setAssets(assets);
-                setShifts(shifts);
-            }).catch((err) => {
-                showAlert('error', 'Failed to load dropdown data');
-            });
+            loadPlanningData();
+            loadEmployees();
+            loadOperations();
+            loadItems();
+            loadAssets();
+            loadShift();
         }
     }, [officeId]);
+
+    const loadPlanningData = async()=>{
+        try {
+            const data = await getAllPlanningByOffice(officeId);
+            setPlanningData(data);
+        }
+        catch {
+            showAlert('error','Failed to load planning data')
+        }
+    }
 
     const loadEmployees = async () => {
         try {
@@ -195,19 +125,20 @@ const DailyPlanningSheet = () => {
     const handleCreate = () => {
         setIsEdit(false);
         setSelectedShift({
-            id: null,
-            Item: '',
-            Date: '',
-            operationName: '',
-            EmployeeName: '',
-            process: '',
-            asset: '',
-            shift: '',
+            officeId: officeId,
+            id: 0,
+            itemId: 0,
+            planDate: '',
+            operationId: 0,
+            employeeId: 0,
+            assetId: 0,
+            shiftId: 0,
             manpower: '',
             target: '',
-            achieved: '',
+            achieved: 0,
             backfeed: '',
             remark: '',
+            created_by: userId || 0
         });
         setDialogOpen(true);
     };
@@ -218,50 +149,85 @@ const DailyPlanningSheet = () => {
         setDialogOpen(true);
     };
 
-    const handleDelete = (entry) => {
-        if (window.confirm(`Are you sure you want to delete "${entry.EmployeeName}" shift?`)) {
-            setShift(prev => prev.filter(p => p.id !== entry.id));
-            showAlert('success', 'Shift deleted successfully');
+    const handleDelete = async (entry) => {
+        if (window.confirm(`Are you sure you want to delete this shift?`)) {
+            try {
+                await deletePlanning(entry.id);
+                showAlert('success', 'Shift deleted successfully');
+                loadPlanningData(); // reload after delete
+            } catch (err) {
+                showAlert('error', err.message || 'Failed to delete');
+            }
         }
     };
 
+
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setSelectedShift(prev => ({ ...prev, [name]: value }));
+        setSelectedShift((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSave = () => {
-        const newEntry = {
-            ...selectedShift,
-            id: selectedShift.id || Date.now(), // use existing ID or assign new one
-        };
-
-        if (!selectedShift.EmployeeName || !selectedShift.Item || !selectedShift.asset || !selectedShift.Date) {
+    const handleSave = async () => {
+        console.log(selectedShift)
+        if (!selectedShift.employeeId || !selectedShift.itemId || !selectedShift.assetId || !selectedShift.planDate) {
             showAlert('error', 'Please fill required fields');
             return;
         }
 
-        if (isEdit) {
-            setShift(prev =>
-                prev.map(entry =>
-                    entry.id === newEntry.id ? newEntry : entry
-                )
-            );
-            showAlert('success', 'Shift updated successfully');
-        } else {
-            setShift(prev => [...prev, newEntry]);
-            showAlert('success', 'Shift added successfully');
+        try {
+            if (isEdit) {
+                await updatePlanning(selectedShift.id, selectedShift);
+                showAlert('success', 'Shift updated successfully');
+            } else {
+                await createPlanning(selectedShift);
+                showAlert('success', 'Shift added successfully');
+            }
+            loadPlanningData(); // reload after save
+            setDialogOpen(false);
+        } catch (err) {
+            showAlert('error', err.message || 'Error occurred');
+        }
+    };
+    const handleExport = () => {
+        if (!planningData || planningData.length === 0) {
+            showAlert('error', 'No data to export');
+            return;
         }
 
-        setDialogOpen(false);
+        const exportData = planningData.map((p, index) => ({
+            '#': index + 1,
+            'Plan Date': p.planDate ? `${p.planDate.substring(0, 10)}` : '',
+            'Machine Name': Assets.find(a => a.assetId === p.assetId)?.assetName,
+            'Operator Name': Employees.find(e => e.employeeId === p.employeeId)?.employeeName,
+            'Manpower': p.manpower,
+            'Item Name': Items.find(i => i.id === p.itemId)?.name,
+            'Shift Name': shifts.find(s => s.shiftId === p.shiftId)?.shiftName,
+            'Target': p.target,
+            'Backfeed': p.backfeed,
+            'Remarks': p.remark
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Planning Sheet');
+
+        XLSX.writeFile(workbook, 'DailyPlanningSheet.xlsx');
     };
 
     return (
         <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Typography variant="h4">Daily Planning Sheet</Typography>
-                <Button variant="contained" onClick={handleCreate}>Create Planning</Button>
+                <Box>
+                    <Button variant="outlined" onClick={handleExport} sx={{ mr: 1 }}>
+                        Export to Excel
+                    </Button>
+                    <Button variant="contained" onClick={handleCreate}>
+                        Create Planning
+                    </Button>
+                </Box>
             </Box>
+
 
             <Table>
                 <TableHead>
@@ -276,15 +242,15 @@ const DailyPlanningSheet = () => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {shift.length > 0 ? (
-                        shift.map((emp, index) => (
+                    {planningData.length > 0 ? (
+                        planningData.map((emp, index) => (
                             <TableRow key={emp.id}>
                                 <TableCell>{index + 1}</TableCell>
-                                <TableCell>{emp.asset}</TableCell>
-                                <TableCell>{emp.EmployeeName}</TableCell>
+                                <TableCell>{Assets.find(a => a.assetId === emp.assetId)?.assetName}</TableCell>
+                                <TableCell>{Employees.find(e => e.employeeId === emp.employeeId)?.employeeName}</TableCell>
                                 <TableCell>{emp.manpower}</TableCell>
-                                <TableCell>{emp.Item}</TableCell>
-                                <TableCell>{emp.shift}</TableCell>
+                                <TableCell>{Items.find(i => i.id === emp.itemId)?.name}</TableCell>
+                                <TableCell>{shifts.find(s => s.shiftId === emp.shiftId)?.shiftName}</TableCell>
                                 <TableCell align="center">
                                     <Tooltip title="Edit">
                                         <IconButton onClick={() => handleEdit(emp)} color="primary">
@@ -311,43 +277,126 @@ const DailyPlanningSheet = () => {
                 <DialogTitle>{isEdit ? 'Edit Shift' : 'Add Shift'}</DialogTitle>
                 <DialogContent>
                     <Grid container spacing={2} sx={{ mt: 1 }}>
-                        {formFields.map((field) => (
-                            <Grid item key={field.name} xs={field.grid.xs} md={field.grid.md}>
-                                {field.type === 'select' ? (
-                                    <TextField
-                                        select
-                                        label={field.label}
-                                        name={field.name}
-                                        value={selectedShift[field.name] || ''}
-                                        onChange={handleChange}
-                                        fullWidth
-                                        sx={{ mt: 2 }}
-                                        SelectProps={{ native: true }}
-                                    >
-                                        <option value=""></option>
-                                        {(field.optionsKey ? (eval(field.optionsKey) || []) : []).map((option) => (
-                                            <option
-                                                key={option[field.optionValue] || option.id}
-                                                value={option[field.optionValue]}
-                                            >
-                                                {option[field.optionLabel]}
-                                            </option>
-                                        ))}
-                                    </TextField>
-                                ) : (
-                                    <TextField
-                                        label={field.label}
-                                        name={field.name}
-                                        type={field.type}
-                                        value={selectedShift[field.name] || ''}
-                                        onChange={handleChange}
-                                        fullWidth
-                                        sx={{ mt: 2 }}
-                                        InputLabelProps={field.type === 'date' ? { shrink: true } : undefined}
-                                    />
-                                )}
-                            </Grid>
-                        ))}
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                label="Plan Date"
+                                name="planDate"
+                                type="date"
+                                value={selectedShift.planDate ? selectedShift.planDate.substring(0, 10) : ''}
+                                onChange={handleChange}
+                                fullWidth
+                                InputLabelProps={{ shrink: true }}
+                            />
+                            <TextField
+                                select
+                                label="Shift"
+                                name="shiftId"
+                                value={selectedShift.shiftId}
+                                onChange={handleChange}
+                                fullWidth
+                                sx={{ mt: 2 }}
+                                SelectProps={{ native: true }}
+                            >
+                                <option value=""></option>
+                                {shifts.map((a) => (
+                                    <option key={a.shiftId} value={a.shiftId}>{a.shiftName}</option>
+                                ))}
+                            </TextField>
+                            <TextField
+                                select
+                                label="Machine Name"
+                                name="assetId"
+                                value={selectedShift.assetId}
+                                onChange={handleChange}
+                                fullWidth
+                                sx={{ mt: 2 }}
+                                SelectProps={{ native: true }}
+                            >
+                                <option value=""></option>
+                                {Assets.map((a) => (
+                                    <option key={a.assetId} value={a.assetId}>{a.assetName}</option>
+                                ))}
+                            </TextField>
+                            <TextField
+                                fullWidth
+                                label="Manpower"
+                                name="manpower"
+                                value={selectedShift.manpower}
+                                onChange={handleChange}
+                                sx={{ mt: 2 }}
+                            />
+                            <TextField
+                                select
+                                label="Operation Name"
+                                name="operationId"
+                                value={selectedShift.operationId}
+                                onChange={handleChange}
+                                fullWidth
+                                sx={{ mt: 2 }}
+                                SelectProps={{ native: true }}
+                            >
+                                <option value=""></option>
+                                {Operations.map((op) => (
+                                    <option key={op.operationId} value={op.operationId}>{op.operationName}</option>
+                                ))}
+                            </TextField>
+                        </Grid>
+
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                select
+                                label="Employee Name"
+                                name="employeeId"
+                                value={selectedShift.employeeId}
+                                onChange={handleChange}
+                                fullWidth
+                                SelectProps={{ native: true }}
+                            >
+                                <option value=""></option>
+                                {Employees.map((emp) => (
+                                    <option key={emp.employeeId} value={emp.employeeId}>{emp.employeeName}</option>
+                                ))}
+                            </TextField>
+                            <TextField
+                                select
+                                label="Item Name"
+                                name="itemId"
+                                value={selectedShift.itemId}
+                                onChange={handleChange}
+                                fullWidth
+                                sx={{ mt: 2 }}
+                                SelectProps={{ native: true }}
+                            >
+                                <option value=""></option>
+                                {Items.map((i) => (
+                                    <option key={i.id} value={i.id}>{i.name}</option>
+                                ))}
+                            </TextField>
+                            <TextField
+                                fullWidth
+                                label="Target (KM)"
+                                name="target"
+                                value={selectedShift.target}
+                                onChange={handleChange}
+                                sx={{ mt: 2 }}
+                            />
+                            <TextField
+                                fullWidth
+                                label="Back Feed (KM)"
+                                name="backfeed"
+                                value={selectedShift.backfeed}
+                                onChange={handleChange}
+                                sx={{ mt: 2 }}
+                            />
+                            <TextField
+                                fullWidth
+                                label="Remarks"
+                                name="remark"
+                                value={selectedShift.remark}
+                                onChange={handleChange}
+                                sx={{ mt: 2 }}
+                            />
+                        </Grid>
                     </Grid>
                 </DialogContent>
                 <DialogActions>
@@ -364,6 +413,7 @@ const DailyPlanningSheet = () => {
             />
         </Container>
     );
+
 };
 
 export default DailyPlanningSheet;

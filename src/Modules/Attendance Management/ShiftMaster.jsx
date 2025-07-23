@@ -85,10 +85,6 @@ const ShiftMaster = () => {
         }
     };
 
-    const filteredShift = shift.filter((shift) =>
-        shift.shiftName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        shift.shiftCode?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
 
     const handleEdit = (shift) => {
         setIsEdit(true)
@@ -122,7 +118,10 @@ const ShiftMaster = () => {
             showAlert('error', 'Failed to delete shift');
         }
     };
-
+    const filteredShift = shift.filter((v) =>
+        v.shiftName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.shiftCode?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
     return (
         <Container maxWidth={false}>
             {/* Header */}
@@ -130,9 +129,7 @@ const ShiftMaster = () => {
                 <Typography variant="h4">Shift Master</Typography>
                 <Box display="flex" alignItems="center" gap={2}>
                     <TextField
-                        placeholder="Search Shift..."
-                        variant="outlined"
-                        sx={{ width: 300 }}
+                        placeholder="Search by Shift Name, Shift Code"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         InputProps={{
@@ -142,6 +139,8 @@ const ShiftMaster = () => {
                                 </InputAdornment>
                             ),
                         }}
+                        size="small"
+                        sx={{ width: 300 }}
                     />
                     <Button variant="contained" color="primary" onClick={handleCreate}>
                         Add Shift
