@@ -17,16 +17,20 @@ import { DataGrid } from "@mui/x-data-grid";
 import {
     getCategories,
     getVendors,
+    getAllItems,
     fetchFilteredRate,
 } from "../../Services/InventoryService.jsx";
 import POQuantity from "./POQuantity.jsx";
 import EditIcon from '@mui/icons-material/Edit';
+import Autocomplete from '@mui/material/Autocomplete';
 
 const CreatePurchaseOrder = ({ open, onClose, officeId }) => {
     const [categories, setCategories] = useState([]);
     const [vendors, setVendors] = useState([]);
     const [selectedCategoryId, setSelectedCategoryId] = useState("");
     const [selectedVendorId, setSelectedVendorId] = useState("");
+    const [selectedItemId, setSelectedItemId] = useState("");
+    const [item, setItem] = useState([]);
     const [items, setItems] = useState([]);
     const [selectedItemIds, setSelectedItemIds] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -43,10 +47,12 @@ const CreatePurchaseOrder = ({ open, onClose, officeId }) => {
             try {
                 const categoryData = await getCategories(officeId);
                 const vendorData = await getVendors(officeId);
+                const itemData = await getAllItems(officeId);
                 const data = await fetchFilteredRate(officeId);
                 setCategories(categoryData);
                 setVendors(vendorData);
-                setItems(data || []);
+                setItem(itemData);
+                setItems(data);
             } catch (error) {
                 console.error(error);
             } finally {
@@ -67,7 +73,8 @@ const CreatePurchaseOrder = ({ open, onClose, officeId }) => {
             try {
                 const category = selectedCategoryId || null;
                 const vendor = selectedVendorId || null;
-                const data = await fetchFilteredRate(officeId, category, null, vendor);
+                const item = selectedItemId || null;
+                const data = await fetchFilteredRate(officeId, category, item, vendor);
                 setItems(data || []);
             } catch (error) {
                 console.error(error);
@@ -76,7 +83,7 @@ const CreatePurchaseOrder = ({ open, onClose, officeId }) => {
             }
         };
         if (open) loadItems();
-    }, [officeId, selectedCategoryId, selectedVendorId, open]);
+    }, [officeId, selectedCategoryId, selectedVendorId, selectedItemId, open]);
 
     useEffect(() => {
         if (!open) setEditingPriceRowId(null);
@@ -190,6 +197,19 @@ const CreatePurchaseOrder = ({ open, onClose, officeId }) => {
                                 </MenuItem>
                             ))}
                         </Select>
+                    </FormControl>
+
+                    <FormControl fullWidth margin="normal">
+                        <Autocomplete
+                            options={item}
+                            getOptionLabel={(option) => option.name || ""}
+                            value={item.find(i => i.id === selectedItemId) || null}
+                            onChange={(event, newValue) => setSelectedItemId(newValue ? newValue.id : "")}
+                            renderInput={(params) => (
+                                <TextField {...params} label="Items" margin="normal" fullWidth />
+                            )}
+                            isOptionEqualToValue={(option, value) => option.id === value.id}
+                        />
                     </FormControl>
 
                     <Typography variant="h6" mt={2}>
