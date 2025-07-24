@@ -207,6 +207,12 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemText primary="Party Master" />
                     </ListItemButton>
                 </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Work Order Management/ProductMaster"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Product Master" />
+                    </ListItemButton>
+                </ListItem>
             </List>
         </Drawer>
 
