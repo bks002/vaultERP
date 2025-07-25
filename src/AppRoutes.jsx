@@ -21,6 +21,7 @@ import DailyPlanningSheet from "./Modules/Employee/DailyPlanningSheet.jsx";
 import EmployeeShift from "./Modules/Employee/EmployeeShift.jsx";
 import JobCard from "./Modules/Employee/JobCard.jsx";
 import PartyMaster from "./Modules/Work Order Management/PartyMaster.jsx";
+import ProductMaster from "./Modules/Work Order Management/ProductMaster.jsx"; // Assuming this is the correct import path
 
 function AppRoutes() {
   return (
@@ -43,6 +44,7 @@ function AppRoutes() {
       <Route path="/employeeshift" element={<AuthWrapper><EmployeeShift /></AuthWrapper>} />
       <Route path="/JobCard" element={<AuthWrapper><JobCard /></AuthWrapper>} />
       <Route path="Work Order Management/PartyMaster" element={<AuthWrapper><PartyMaster /></AuthWrapper>} />
+      <Route path="Work Order Management/ProductMaster" element={<AuthWrapper><ProductMaster /></AuthWrapper>} />
       
       {/* Redirect to dashboard if no match */}
     </Routes>
