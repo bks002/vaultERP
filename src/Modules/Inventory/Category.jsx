@@ -121,9 +121,7 @@ const Category = () => {
 
                 <Box display="flex" alignItems="center" gap={2}>
                     <TextField
-                        placeholder="Search category..."
-                        variant="outlined"
-                        sx={{ width: 300 }} 
+                        placeholder="Search by Category Name, Description"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         InputProps={{
@@ -133,6 +131,8 @@ const Category = () => {
                                 </InputAdornment>
                             ),
                         }}
+                        size="small"
+                        sx={{ width: 300 }}
                     />
                     <Button variant="contained" color="primary" onClick={handleCreateNew}>
                         Create New Category
