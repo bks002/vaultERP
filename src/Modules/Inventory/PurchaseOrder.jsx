@@ -64,10 +64,9 @@ const PurchaseOrder = () => {
                     {/* ✅ Search Bar */}
                     <TextField
                         placeholder="Search PO Number or Vendor..."
-                        variant="outlined"
+                       
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        sx={{ width: 300 }}
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
@@ -75,6 +74,8 @@ const PurchaseOrder = () => {
                                 </InputAdornment>
                             )
                         }}
+                         size="small"
+                        sx={{ width: 300 }}
                     />
                     <Button variant="contained" color="primary" onClick={() => setCreateDialogOpen(true)}>
                         Create New Purchase Order

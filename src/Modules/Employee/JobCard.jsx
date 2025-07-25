@@ -213,7 +213,7 @@ if (window.confirm(`Are you sure you want to delete job card "${job.orderNo}"?`)
 
   return (
     <Container maxWidth={false}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
         <Typography variant="h4">Job Card</Typography>
         <Box display="flex" gap={2}>
           <TextField
