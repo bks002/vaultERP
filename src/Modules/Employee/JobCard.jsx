@@ -4,7 +4,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import {
   Container, Typography, Grid, TextField, Box, Button, Dialog, DialogTitle, DialogContent, DialogActions,
   MenuItem, Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, InputAdornment, IconButton, Tooltip, Stack, Paper, Checkbox, FormControl,
+  TableRow, InputAdornment, IconButton, Tooltip, Stack, Paper, FormControl,
   FormLabel, RadioGroup, FormControlLabel, Radio,
 } from "@mui/material";
 import EditIcon from '@mui/icons-material/Edit';
@@ -34,7 +34,6 @@ const JobCard = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({ open: false, type: "success", message: "" });
 
   const defaultFormData = {
@@ -59,7 +58,7 @@ const JobCard = () => {
     embrossing: "",
     remark: "",
     createdBy: userId,
-    createdOn:"",
+    createdOn: "",
     updatedBy: userId,
     updatedOn: "",
   };
@@ -126,7 +125,7 @@ const JobCard = () => {
     setDialogOpen(true);
   };
 
- const populateFormData = (job) => ({
+  const populateFormData = (job) => ({
     id: job.id,
     orderNo: job.orderNo,
     isCode: job.isCode,
@@ -145,11 +144,11 @@ const JobCard = () => {
     takeUpDrumSize: job.takeUpDrumSize,
     embrossing: job.embrossing,
     remark: job.remark,
-    date: job.date,            
-    shape: job.shape,  
+    date: job.date,
+    shape: job.shape,
   });
 
-    const handleEdit = (data) => {
+  const handleEdit = (data) => {
     setFormData({ ...data, isCompacted: data.isCompacted ? "yes" : "no" });
     setIsEdit(true);
     setViewOpen(false);
@@ -163,7 +162,7 @@ const JobCard = () => {
   };
 
   const handleDelete = async (job) => {
-if (window.confirm(`Are you sure you want to delete job card "${job.orderNo}"?`)) {
+    if (window.confirm(`Are you sure you want to delete job card "${job.orderNo}"?`)) {
       try {
         await deleteJobCard(job.id);
         showAlert("success", "Job card deleted successfully");
@@ -174,40 +173,38 @@ if (window.confirm(`Are you sure you want to delete job card "${job.orderNo}"?`)
     }
   };
 
-   const handleSave = async () => {
-  const payload = {
-    ...formData,
-    assetId: Number(formData.assetId),
-    shiftId: Number(formData.shiftId),
-    operationId: Number(formData.operationId),
-    isCompacted: formData.isCompacted === "yes",
-    detail: formData.remark || "", // ✅ fix 1: backend requires 'detail' field
-    createdBy: Number(userId), 
-    createdOn: new Date().toISOString(),
-  };
+  const handleSave = async () => {
+    const payload = {
+      ...formData,
+      assetId: Number(formData.assetId),
+      shiftId: Number(formData.shiftId),
+      operationId: Number(formData.operationId),
+      isCompacted: formData.isCompacted === "yes",
+      detail: formData.remark || "",
+      createdBy: Number(userId),
+      createdOn: new Date().toISOString(),
+    };
 
-  console.log("Submitting payload:", payload);
-
-  if (!formData.orderNo || !formData.assetId || !formData.shiftId || !formData.operationId) {
-    showAlert("error", "Please fill all required fields");
-    return;
-  }
-
-  try {
-    if (isEdit) {
-      await updateJobCard(formData.id, payload);
-      showAlert("success", "Job card updated successfully");
-    } else {
-      await createJobCard(payload);
-      showAlert("success", "Job card created successfully");
+    if (!formData.orderNo || !formData.assetId || !formData.shiftId || !formData.operationId) {
+      showAlert("error", "Please fill all required fields");
+      return;
     }
-    setDialogOpen(false);
-    await fetchJobCardData();
-  } catch (error) {
-    console.error("Save failed:", error.response?.data || error.message || error);
-    showAlert("error", error.response?.data?.message || "Failed to save job card");
-  }
-};
+
+    try {
+      if (isEdit) {
+        await updateJobCard(formData.id, payload);
+        showAlert("success", "Job card updated successfully");
+      } else {
+        await createJobCard(payload);
+        showAlert("success", "Job card created successfully");
+      }
+      setDialogOpen(false);
+      await fetchJobCardData();
+    } catch (error) {
+      console.error("Save failed:", error.response?.data || error.message || error);
+      showAlert("error", error.response?.data?.message || "Failed to save job card");
+    }
+  };
 
 
 
@@ -271,54 +268,54 @@ if (window.confirm(`Are you sure you want to delete job card "${job.orderNo}"?`)
         <DialogTitle>{isEdit ? "Edit Job Card" : "Create Job Card"}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} mt={1}>
-  <Grid item xs={12} sm={6}>
-    <TextField fullWidth label="Order No" name="orderNo" value={formData.orderNo} onChange={handleChange} />
-    <TextField fullWidth label="IS Code" name="isCode" value={formData.isCode} onChange={handleChange} sx={{ mt: 2 }} />
-    <TextField fullWidth label="Date" name="date" value={formData.date} onChange={handleChange} sx={{ mt: 2 }} />
-    <TextField select fullWidth label="Asset" name="assetId" value={formData.assetId} onChange={handleChange} sx={{ mt: 2 }}>
-      {assets.map((a) => (
-        <MenuItem key={a.assetId} value={a.assetId}>
-          {a.assetName}
-        </MenuItem>
-      ))}
-    </TextField>
-    <TextField select fullWidth label="Shift" name="shiftId" value={formData.shiftId} onChange={handleChange} sx={{ mt: 2 }}>
-      {shift.map((s) => (
-        <MenuItem key={s.shiftId} value={s.shiftId}>
-          {s.shiftName}
-        </MenuItem>
-      ))}
-    </TextField>
-    <TextField select fullWidth label="Operation" name="operationId" value={formData.operationId} onChange={handleChange} sx={{ mt: 2 }}>
-      {operations.map((o) => (
-        <MenuItem key={o.operationId} value={o.operationId}>
-          {o.operationName}
-        </MenuItem>
-      ))}
-    </TextField>
-    <TextField fullWidth label="Size" name="size" value={formData.size} onChange={handleChange} sx={{ mt: 2 }} />
-    <TextField fullWidth label="No. Dia of Stands" name="noDiaOfStands" value={formData.noDiaOfStands} onChange={handleChange} sx={{ mt: 2 }} />
-    <TextField fullWidth label="Shape" name="shape" value={formData.shape} onChange={handleChange} sx={{ mt: 2 }} />
-    <FormControl sx={{ mt: 2 }}>
-      <FormLabel>Is Compacted</FormLabel>
-      <RadioGroup row name="isCompacted" value={formData.isCompacted} onChange={handleChange}>
-        <FormControlLabel value="yes" control={<Radio />} label="Yes" />
-        <FormControlLabel value="no" control={<Radio />} label="No" />
-      </RadioGroup>
-    </FormControl>
-  </Grid>
-  <Grid item xs={12} sm={6}>
-    <TextField fullWidth label="Compound" name="compound" value={formData.compound} onChange={handleChange} sx={{ mt: 2 }} />
-    <TextField fullWidth label="Color" name="color" value={formData.color} onChange={handleChange} sx={{ mt: 2 }} />
-    <TextField fullWidth label="Thickness" name="thickness" value={formData.thickness} onChange={handleChange} sx={{ mt: 2 }} />
-    <TextField fullWidth label="Length" name="length" value={formData.length} onChange={handleChange} sx={{ mt: 2 }} />
-    <TextField fullWidth label="No. Dia of AM Wire" name="noDiaOfAmWire" value={formData.noDiaOfAmWire} onChange={handleChange} sx={{ mt: 2 }} />
-    <TextField fullWidth label="Pay Off Dno" name="payOffDno" value={formData.payOffDno} onChange={handleChange} sx={{ mt: 2 }} />
-    <TextField fullWidth label="Take Up Drum Size" name="takeUpDrumSize" value={formData.takeUpDrumSize} onChange={handleChange} sx={{ mt: 2 }} />
-    <TextField fullWidth label="Embrossing" name="embrossing" value={formData.embrossing} onChange={handleChange} sx={{ mt: 2 }} />
-    <TextField fullWidth label="Remarks" name="remark" value={formData.remark} onChange={handleChange} sx={{ mt: 2 }} />
-  </Grid>
-</Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="Order No" name="orderNo" value={formData.orderNo} onChange={handleChange} />
+              <TextField fullWidth label="IS Code" name="isCode" value={formData.isCode} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Date" name="date" value={formData.date} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField select fullWidth label="Asset" name="assetId" value={formData.assetId} onChange={handleChange} sx={{ mt: 2 }}>
+                {assets.map((a) => (
+                  <MenuItem key={a.assetId} value={a.assetId}>
+                    {a.assetName}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField select fullWidth label="Shift" name="shiftId" value={formData.shiftId} onChange={handleChange} sx={{ mt: 2 }}>
+                {shift.map((s) => (
+                  <MenuItem key={s.shiftId} value={s.shiftId}>
+                    {s.shiftName}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField select fullWidth label="Operation" name="operationId" value={formData.operationId} onChange={handleChange} sx={{ mt: 2 }}>
+                {operations.map((o) => (
+                  <MenuItem key={o.operationId} value={o.operationId}>
+                    {o.operationName}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField fullWidth label="Size" name="size" value={formData.size} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="No. Dia of Stands" name="noDiaOfStands" value={formData.noDiaOfStands} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Shape" name="shape" value={formData.shape} onChange={handleChange} sx={{ mt: 2 }} />
+              <FormControl sx={{ mt: 2 }}>
+                <FormLabel>Is Compacted</FormLabel>
+                <RadioGroup row name="isCompacted" value={formData.isCompacted} onChange={handleChange}>
+                  <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+                  <FormControlLabel value="no" control={<Radio />} label="No" />
+                </RadioGroup>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="Compound" name="compound" value={formData.compound} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Color" name="color" value={formData.color} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Thickness" name="thickness" value={formData.thickness} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Length" name="length" value={formData.length} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="No. Dia of AM Wire" name="noDiaOfAmWire" value={formData.noDiaOfAmWire} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Pay Off Dno" name="payOffDno" value={formData.payOffDno} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Take Up Drum Size" name="takeUpDrumSize" value={formData.takeUpDrumSize} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Embrossing" name="embrossing" value={formData.embrossing} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Remarks" name="remark" value={formData.remark} onChange={handleChange} sx={{ mt: 2 }} />
+            </Grid>
+          </Grid>
 
         </DialogContent>
         <DialogActions>
@@ -327,40 +324,40 @@ if (window.confirm(`Are you sure you want to delete job card "${job.orderNo}"?`)
         </DialogActions>
       </Dialog>
 
-      
 
-    {/* View Dialog */}
-    <Dialog open={viewOpen} onClose={() => setViewOpen(false)} fullWidth maxWidth="md">
-      <DialogTitle>View Job Card</DialogTitle>
-     <DialogContent>
-  <Stack spacing={2} mt={1}>
-    <TextField fullWidth label="Order No" value={formData.orderNo || ''} disabled />
-    <TextField fullWidth label="IS Code" value={formData.isCode || ''} disabled />
-    <TextField fullWidth label="Date" value={formData.date || ''} disabled />
-    <TextField fullWidth label="Asset" value={assets.find(a => a.assetId === formData.assetId)?.assetName || '-'} disabled />
-    <TextField fullWidth label="Shift" value={shift.find(s => s.shiftId === formData.shiftId)?.shiftName || '-'} disabled />
-    <TextField fullWidth label="Operation" value={operations.find(o => o.operationId === formData.operationId)?.operationName || '-'} disabled />
-    <TextField fullWidth label="Size" value={formData.size || ''} disabled />
-    <TextField fullWidth label="No. Dia of Stands" value={formData.noDiaOfStands || ''} disabled />
-    <TextField fullWidth label="Shape" value={formData.shape || ''} disabled />
-    <TextField fullWidth label="Is Compacted" value={formData.isCompacted === "yes" ? "Yes" : "No"} disabled />
-    <TextField fullWidth label="Compound" value={formData.compound || ''} disabled />
-    <TextField fullWidth label="Color" value={formData.color || ''} disabled />
-    <TextField fullWidth label="Thickness" value={formData.thickness || ''} disabled />
-    <TextField fullWidth label="Length" value={formData.length || ''} disabled />
-    <TextField fullWidth label="No. Dia of AM Wire" value={formData.noDiaOfAmWire || ''} disabled />
-    <TextField fullWidth label="Pay Off Dno" value={formData.payOffDno || ''} disabled />
-    <TextField fullWidth label="Take Up Drum Size" value={formData.takeUpDrumSize || ''} disabled />
-    <TextField fullWidth label="Embrossing" value={formData.embrossing || ''} disabled />
-    <TextField fullWidth label="Remarks" value={formData.remark || ''} disabled />
-   
-  </Stack>
-</DialogContent>
 
-      <DialogActions>
-        <Button onClick={() => setViewOpen(false)}>Close</Button>
-      </DialogActions>
-    </Dialog>
+      {/* View Dialog */}
+      <Dialog open={viewOpen} onClose={() => setViewOpen(false)} fullWidth maxWidth="md">
+        <DialogTitle>View Job Card</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} mt={1}>
+            <TextField fullWidth label="Order No" value={formData.orderNo || ''} disabled />
+            <TextField fullWidth label="IS Code" value={formData.isCode || ''} disabled />
+            <TextField fullWidth label="Date" value={formData.date || ''} disabled />
+            <TextField fullWidth label="Asset" value={assets.find(a => a.assetId === formData.assetId)?.assetName || '-'} disabled />
+            <TextField fullWidth label="Shift" value={shift.find(s => s.shiftId === formData.shiftId)?.shiftName || '-'} disabled />
+            <TextField fullWidth label="Operation" value={operations.find(o => o.operationId === formData.operationId)?.operationName || '-'} disabled />
+            <TextField fullWidth label="Size" value={formData.size || ''} disabled />
+            <TextField fullWidth label="No. Dia of Stands" value={formData.noDiaOfStands || ''} disabled />
+            <TextField fullWidth label="Shape" value={formData.shape || ''} disabled />
+            <TextField fullWidth label="Is Compacted" value={formData.isCompacted === "yes" ? "Yes" : "No"} disabled />
+            <TextField fullWidth label="Compound" value={formData.compound || ''} disabled />
+            <TextField fullWidth label="Color" value={formData.color || ''} disabled />
+            <TextField fullWidth label="Thickness" value={formData.thickness || ''} disabled />
+            <TextField fullWidth label="Length" value={formData.length || ''} disabled />
+            <TextField fullWidth label="No. Dia of AM Wire" value={formData.noDiaOfAmWire || ''} disabled />
+            <TextField fullWidth label="Pay Off Dno" value={formData.payOffDno || ''} disabled />
+            <TextField fullWidth label="Take Up Drum Size" value={formData.takeUpDrumSize || ''} disabled />
+            <TextField fullWidth label="Embrossing" value={formData.embrossing || ''} disabled />
+            <TextField fullWidth label="Remarks" value={formData.remark || ''} disabled />
+
+          </Stack>
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setViewOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
 
       <AlertSnackbar
         open={alert.open}

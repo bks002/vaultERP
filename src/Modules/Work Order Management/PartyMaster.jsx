@@ -20,7 +20,6 @@ import {
     Stack,
     Switch,
     FormControlLabel,
-     Container,
     InputAdornment,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
@@ -86,7 +85,7 @@ const PartyMaster = () => {
         if (window.confirm(`Are you sure you want to delete "${vendor.name}"?`)) {
             try {
                 await deletePartyMaster(vendor.id);
-                alert('Vendor deleted successfully!');
+                alert('Party deleted successfully!');
                 loadVendors();
             } catch (error) {
                 alert(error.message);
@@ -95,7 +94,6 @@ const PartyMaster = () => {
     };
 
     const handleCreateNew = () => {
-        console.log('Creating new vendor');
         setSelectedVendor({
     office_id: 'officeId',
     name: '',
@@ -124,7 +122,7 @@ const PartyMaster = () => {
         try {
             if (isEdit) {
                 await updatePartyMaster(selectedVendor.id, selectedVendor);
-                alert('Vendor updated successfully!');
+                alert('Party updated successfully!');
             } else {
         await createPartyMaster({
         ...selectedVendor,
@@ -132,7 +130,7 @@ const PartyMaster = () => {
          created_by: userId
         }
         );
-                alert('Vendor created successfully!');
+                alert('Party created successfully!');
             }
             setDialogOpen(false);
             loadVendors();

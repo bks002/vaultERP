@@ -88,7 +88,6 @@ const ProductMaster = () => {
     office_id: Number(officeId),
   };
 
-  console.log('Payload:', payload);
   try {
     if (isEdit) {
       await updateProductMaster(selectedVendor.id, payload);
