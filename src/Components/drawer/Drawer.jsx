@@ -114,6 +114,12 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemText primary="Planning Sheet" />
                     </ListItemButton>
                 </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/JobCard" >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Job Card" />
+                    </ListItemButton>
+                </ListItem>
             </List>
             <Divider />
             <List>
@@ -188,6 +194,30 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                     </ListItemButton>
                 </ListItem>
             </List>
+            <Divider />
+            <List>
+                {drawer && (
+                    <ListSubheader component="div" id="nested-list-subheader">
+                        Work Order Management
+                    </ListSubheader>
+                )}
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Work Order Management/PartyMaster"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Party Master" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Work Order Management/ProductMaster"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Product Master" />
+                    </ListItemButton>
+                </ListItem>
+            </List>
         </Drawer>
+
+        
+        
+        
     );
 }

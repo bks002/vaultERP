@@ -14,7 +14,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useSelector } from "react-redux";
 import { getAllShift } from '../../Services/ShiftService';
-import { getAllEmployeeShift, createEmployeeShift, updateEmployeeShift, deleteEmployeeShift } from '../../Services/EmployeeShift';
+import { getAllEmployeeShift, createEmployeeShift, deleteEmployeeShift } from '../../Services/EmployeeShift';
 
 const EmployeeShiftPage = () => {
     const officeId = useSelector((state) => state.user.officeId);
