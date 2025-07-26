@@ -1,92 +1,77 @@
 import React, { useEffect, useState } from "react";
 import {
-  Box,
-  Typography,
-  Tabs,
-  Tab,
-  Paper,
-  Stack,
-  Chip,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  MenuItem,
-  TextField,
+  Box, Typography, Tabs, Tab, Paper, Stack, Chip, Button, Dialog,
+  DialogTitle, DialogContent, DialogActions, MenuItem, TextField
 } from "@mui/material";
-import { getCategories } from "../../Services/InventoryService";
+import { getCategories, getAllItems } from "../../Services/InventoryService";
 import { useSelector } from "react-redux";
 
 const Stock = () => {
   const officeId = useSelector((state) => state.user.officeId);
   const [selectedTab, setSelectedTab] = useState(0);
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [openDialog, setOpenDialog] = useState(false);
-
-  const [selectedCategoryId, setSelectedCategoryId] = useState("");
-  const [selectedDescription, setSelectedDescription] = useState("");
-  const [quantity, setQuantity] = useState("");
-
+  const [items, setItems] = useState([]);
   const [stockData, setStockData] = useState([]);
 
-  const loadCategories = async () => {
-    try {
-      setLoading(true);
-      const data = await getCategories(officeId);
-      setCategories(data || []);
-    } catch (error) {
-      console.error("Failed to fetch categories:", error.message);
-      setCategories([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [selectedItemId, setSelectedItemId] = useState("");
+  const [quantity, setQuantity] = useState("");
 
   useEffect(() => {
     if (officeId > 0) {
       loadCategories();
+      loadItems();
     }
   }, [officeId]);
 
-  // Get descriptions of selected tab category
-  const selectedCategory = categories[selectedTab];
+  const loadCategories = async () => {
+    try {
+      const data = await getCategories(officeId);
+      setCategories(data || []);
+    } catch (err) {
+      console.error("Failed to fetch categories:", err.message);
+    }
+  };
 
-  // Get descriptions of selected category in dialog
-  const dialogCategory = categories.find(cat => cat.id === selectedCategoryId);
+  const loadItems = async () => {
+    try {
+      const data = await getAllItems(officeId);
+      setItems(data || []);
+    } catch (err) {
+      console.error("Failed to fetch items:", err.message);
+    }
+  };
 
   const handleAddStock = () => {
-    if (selectedCategoryId && selectedDescription && quantity) {
-      const existing = stockData.find(
-        (s) =>
-          s.categoryId === selectedCategoryId &&
-          s.description === selectedDescription
-      );
+    if (selectedCategoryId && selectedItemId && quantity) {
+      const item = items.find(i => i.id === selectedItemId);
+      const existing = stockData.find(s => s.itemId === selectedItemId);
 
       if (existing) {
-        // If already exists, update quantity
         existing.quantity += parseInt(quantity);
         setStockData([...stockData]);
       } else {
-        // New entry
         setStockData([
           ...stockData,
           {
+            itemId: selectedItemId,
+            name: item?.name,
             categoryId: selectedCategoryId,
-            description: selectedDescription,
             quantity: parseInt(quantity),
           },
         ]);
       }
 
-      // Reset form and close
       setSelectedCategoryId("");
-      setSelectedDescription("");
+      setSelectedItemId("");
       setQuantity("");
       setOpenDialog(false);
     }
   };
+
+  const selectedCategory = categories[selectedTab];
+  const itemsInCategory = items.filter(i => i.categoryId === selectedCategory?.id);
 
   return (
     <Box p={1}>
@@ -94,19 +79,14 @@ const Stock = () => {
         <Typography variant="h4" gutterBottom>
           Stock Page
         </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => setOpenDialog(true)}
-        >
+        <Button variant="contained" color="primary" onClick={() => setOpenDialog(true)}>
           Add Stock
         </Button>
       </Box>
 
-      {/* Tabs — Category Names */}
       <Tabs
         value={selectedTab}
-        onChange={(_, newValue) => setSelectedTab(newValue)}
+        onChange={(_, newVal) => setSelectedTab(newVal)}
         textColor="primary"
         indicatorColor="primary"
         variant="scrollable"
@@ -114,60 +94,44 @@ const Stock = () => {
         sx={{ mb: 3 }}
       >
         {categories.map((cat, index) => (
-          <Tab key={index} label={cat.name} />
+          <Tab key={cat.id} label={cat.name} />
         ))}
       </Tabs>
 
       {/* Stock List */}
       <Stack spacing={2}>
-       {!loading && selectedCategory ? (
-  selectedCategory.description.split(",").map((desc, index) => {
-    const stockItem = stockData.find(
-      (s) =>
-        s.categoryId === selectedCategory.id &&
-        s.description.trim() === desc.trim()
-    );
-    const quantity = stockItem?.quantity || 0;
-    const isHighStock = quantity >= 1000;
+        {itemsInCategory.length > 0 ? (
+          itemsInCategory.map((item) => {
+            const stock = stockData.find(s => s.itemId === item.id);
+            const quantity = stock?.quantity || 0;
+            const isHighStock = quantity >= 1000;
 
-    return (
-      <Box key={index}>
-        <Box display="flex" alignItems="center">
-          <Typography sx={{ minWidth: "130px", fontWeight: 600 }}>
-            Description:
-          </Typography>
-          <Paper
-            elevation={2}
-            sx={{
-              flex: 1,
-              borderRadius: "12px",
-              backgroundColor: isHighStock ? "#e8f5e9" : "#ffe5e5",
-              px: 2,
-              py: 1,
-            }}
-          >
-            <Box
-              display="flex"
-              justifyContent="space-between"
-              alignItems="center"
-              mb={1}
-            >
-              <Typography>{desc.trim()}</Typography>
-              <Chip
-                label={`Qty: ${quantity}`}
-                size="small"
-                color={isHighStock ? "success" : "default"}
-              />
-            </Box>
-          </Paper>
-        </Box>
-      </Box>
-    );
-  })
-) : (
-  <Typography>No data available.</Typography>
-)}
+            return (
+             <Box key={item.id} display="flex" alignItems="center" gap={2}>
+  <Typography fontWeight={600} minWidth="150px">
+    {item.name}
+  </Typography>
+  <Paper
+    elevation={2}
+    sx={{
+      flexGrow: 1,
+      borderRadius: "12px",
+      backgroundColor: isHighStock ? "#e8f5e9" : "#ffe5e5",
+      px: 2,
+      py: 1,
+    }}
+  >
+    <Box display="flex" justifyContent="flex-end" alignItems="center">
+      <Chip label={`Qty: ${quantity}`} color={isHighStock ? "success" : "default"} />
+    </Box>
+  </Paper>
+</Box>
 
+            );
+          })
+        ) : (
+          <Typography>No items found for this category.</Typography>
+        )}
       </Stack>
 
       {/* Add Stock Dialog */}
@@ -181,7 +145,7 @@ const Stock = () => {
               value={selectedCategoryId}
               onChange={(e) => {
                 setSelectedCategoryId(e.target.value);
-                setSelectedDescription("");
+                setSelectedItemId("");
               }}
               fullWidth
             >
@@ -194,15 +158,15 @@ const Stock = () => {
 
             <TextField
               select
-              label="Select Description"
-              value={selectedDescription}
-              onChange={(e) => setSelectedDescription(e.target.value)}
-              fullWidth
+              label="Select Item"
+              value={selectedItemId}
+              onChange={(e) => setSelectedItemId(e.target.value)}
               disabled={!selectedCategoryId}
+              fullWidth
             >
-              {dialogCategory?.description?.split(",").map((desc, i) => (
-                <MenuItem key={i} value={desc.trim()}>
-                  {desc.trim()}
+              {items.filter(i => i.categoryId === selectedCategoryId).map((item) => (
+                <MenuItem key={item.id} value={item.id}>
+                  {item.name}
                 </MenuItem>
               ))}
             </TextField>
