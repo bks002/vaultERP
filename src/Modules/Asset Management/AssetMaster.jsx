@@ -10,7 +10,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SettingsIcon from '@mui/icons-material/Settings';
-// import {assetTypes} from "../../Components/constant";
+import { assetTypes } from "../../Components/constant";
 import { getAllAssets, createAssets, EditAssets, deleteAsset } from "../../Services/AssetService";
 import { getAllOperation } from "../../Services/OperationService";
 import { getAssetOperation, OperationMapping } from "../../Services/AssetOperation";
@@ -122,8 +122,6 @@ const AssetMaster = () => {
     }
   };
 
- 
-
   const handleCheckboxChange = (assetId) => {
     setSelectedIds((prev) =>
       prev.includes(assetId)
@@ -152,17 +150,7 @@ const AssetMaster = () => {
 
   const handleCreate = () => {
     setIsEdit(false);
-    setFormData({
-      assetCode: "",
-      assetName: "",
-      assetTypeId: "",
-      manufacturer: "",
-      modelNumber: "",
-      serialNumber: "",
-      purchaseDate: "",
-      warrantyExpiry: "",
-      supplier: "",
-    });
+    setFormData(defaultFormData);
     setDialogOpen(true);
   };
 
@@ -182,36 +170,37 @@ const AssetMaster = () => {
       }
     }
   };
-    const filteredAssets = assets.filter((v) =>
-        v.assetName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.manufacturer?.toLowerCase().includes(searchQuery.toLowerCase())
- );
+
+  const filteredAssets = assets.filter((v) =>
+    v.assetName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    v.manufacturer?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <Container maxWidth={false}>
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                <Typography variant="h4">Asset Master</Typography>
-                <Box display="flex" alignItems="center" gap={2}>
-                    <TextField
-                        placeholder="Search by Asset name, Manufacturer"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <SearchIcon />
-                                </InputAdornment>
-                            ),
-                        }}
-                        size="small"
-                        sx={{ width: 300 }}
-                    />
-                    <Button variant="contained" color="primary" onClick={handleCreate}>
-                        Add Asset Master
-                    </Button>
-                </Box>
-            </Box>
-
+        <Typography variant="h4">Asset Master</Typography>
+        <Box display="flex" alignItems="center" gap={2}>
+          <TextField
+            placeholder="Search by Asset name, Manufacturer"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+            size="small"
+            sx={{ width: 300 }}
+          />
+          <Button variant="contained" color="primary" onClick={handleCreate}>
+            Add Asset Master
+          </Button>
+        </Box>
+      </Box>
 
       {/* Table */}
       {loading ? (
@@ -265,8 +254,8 @@ const AssetMaster = () => {
 
             <Grid item xs={12} md={6} size={6}>
               <TextField fullWidth label="Asset Code" name="assetCode" value={formData.assetCode} onChange={handleChange} />
-              <TextField select fullWidth label="Asset Type Id" name="assetName" type="number" value={formData.assetName} onChange={handleChange} sx={{ mt: 2 }} >
-                {getAllAssets.map((type) => (
+              <TextField select fullWidth label="Asset Type" name="assetTypeId" value={formData.assetTypeId} onChange={handleChange} sx={{ mt: 2 }} >
+                {assetTypes.map((type) => (
                   <MenuItem key={type.id} value={type.id}>
                     {type.type}
                   </MenuItem>
