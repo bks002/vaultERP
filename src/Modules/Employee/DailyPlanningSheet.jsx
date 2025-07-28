@@ -3,13 +3,15 @@ import {
     Container, Typography, Button, TextField, Dialog,
     DialogTitle, DialogContent, DialogActions, Box,
     IconButton, Tooltip, Table, TableHead, TableRow,
-    TableCell, TableBody, Grid
+    TableCell, TableBody, Grid,  InputAdornment,
 } from '@mui/material';
 import { getAllEmployees } from '../../Services/EmployeeService.js';
 import { getAllOperation } from '../../Services/OperationService.js';
 import { getAllItems } from '../../Services/InventoryService.jsx';
 import { getAllAssets } from '../../Services/AssetService.js';
 import AlertSnackbar from "../../Components/Alert/AlertSnackBar.jsx";
+import SearchIcon from '@mui/icons-material/Search';
+
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -28,6 +30,8 @@ const DailyPlanningSheet = () => {
     const userId = useSelector((state) => state.user.userId);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+
     const [Employees, setEmployees] = useState([]);
     const [Items, setItems] = useState([]);
     const [Operations, setOperations] = useState([]);
@@ -213,20 +217,44 @@ const DailyPlanningSheet = () => {
 
         XLSX.writeFile(workbook, 'DailyPlanningSheet.xlsx');
     };
+    const filteredPlanningData = planningData.filter((entry) => {
+    const employeeName = Employees.find(e => e.employeeId === entry.employeeId)?.employeeName || '';
+    const shiftName = shifts.find(s => s.shiftId === entry.shiftId)?.shiftName || '';
+    return (
+        employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        shiftName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+});
+
 
     return (
         <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                <Typography variant="h4">Daily Planning Sheet</Typography>
-                <Box>
-                    <Button variant="outlined" onClick={handleExport} sx={{ mr: 1 }}>
-                        Export to Excel
-                    </Button>
-                    <Button variant="contained" onClick={handleCreate}>
-                        Create Planning
-                    </Button>
-                </Box>
-            </Box>
+    <Typography variant="h4">Daily Planning Sheet</Typography>
+    <Box display="flex" alignItems="center" gap={2}>
+        <TextField
+            placeholder="Search by employee name or shift"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+                startAdornment: (
+                    <InputAdornment position="start">
+                        <SearchIcon />
+                    </InputAdornment>
+                ),
+            }}
+            size="small"
+            sx={{ width: 300 }}
+        />
+        <Button variant="outlined" onClick={handleExport}>
+            Export to Excel
+        </Button>
+        <Button variant="contained" onClick={handleCreate}>
+            Create Planning
+        </Button>
+    </Box>
+</Box>
+
 
 
             <Table>
@@ -242,8 +270,9 @@ const DailyPlanningSheet = () => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {planningData.length > 0 ? (
-                        planningData.map((emp, index) => (
+                    {filteredPlanningData.length > 0 ? (
+    filteredPlanningData.map((emp, index) => (
+
                             <TableRow key={emp.id}>
                                 <TableCell>{index + 1}</TableCell>
                                 <TableCell>{Assets.find(a => a.assetId === emp.assetId)?.assetName}</TableCell>

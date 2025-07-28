@@ -13,6 +13,7 @@ import {
     getAllItems, deleteItem, createItem, updateItem, getCategories
 } from '../../Services/InventoryService';
 import { useSelector } from 'react-redux';
+import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton';
 
 const ItemMaster = () => {
     const officeId = useSelector((state) => state.user.officeId);
@@ -149,6 +150,16 @@ const ItemMaster = () => {
             alert(error.message);
         }
     };
+    const csvHeaders = [
+        { label: "Item ID", key: "id" },
+        { label: "Item Name", key: "name" },
+        { label: "Description", key: "description" },
+        { label: "Category", key: "categoryId" },
+        { label: "Measurement Unit", key: "measurementUnit" },
+        { label: "Minimum Stock Level", key: "minStockLevel" },
+        { label: "Brand Name", key: "brandName" },
+        { label: "HSN Code", key: "hsnCode" },
+    ];
 
     return (
         <div className="col-12">
@@ -168,6 +179,11 @@ const ItemMaster = () => {
                         }}
                         size="small"
                         sx={{ width: 300 }}
+                    />
+                    <ExportCSVButton
+                        data={filteredItems}
+                        filename={`Item.csv`}
+                        headers={csvHeaders}
                     />
                     <Button variant="contained" color="primary" onClick={handleCreateNew}>
                         Create New Item

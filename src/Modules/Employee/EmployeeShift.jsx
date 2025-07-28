@@ -3,24 +3,28 @@ import {
     Container, Typography, Button, TextField, Dialog,
     DialogTitle, DialogContent, DialogActions, Box,
     IconButton, Tooltip, Table, TableHead, TableRow,
-    TableCell, TableBody, Stack, MenuItem
+    TableCell, TableBody, Stack, MenuItem, InputAdornment,
 } from '@mui/material';
 import {
     getAllEmployees
 } from "../../Services/EmployeeService";
 import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
 // import EditIcon from '@mui/icons-material/Edit';
+import SearchIcon from '@mui/icons-material/Search';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useSelector } from "react-redux";
 import { getAllShift } from '../../Services/ShiftService';
 import { getAllEmployeeShift, createEmployeeShift, deleteEmployeeShift } from '../../Services/EmployeeShift';
+import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton';
 
 const EmployeeShiftPage = () => {
     const officeId = useSelector((state) => state.user.officeId);
     const userId = useSelector((state) => state.user.userId);
     const [employees, setEmployees] = useState([]);
     const [shift, setShift] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    
     const [employeeShiftList, setEmployeeShiftList] = useState([]);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [viewOpen, setViewOpen] = useState(false);
@@ -150,13 +154,53 @@ const EmployeeShiftPage = () => {
             showAlert('error', 'Failed to save employee shift');
         }
     };
+    const csvHeaders = [
+        { label: "Employee ID", key: "employeeId" },
+        { label: "Employee Name", key: "employeeName" },
+        { label: "Shift ID", key: "shiftId" },
+        { label: "Shift Name", key: "shiftName" },
+        { label: "Date From", key: "dateFrom" },
+        { label: "Date To", key: "dateTo" },
+        { label: "Mobile No", key: "mobileNo" } 
+    ];  
+
+    const filteredEmployee = employeeShiftList.filter((emp) =>
+    emp.employeeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    emp.mobileNo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    emp.shiftName?.toLowerCase().includes(searchQuery.toLowerCase())
+);
 
     return (
         <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                <Typography variant="h4">Employee Shift</Typography>
-                <Button variant="contained" onClick={handleCreate}>Add Employee Shift</Button>
-            </Box>
+    <Typography variant="h4">Employee Shift</Typography>
+    
+    <Box display="flex" alignItems="center" gap={2}>
+        <TextField
+            placeholder="Search by Employee Name, Shift"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+                startAdornment: (
+                    <InputAdornment position="start">
+                        <SearchIcon />
+                    </InputAdornment>
+                ),
+            }}
+            size="small"
+            sx={{ width: 300 }}
+        />
+        <ExportCSVButton
+            data={filteredEmployee}
+            filename={`EmployeeShift.csv`}
+            headers={csvHeaders}
+        />
+        <Button variant="contained" color="primary" onClick={handleCreate}>
+            Add Employee Shift
+        </Button>
+    </Box>
+</Box>
+
 
             <Table>
                 <TableHead>
@@ -170,8 +214,8 @@ const EmployeeShiftPage = () => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {employeeShiftList.length > 0 ? (
-                        employeeShiftList.map((emp, index) => (
+                    {filteredEmployee.length > 0 ? (
+                        filteredEmployee.map((emp, index) => (
                             <TableRow key={emp.id || index}>
                                 <TableCell>{index + 1}</TableCell>
                                 <TableCell>{emp.employeeName}</TableCell>

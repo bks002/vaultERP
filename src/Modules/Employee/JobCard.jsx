@@ -22,6 +22,7 @@ import {
   updateJobCard,
   deleteJobCard
 } from "../../Services/JobCard";
+import ExportCSVButton from "../../Components/Export to CSV/ExportCSVButton";
 
 const JobCard = () => {
   const officeId = useSelector((state) => state.user.officeId);
@@ -209,7 +210,26 @@ if (window.confirm(`Are you sure you want to delete job card "${job.orderNo}"?`)
   }
 };
 
+  
+  const csvHeaders = [
+  { label: "Order No", key: "orderNo" },
+  { label: "IS Code", key: "isCode" },
+  { label: "Date", key: "date" },
+  { label: "Asset", key: "assetId" },
+  { label: "Shift", key: "shiftId" },
+  { label: "Operation", key: "operationId" },
+  { label: "Is Compacted", key: "isCompacted" },
+];
 
+const transformedStockData = jobCards.map((job) => ({
+  orderNo: job.orderNo,
+  isCode: job.isCode,
+  date: job.date,
+  assetId: assets.find(a => a.assetId === job.assetId)?.assetName || '',
+  shiftId: shift.find(s => s.shiftId === job.shiftId)?.shiftName || '',
+  operationId: operations.find(o => o.operationId === job.operationId)?.operationName || '',
+  isCompacted: job.isCompacted ? "Yes" : "No",
+}));
 
   return (
     <Container maxWidth={false}>
@@ -225,8 +245,14 @@ if (window.confirm(`Are you sure you want to delete job card "${job.orderNo}"?`)
                 <InputAdornment position="start">
                   <SearchIcon />
                 </InputAdornment>
+                
               )
             }}
+          />
+          <ExportCSVButton
+            data={transformedStockData}
+            filename="stock_data.csv"
+            headers={csvHeaders}
           />
           <Button variant="contained" onClick={handleCreate}>Create Job Card</Button>
         </Box>

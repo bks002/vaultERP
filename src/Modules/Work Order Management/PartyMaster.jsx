@@ -28,6 +28,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { getPartyMasters, createPartyMaster, updatePartyMaster, deletePartyMaster } from '../../Services/PartyMasterService';
 import { useSelector } from 'react-redux';
+import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton';
 
 const PartyMaster = () => {
     const officeId = useSelector((state) => state.user.officeId);
@@ -146,6 +147,16 @@ const PartyMaster = () => {
         v.contact_number?.includes(searchQuery) ||
         v.email?.toLowerCase().includes(searchQuery.toLowerCase()) 
  );
+    const csvHeaders = [
+        { label: 'Name', key: 'name' },
+        { label: 'Contact Person', key: 'contact_person' },
+        { label: 'Contact Number', key: 'contact_number' },
+        { label: 'Email', key: 'email' },
+        { label: 'Address', key: 'address' },
+        { label: 'GST Number', key: 'gst_number' },
+        { label: 'PAN Number', key: 'pan_number' },
+        { label: 'Website URL', key: 'website_url' },
+    ];
     return (
         <div className="col-12">
              <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
@@ -164,6 +175,11 @@ const PartyMaster = () => {
                         }}
                         size="small"
                         sx={{ width: 300 }}
+                    />
+                    <ExportCSVButton
+                        data={filteredVendors}
+                        filename="PartyMasters.csv"
+                        headers={csvHeaders}
                     />
                     <Button variant="contained" color="primary" onClick={handleCreateNew}>
                         Create New Party Master

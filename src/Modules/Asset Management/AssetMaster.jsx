@@ -15,6 +15,7 @@ import { getAllAssets, createAssets, EditAssets, deleteAsset } from "../../Servi
 import { getAllOperation } from "../../Services/OperationService";
 import { getAssetOperation, OperationMapping } from "../../Services/AssetOperation";
 import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
+import ExportCSVButton from "../../Components/Export to CSV/ExportCSVButton";
 
 const AssetMaster = () => {
   const officeId = useSelector((state) => state.user.officeId);
@@ -127,6 +128,19 @@ const AssetMaster = () => {
     asset.manufacturer?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const csvHeaders = [
+    { label: "Asset Id", key: "assetId" },
+    { label: "Asset Code", key: "assetCode" },
+    { label: "Asset Name", key: "assetName" },
+    { label: "Asset Type Id", key: "assetTypeId" },
+    { label: "Manufacturer", key: "manufacturer" },
+    { label: "Model Number", key: "modelNumber" },
+    { label: "Serial Number", key: "serialNumber" },
+    { label: "Purchase Date", key: "purchaseDate" },
+    { label: "Warranty Expiry", key: "warrantyExpiry" },
+    { label: "Supplier", key: "supplier" }
+  ];
+
   const handleCheckboxChange = (assetId) => {
     setSelectedIds((prev) =>
       prev.includes(assetId)
@@ -205,6 +219,11 @@ const AssetMaster = () => {
                 </InputAdornment>
               ),
             }}
+          />
+          <ExportCSVButton
+            data={filteredAssets}
+            filename="Assets.csv"
+            headers={csvHeaders}
           />
           <Button variant="contained" color="primary" onClick={handleCreate}>
             Add Asset Master

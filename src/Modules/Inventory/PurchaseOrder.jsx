@@ -23,6 +23,7 @@ import { useSelector } from 'react-redux';
 import { getPurchaseOrder } from '../../Services/InventoryService.jsx';
 import CreatePurchaseOrder from "./CreatePurchseOrder.jsx";
 import SearchIcon from '@mui/icons-material/Search';
+import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton.jsx';
 
 const PurchaseOrder = () => {
     const officeId = useSelector((state) => state.user.officeId);
@@ -56,6 +57,20 @@ const PurchaseOrder = () => {
         po.poNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
         po.vendorName.toLowerCase().includes(searchQuery.toLowerCase())
     );
+    
+    const csvHeaders = [
+        { label: "PO Number", key: "poNumber" },
+        { label: "Vendor Name", key: "vendorName" },
+        { label: "PO Date", key: "poDateTime" },
+        { label: "Shipping Address", key: "shippingAddress" },
+        { label: "Billing Address", key: "billingAddress" },
+        { label: "Total Amount", key: "totalAmount" },
+        { label: "Created By", key: "createdBy" },
+        { label: "Created At", key: "createdAt" },
+        { label: "Updated By", key: "updatedBy" },
+        { label: "Updated At", key: "updatedAt" },
+    ];
+
     return (
         <div className="col-12">
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
@@ -76,6 +91,11 @@ const PurchaseOrder = () => {
                         }}
                          size="small"
                         sx={{ width: 300 }}
+                    />
+                    <ExportCSVButton
+                        data={filteredPOs}
+                        filename={`PurchaseOrder.csv`}
+                        headers={csvHeaders}
                     />
                     <Button variant="contained" color="primary" onClick={() => setCreateDialogOpen(true)}>
                         Create New Purchase Order

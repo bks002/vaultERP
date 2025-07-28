@@ -21,6 +21,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { useSelector } from "react-redux";
 import Checkbox from '@mui/material/Checkbox';
 import {employmentTypes, department, gender} from "../../Components/constant";
+import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton';
 
 const EmployeeMasterPage = () => {
     const officeId = useSelector((state) => state.user.officeId);
@@ -246,6 +247,20 @@ const EmployeeMasterPage = () => {
         rate.employeeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
          rate.email?.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+   const csvHeaders = [
+        { label: "Employee Code", key: "employeeCode" },
+        { label: "Name", key: "employeeName" },
+        { label: "Email", key: "email" },
+        { label: "Phone", key: "phoneNumber" },
+        { label: "Designation", key: "designation" },
+        { label: "Department", key: "department" },
+        { label: "DOB", key: "dob" },
+        { label: "Gender", key: "gender" }
+    ];
+   
+
+
     return (
         <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
@@ -264,6 +279,11 @@ const EmployeeMasterPage = () => {
                         }}
                         size="small"
                         sx={{ width: 300 }}
+                    />
+                    <ExportCSVButton
+                        data={filteredEmployee}
+                        filename={`EmployeeMaster.csv`}
+                        headers={csvHeaders}
                     />
                 <Button variant="contained" onClick={handleCreate}>Add Employee</Button>
             </Box>

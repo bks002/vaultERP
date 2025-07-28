@@ -10,6 +10,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
 import { createShift, deleteShift, EditShift, getAllShift } from "../../Services/ShiftService";
+import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton';
 
 const ShiftMaster = () => {
     const officeId = useSelector((state) => state.user.officeId);
@@ -122,6 +123,12 @@ const ShiftMaster = () => {
         v.shiftName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         v.shiftCode?.toLowerCase().includes(searchQuery.toLowerCase())
     );
+    const csvHeaders = [
+        { label: 'Shift Name', key: 'shiftName' },
+        { label: 'Shift Code', key: 'shiftCode' },
+        { label: 'Start Time', key: 'startTime' },
+        { label: 'End Time', key: 'endTime' },
+    ];
     return (
         <Container maxWidth={false}>
             {/* Header */}
@@ -141,6 +148,11 @@ const ShiftMaster = () => {
                         }}
                         size="small"
                         sx={{ width: 300 }}
+                    />
+                    <ExportCSVButton
+                        data={filteredShift}
+                        filename="Shifts.csv"
+                        headers={csvHeaders}
                     />
                     <Button variant="contained" color="primary" onClick={handleCreate}>
                         Add Shift

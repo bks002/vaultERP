@@ -5,6 +5,7 @@ import {
 } from "@mui/material";
 import { getCategories, getAllItems } from "../../Services/InventoryService";
 import { useSelector } from "react-redux";
+import ExportCSVButton from "../../Components/Export to CSV/ExportCSVButton";
 
 const Stock = () => {
   const officeId = useSelector((state) => state.user.officeId);
@@ -70,19 +71,35 @@ const Stock = () => {
     }
   };
 
+
+  const csvHeaders = [
+    { label: "Item ID", key: "itemId" },
+    { label: "Item Name", key: "name" },
+    { label: "Category ID", key: "categoryId" },
+    { label: "Quantity", key: "quantity" },
+  ];
+
   const selectedCategory = categories[selectedTab];
   const itemsInCategory = items.filter(i => i.categoryId === selectedCategory?.id);
 
   return (
     <Box p={1}>
       <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Typography variant="h4" gutterBottom>
-          Stock Page
-        </Typography>
-        <Button variant="contained" color="primary" onClick={() => setOpenDialog(true)}>
-          Add Stock
-        </Button>
-      </Box>
+  <Typography variant="h4" gutterBottom>
+    Stock Page
+  </Typography>
+  <Stack direction="row" spacing={2}>
+    <ExportCSVButton
+            data={itemsInCategory}
+            filename="stock.csv"
+            headers={csvHeaders}
+          />
+    <Button variant="contained" color="primary" onClick={() => setOpenDialog(true)}>
+      Add Stock
+    </Button>
+  </Stack>
+</Box>
+
 
       <Tabs
         value={selectedTab}
