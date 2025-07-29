@@ -122,8 +122,6 @@ const AssetMaster = () => {
     }
   };
 
-
-
   const handleCheckboxChange = (assetId) => {
     setSelectedIds((prev) =>
       prev.includes(assetId)
@@ -172,10 +170,12 @@ const AssetMaster = () => {
       }
     }
   };
+
   const filteredAssets = assets.filter((v) =>
     v.assetName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     v.manufacturer?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
   return (
     <Container maxWidth={false}>
       {/* Header */}
@@ -245,7 +245,7 @@ const AssetMaster = () => {
         <DialogContent>
           <Grid container spacing={2} mt={1}>
             <Grid item xs={12} md={6} size={6}>
-              <TextField fullWidth label="Asset Name" name="assetName" value={formData.assetName} onChange={handleChange} />
+              <TextField fullWidth label="Asset Name" name="getAllAssets" value={formData.assetName} onChange={handleChange} />
               <TextField fullWidth label="Model Number" name="modelNumber" value={formData.modelNumber} onChange={handleChange} sx={{ mt: 2 }} />
               <TextField fullWidth label="Purchase Date" name="purchaseDate" type="date" InputLabelProps={{ shrink: true }} value={formData.purchaseDate?.split("T")[0] || ""} onChange={handleChange} sx={{ mt: 2 }} />
               <TextField fullWidth label="Manufacturer" name="manufacturer" value={formData.manufacturer} onChange={handleChange} sx={{ mt: 2 }} />
