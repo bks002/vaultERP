@@ -219,6 +219,8 @@ const AssetMaster = () => {
                 </InputAdornment>
               ),
             }}
+            size="small"
+            sx={{ width: 300 }}
           />
           <ExportCSVButton
             data={filteredAssets}

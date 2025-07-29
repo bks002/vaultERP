@@ -248,6 +248,8 @@ const transformedStockData = jobCards.map((job) => ({
                 
               )
             }}
+            size="small"
+            sx={{ width: 300 }}
           />
           <ExportCSVButton
             data={transformedStockData}
