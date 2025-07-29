@@ -253,9 +253,9 @@ const JobCard = () => {
                   <TableCell>{shift.find(s => s.shiftId === job.shiftId)?.shiftName || '-'}</TableCell>
                   <TableCell>{job.isCompacted ? "Yes" : "No"}</TableCell>
                   <TableCell>
-                    <Tooltip title="View"><IconButton onClick={() => handleView(job)}><VisibilityIcon /></IconButton></Tooltip>
-                    <Tooltip title="Edit"><IconButton onClick={() => handleEdit(job)}><EditIcon /></IconButton></Tooltip>
-                    <Tooltip title="Delete"><IconButton onClick={() => handleDelete(job)}><DeleteIcon /></IconButton></Tooltip>
+                    <Tooltip title="View"><IconButton onClick={() => handleView(job)} color="info"><VisibilityIcon /></IconButton></Tooltip>
+                    <Tooltip title="Edit" ><IconButton onClick={() => handleEdit(job)} color="primary"><EditIcon /></IconButton></Tooltip>
+                    <Tooltip title="Delete"><IconButton onClick={() => handleDelete(job)} color="error"><DeleteIcon /></IconButton></Tooltip>
                   </TableCell>
                 </TableRow>
               ))}
