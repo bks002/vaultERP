@@ -65,10 +65,6 @@ const PurchaseOrder = () => {
         { label: "Shipping Address", key: "shippingAddress" },
         { label: "Billing Address", key: "billingAddress" },
         { label: "Total Amount", key: "totalAmount" },
-        { label: "Created By", key: "createdBy" },
-        { label: "Created At", key: "createdAt" },
-        { label: "Updated By", key: "updatedBy" },
-        { label: "Updated At", key: "updatedAt" },
     ];
 
     return (

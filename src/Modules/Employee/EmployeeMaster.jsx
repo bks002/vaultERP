@@ -20,15 +20,14 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useSelector } from "react-redux";
 import Checkbox from '@mui/material/Checkbox';
-import {employmentTypes, department, gender} from "../../Components/constant";
+import { employmentTypes, department, gender } from "../../Components/constant";
 import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton';
-import AddLinkIcon from '@mui/icons-material/AddLink';
 import { uploadImage } from '../../Services/ImageService';
 
 const EmployeeMasterPage = () => {
     const officeId = useSelector((state) => state.user.officeId);
-    const officeName= useSelector((state)=> state.user.officeName);
-     const [searchQuery, setSearchQuery] = useState('');
+    const officeName = useSelector((state) => state.user.officeName);
+    const [searchQuery, setSearchQuery] = useState('');
     const userId = useSelector((state) => state.user.userId);
     const [employees, setEmployees] = useState([]);
     const [operations, setOperations] = useState([]);
@@ -109,7 +108,7 @@ const EmployeeMasterPage = () => {
             designation: '',
             roleId: 9,
             department: '',
-            officeId: officeId ,
+            officeId: officeId,
             employeeCode: '',
             dob: '',
             pancard: '',
@@ -122,7 +121,7 @@ const EmployeeMasterPage = () => {
         });
         setDialogOpen(true);
     };
-    
+
 
     const handleEdit = (emp) => {
         setSelectedEmployee({ ...emp });
@@ -163,38 +162,35 @@ const EmployeeMasterPage = () => {
         const { name, value } = e.target;
         setSelectedEmployee({ ...selectedEmployee, [name]: value });
     };
-     
- const handleFileChange = (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    setSelectedFile(file);
-  }
-};
 
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setSelectedFile(file);
+        }
+    };
 
+    const handleImageUpload = async () => {
+        if (!selectedFile) {
+            showAlert("error", "Please select a file first");
+            return;
+        }
 
-   const handleImageUpload = async () => {
-  if (!selectedFile) {
-    showAlert("error", "Please select a file first");
-    return;
-  }
-
-  try {
-    const result = await uploadImage(selectedFile);
-    if (result && result.url) {
-      setSelectedEmployee((prev) => ({
-        ...prev,
-        Image: result.url,
-      }));
-      showAlert("success", "Image uploaded successfully");
-    } else {
-      showAlert("error", "Image upload failed: No URL returned");
-    }
-  } catch (error) {
-    showAlert("error", "Image upload failed");
-  }
-};
-
+        try {
+            const result = await uploadImage(selectedFile);
+            if (result && result.url) {
+                setSelectedEmployee((prev) => ({
+                    ...prev,
+                    Image: result.url,
+                }));
+                showAlert("success", "Image uploaded successfully");
+            } else {
+                showAlert("error", "Image upload failed: No URL returned");
+            }
+        } catch (error) {
+            showAlert("error", "Image upload failed");
+        }
+    };
 
     const handleCheckboxChange = (employeeId) => {
         setSelectedIds((prev) =>
@@ -246,12 +242,12 @@ const EmployeeMasterPage = () => {
             showAlert("error", error.message || "Failed to map operations");
         }
     };
-      const filteredEmployee = employees.filter((rate) =>
+    const filteredEmployee = employees.filter((rate) =>
         rate.employeeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-         rate.email?.toLowerCase().includes(searchQuery.toLowerCase())
+        rate.email?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-   const csvHeaders = [
+    const csvHeaders = [
         { label: "Employee Code", key: "employeeCode" },
         { label: "Name", key: "employeeName" },
         { label: "Email", key: "email" },
@@ -261,8 +257,6 @@ const EmployeeMasterPage = () => {
         { label: "DOB", key: "dob" },
         { label: "Gender", key: "gender" }
     ];
-   
-
 
     return (
         <Container maxWidth={false}>
@@ -288,8 +282,8 @@ const EmployeeMasterPage = () => {
                         filename={`EmployeeMaster.csv`}
                         headers={csvHeaders}
                     />
-                <Button variant="contained" onClick={handleCreate}>Add Employee</Button>
-            </Box>
+                    <Button variant="contained" onClick={handleCreate}>Add Employee</Button>
+                </Box>
             </Box>
             <Table>
                 <TableHead>
@@ -348,10 +342,10 @@ const EmployeeMasterPage = () => {
                 <DialogTitle>{isEdit ? 'Edit Employee' : 'Add Employee'}</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} mt={1}>
-                        <TextField label="Office Name" name="officeName" value={officeName}  fullWidth />
+                        <TextField label="Office Name" name="officeName" value={officeName} fullWidth />
                         <TextField label="Employee Code" name="employeeCode" value={selectedEmployee.employeeCode} onChange={handleChange} fullWidth />
                         <TextField label="Employee Name" name="employeeName" value={selectedEmployee.employeeName} onChange={handleChange} fullWidth />
-                        <TextField select label="Employment Type" name="employementType" value={selectedEmployee.employementType } onChange={handleChange} fullWidth >
+                        <TextField select label="Employment Type" name="employementType" value={selectedEmployee.employementType} onChange={handleChange} fullWidth >
                             {employmentTypes.map((type) => (
                                 <MenuItem key={type} value={type}>
                                     {type}
@@ -375,30 +369,28 @@ const EmployeeMasterPage = () => {
                                 </MenuItem>
                             ))}
                         </TextField>
-                        <TextField label="Date of Birth" name="dob" type="date" value={selectedEmployee.dob } onChange={handleChange} fullWidth InputLabelProps={{ shrink: true,}} />
+                        <TextField label="Date of Birth" name="dob" type="date" value={selectedEmployee.dob} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true, }} />
                         <TextField label="Pan Card" name="pancard" value={selectedEmployee.pancard} onChange={handleChange} fullWidth />
                         <TextField label="Aadhar Card" name="aadharcard" value={selectedEmployee.aadharcard} onChange={handleChange} fullWidth />
                         <TextField label="Address Line 1" name="address1" value={selectedEmployee.address1} onChange={handleChange} fullWidth />
                         <TextField label="Address Line 2" name="address2" value={selectedEmployee.address2} onChange={handleChange} fullWidth />
                         <TextField label="City" name="city" value={selectedEmployee.city} onChange={handleChange} fullWidth />
                         <TextField label="State" name="state" value={selectedEmployee.state} onChange={handleChange} fullWidth />
-                       <div>
-                       <Stack direction="row" spacing={1}>
-                    <TextField
-                    type="file"
-                    name="image"
-                    onChange={handleFileChange}
-                    fullWidth
-                    InputLabelProps={{ shrink: true }}
-                />
-                <Button variant="contained" onClick={handleImageUpload}>
-                    Upload
-                </Button>
-                </Stack>
+                        <div>
+                            <Stack direction="row" spacing={1}>
+                                <TextField
+                                    type="file"
+                                    name="image"
+                                    onChange={handleFileChange}
+                                    fullWidth
+                                    InputLabelProps={{ shrink: true }}
+                                />
+                                <Button variant="contained" onClick={handleImageUpload}>
+                                    Upload
+                                </Button>
+                            </Stack>
 
-                </div>
-
-
+                        </div>
                     </Stack>
                 </DialogContent>
                 <DialogActions>
@@ -422,12 +414,12 @@ const EmployeeMasterPage = () => {
                         <TextField label="Department" value={selectedEmployee.department} fullWidth disabled />
                         <TextField label="Gender" value={selectedEmployee.gender} fullWidth disabled />
                         <TextField label="Date of Birth" value={selectedEmployee.dob} fullWidth disabled />
-                        <TextField label="Pan Card" value={selectedEmployee.pancard} fullWidth disabled/>
-                        <TextField label="Aadhar Card" value={selectedEmployee.aadharcard} fullWidth disabled/>
-                        <TextField label="Address Line 1" value={selectedEmployee.address1} fullWidth disabled/>
-                        <TextField label="Address Line 2" value={selectedEmployee.address2} fullWidth disabled/>
-                        <TextField label="City" value={selectedEmployee.city} fullWidth disabled/>
-                        <TextField label="State" value={selectedEmployee.state} fullWidth disabled/>
+                        <TextField label="Pan Card" value={selectedEmployee.pancard} fullWidth disabled />
+                        <TextField label="Aadhar Card" value={selectedEmployee.aadharcard} fullWidth disabled />
+                        <TextField label="Address Line 1" value={selectedEmployee.address1} fullWidth disabled />
+                        <TextField label="Address Line 2" value={selectedEmployee.address2} fullWidth disabled />
+                        <TextField label="City" value={selectedEmployee.city} fullWidth disabled />
+                        <TextField label="State" value={selectedEmployee.state} fullWidth disabled />
                         <TextField label="Image" value={selectedEmployee.Image} fullWidth disabled />
                     </Stack>
                 </DialogContent>

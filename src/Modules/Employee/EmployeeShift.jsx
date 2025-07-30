@@ -9,7 +9,6 @@ import {
     getAllEmployees
 } from "../../Services/EmployeeService";
 import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
-// import EditIcon from '@mui/icons-material/Edit';
 import SearchIcon from '@mui/icons-material/Search';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -24,11 +23,10 @@ const EmployeeShiftPage = () => {
     const [employees, setEmployees] = useState([]);
     const [shift, setShift] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
-    
+
     const [employeeShiftList, setEmployeeShiftList] = useState([]);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [viewOpen, setViewOpen] = useState(false);
-    // const [isEdit, setIsEdit] = useState(false);
 
     const [selectedEmployee, setSelectedEmployee] = useState({
         employeeId: '',
@@ -82,7 +80,6 @@ const EmployeeShiftPage = () => {
     };
 
     const handleCreate = () => {
-        // setIsEdit(false);
         setSelectedEmployee({
             employeeId: '',
             employeeName: '',
@@ -94,12 +91,6 @@ const EmployeeShiftPage = () => {
         });
         setDialogOpen(true);
     };
-
-    // const handleEdit = (emp) => {
-    //     setSelectedEmployee({ ...emp });
-    //     setIsEdit(true);
-    //     setDialogOpen(true);
-    // };
 
     const handleView = (emp) => {
         setSelectedEmployee({ ...emp });
@@ -137,17 +128,13 @@ const EmployeeShiftPage = () => {
             isActive: true,
             mobileNo: selectedEmployee.mobileNo,
             createdBy: parseInt(userId),
-            updatedBy:  0
+            updatedBy: 0
         };
 
         try {
-            // if (isEdit) {
-            //     await updateEmployeeShift(payload.employeeId, payload.shiftId, payload);
-            //     showAlert('success', 'Employee shift updated successfully');
-            // } else {
-                await createEmployeeShift(payload);
-                showAlert('success', 'Employee shift created successfully');
-            // }
+            await createEmployeeShift(payload);
+            showAlert('success', 'Employee shift created successfully');
+
             setDialogOpen(false);
             loadEmployeeShift();
         } catch {
@@ -157,50 +144,48 @@ const EmployeeShiftPage = () => {
     const csvHeaders = [
         { label: "Employee ID", key: "employeeId" },
         { label: "Employee Name", key: "employeeName" },
-        { label: "Shift ID", key: "shiftId" },
         { label: "Shift Name", key: "shiftName" },
         { label: "Date From", key: "dateFrom" },
         { label: "Date To", key: "dateTo" },
-        { label: "Mobile No", key: "mobileNo" } 
-    ];  
+        { label: "Mobile No", key: "mobileNo" }
+    ];
 
     const filteredEmployee = employeeShiftList.filter((emp) =>
-    emp.employeeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.mobileNo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.shiftName?.toLowerCase().includes(searchQuery.toLowerCase())
-);
+        emp.employeeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        emp.mobileNo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        emp.shiftName?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     return (
         <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-    <Typography variant="h4">Employee Shift</Typography>
-    
-    <Box display="flex" alignItems="center" gap={2}>
-        <TextField
-            placeholder="Search by Employee Name, Shift"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-                startAdornment: (
-                    <InputAdornment position="start">
-                        <SearchIcon />
-                    </InputAdornment>
-                ),
-            }}
-            size="small"
-            sx={{ width: 300 }}
-        />
-        <ExportCSVButton
-            data={filteredEmployee}
-            filename={`EmployeeShift.csv`}
-            headers={csvHeaders}
-        />
-        <Button variant="contained" color="primary" onClick={handleCreate}>
-            Add Employee Shift
-        </Button>
-    </Box>
-</Box>
+                <Typography variant="h4">Employee Shift</Typography>
 
+                <Box display="flex" alignItems="center" gap={2}>
+                    <TextField
+                        placeholder="Search by Employee Name, Shift"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon />
+                                </InputAdornment>
+                            ),
+                        }}
+                        size="small"
+                        sx={{ width: 300 }}
+                    />
+                    <ExportCSVButton
+                        data={filteredEmployee}
+                        filename={`EmployeeShift.csv`}
+                        headers={csvHeaders}
+                    />
+                    <Button variant="contained" color="primary" onClick={handleCreate}>
+                        Add Employee Shift
+                    </Button>
+                </Box>
+            </Box>
 
             <Table>
                 <TableHead>
@@ -228,11 +213,6 @@ const EmployeeShiftPage = () => {
                                             <VisibilityIcon />
                                         </IconButton>
                                     </Tooltip>
-                                    {/* <Tooltip title="Edit">
-                                        <IconButton onClick={() => handleEdit(emp)} color="primary">
-                                            <EditIcon />
-                                        </IconButton>
-                                    </Tooltip> */}
                                     <Tooltip title="Delete">
                                         <IconButton onClick={() => handleDelete(emp)} color="error">
                                             <DeleteIcon />
@@ -250,7 +230,7 @@ const EmployeeShiftPage = () => {
             </Table>
 
             <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
-                <DialogTitle>{ 'Add Employee shift'}</DialogTitle>
+                <DialogTitle>{'Add Employee shift'}</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} mt={1}>
                         <TextField select label="Employee Name" name="employeeId" value={selectedEmployee.employeeId} onChange={handleChange} fullWidth >
