@@ -124,10 +124,12 @@ const Stock = () => {
             const isHighStock = quantity >= 1000;
 
             return (
-             <Box key={item.id} display="flex" alignItems="center" gap={2}>
-  <Typography fontWeight={600} minWidth="150px">
-    {item.name}
-  </Typography>
+            <Box key={item.id} display="flex" alignItems="center" gap={2}>
+  <Box width="200px" flexShrink={0}>
+    <Typography fontWeight={600}>
+      {item.name}
+    </Typography>
+  </Box>
   <Paper
     elevation={2}
     sx={{
@@ -143,6 +145,7 @@ const Stock = () => {
     </Box>
   </Paper>
 </Box>
+
 
             );
           })
