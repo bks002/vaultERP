@@ -8,6 +8,7 @@ import { getAllOperation, createOperation } from '../../Services/OperationServic
 import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
 import { useSelector } from 'react-redux';
 import SearchIcon from '@mui/icons-material/Search';
+import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton';
 
 const AssetOperationMaster = () => {
     const [type, setType] = useState([]);
@@ -62,6 +63,11 @@ const AssetOperationMaster = () => {
         v.manpower?.includes(searchQuery) ||
         v.item?.toLowerCase().includes(searchQuery.toLowerCase()) 
  );
+
+    const csvHeaders = [
+        { label: 'Operation Name', key: 'operationName' },  
+        { label: 'Description', key: 'description' },
+    ];
     return (
         <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
@@ -80,6 +86,11 @@ const AssetOperationMaster = () => {
                         }}
                         size="small"
                         sx={{ width: 300 }}
+                    />
+                    <ExportCSVButton
+                        data={filteredOperation}
+                        filename="AssetOperations.csv"
+                        headers={csvHeaders}
                     />
                     <Button variant="contained" color="primary" onClick={handleCreate}>
                         Add Operation
