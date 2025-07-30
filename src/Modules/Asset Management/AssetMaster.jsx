@@ -10,11 +10,15 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SettingsIcon from '@mui/icons-material/Settings';
+
+
 import { assetTypes } from "../../Components/constant";
+
 import { getAllAssets, createAssets, EditAssets, deleteAsset } from "../../Services/AssetService";
 import { getAllOperation } from "../../Services/OperationService";
 import { getAssetOperation, OperationMapping } from "../../Services/AssetOperation";
 import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
+import ExportCSVButton from "../../Components/Export to CSV/ExportCSVButton";
 
 const AssetMaster = () => {
   const officeId = useSelector((state) => state.user.officeId);
@@ -122,6 +126,26 @@ const AssetMaster = () => {
     }
   };
 
+
+  const filteredAssets = assets.filter((asset) =>
+    asset.assetName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    asset.manufacturer?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const csvHeaders = [
+    { label: "Asset Id", key: "assetId" },
+    { label: "Asset Code", key: "assetCode" },
+    { label: "Asset Name", key: "assetName" },
+    { label: "Asset Type Id", key: "assetTypeId" },
+    { label: "Manufacturer", key: "manufacturer" },
+    { label: "Model Number", key: "modelNumber" },
+    { label: "Serial Number", key: "serialNumber" },
+    { label: "Purchase Date", key: "purchaseDate" },
+    { label: "Warranty Expiry", key: "warrantyExpiry" },
+    { label: "Supplier", key: "supplier" }
+  ];
+
+
   const handleCheckboxChange = (assetId) => {
     setSelectedIds((prev) =>
       prev.includes(assetId)
@@ -171,6 +195,7 @@ const AssetMaster = () => {
     }
   };
 
+
   const filteredAssets = assets.filter((v) =>
     v.assetName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     v.manufacturer?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -183,7 +208,13 @@ const AssetMaster = () => {
         <Typography variant="h4">Asset Master</Typography>
         <Box display="flex" alignItems="center" gap={2}>
           <TextField
+
+            placeholder="Search Assets..."
+            variant="outlined"
+            sx={{ width: 300 }}
+
             placeholder="Search by Asset name, Manufacturer"
+
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             InputProps={{
@@ -196,6 +227,13 @@ const AssetMaster = () => {
             size="small"
             sx={{ width: 300 }}
           />
+
+          <ExportCSVButton
+            data={filteredAssets}
+            filename="Assets.csv"
+            headers={csvHeaders}
+          />
+
           <Button variant="contained" color="primary" onClick={handleCreate}>
             Add Asset Master
           </Button>
@@ -245,7 +283,7 @@ const AssetMaster = () => {
         <DialogContent>
           <Grid container spacing={2} mt={1}>
             <Grid item xs={12} md={6} size={6}>
-              <TextField fullWidth label="Asset Name" name="getAllAssets" value={formData.assetName} onChange={handleChange} />
+              <TextField fullWidth label="Asset Name" name="assetName" value={formData.assetName} onChange={handleChange} />
               <TextField fullWidth label="Model Number" name="modelNumber" value={formData.modelNumber} onChange={handleChange} sx={{ mt: 2 }} />
               <TextField fullWidth label="Purchase Date" name="purchaseDate" type="date" InputLabelProps={{ shrink: true }} value={formData.purchaseDate?.split("T")[0] || ""} onChange={handleChange} sx={{ mt: 2 }} />
               <TextField fullWidth label="Manufacturer" name="manufacturer" value={formData.manufacturer} onChange={handleChange} sx={{ mt: 2 }} />
@@ -254,7 +292,10 @@ const AssetMaster = () => {
 
             <Grid item xs={12} md={6} size={6}>
               <TextField fullWidth label="Asset Code" name="assetCode" value={formData.assetCode} onChange={handleChange} />
+
+
               <TextField select fullWidth label="Asset Type" name="assetTypeId" value={formData.assetTypeId} onChange={handleChange} sx={{ mt: 2 }} >
+
                 {assetTypes.map((type) => (
                   <MenuItem key={type.id} value={type.id}>
                     {type.type}

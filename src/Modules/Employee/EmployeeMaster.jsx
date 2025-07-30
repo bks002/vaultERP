@@ -21,6 +21,9 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { useSelector } from "react-redux";
 import Checkbox from '@mui/material/Checkbox';
 import {employmentTypes, department, gender} from "../../Components/constant";
+import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton';
+import AddLinkIcon from '@mui/icons-material/AddLink';
+import { uploadImage } from '../../Services/ImageService';
 
 const EmployeeMasterPage = () => {
     const officeId = useSelector((state) => state.user.officeId);
@@ -34,6 +37,9 @@ const EmployeeMasterPage = () => {
     const [isEdit, setIsEdit] = useState(false);
     const [settingOpen, setSettingOpen] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]);
+    const [image, setImage] = useState(null);
+    const [selectedFile, setSelectedFile] = useState(null);
+
 
     const [selectedEmployee, setSelectedEmployee] = useState({
         employeeId: '',
@@ -116,6 +122,7 @@ const EmployeeMasterPage = () => {
         });
         setDialogOpen(true);
     };
+    
 
     const handleEdit = (emp) => {
         setSelectedEmployee({ ...emp });
@@ -156,41 +163,38 @@ const EmployeeMasterPage = () => {
         const { name, value } = e.target;
         setSelectedEmployee({ ...selectedEmployee, [name]: value });
     };
+     
+ const handleFileChange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    setSelectedFile(file);
+  }
+};
 
-    // const handleFileChange = async (e) => {
-    //     const file = e.target.files[0];
-    //     if (!file) return;
 
-    //     const formData = new FormData();
-    //     formData.append("file", file);
-    //     console.log("Uploading file:", file);
-    //     console.log("Uploading file:", formData);
 
-    //     try {
-    //         const response = await axios.post(
-    //             "https://admin.urest.in:8089/api/ImageUpload/upload",
-    //             file,
-    //             {
-    //                 headers: {
-    //                     "Content-Type": "multipart/form-data",
-    //                 },
-    //             }
-    //         );
+   const handleImageUpload = async () => {
+  if (!selectedFile) {
+    showAlert("error", "Please select a file first");
+    return;
+  }
 
-    //         if (response.status === 200 && response.data.url) {
-    //             setSelectedEmployee((prev) => ({
-    //                 ...prev,
-    //                 profileImageUrl: response.data.url,
-    //             }));
-    //             showAlert("success", "Image uploaded successfully");
-    //         } else {
-    //             showAlert("error", "Image upload failed");
-    //         }
-    //     } catch (error) {
-    //         console.error("Upload Error:", error);
-    //         showAlert("error", "Error uploading image");
-    //     }
-    // };
+  try {
+    const result = await uploadImage(selectedFile);
+    if (result && result.url) {
+      setSelectedEmployee((prev) => ({
+        ...prev,
+        Image: result.url,
+      }));
+      showAlert("success", "Image uploaded successfully");
+    } else {
+      showAlert("error", "Image upload failed: No URL returned");
+    }
+  } catch (error) {
+    showAlert("error", "Image upload failed");
+  }
+};
+
 
     const handleCheckboxChange = (employeeId) => {
         setSelectedIds((prev) =>
@@ -246,6 +250,20 @@ const EmployeeMasterPage = () => {
         rate.employeeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
          rate.email?.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+   const csvHeaders = [
+        { label: "Employee Code", key: "employeeCode" },
+        { label: "Name", key: "employeeName" },
+        { label: "Email", key: "email" },
+        { label: "Phone", key: "phoneNumber" },
+        { label: "Designation", key: "designation" },
+        { label: "Department", key: "department" },
+        { label: "DOB", key: "dob" },
+        { label: "Gender", key: "gender" }
+    ];
+   
+
+
     return (
         <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
@@ -264,6 +282,11 @@ const EmployeeMasterPage = () => {
                         }}
                         size="small"
                         sx={{ width: 300 }}
+                    />
+                    <ExportCSVButton
+                        data={filteredEmployee}
+                        filename={`EmployeeMaster.csv`}
+                        headers={csvHeaders}
                     />
                 <Button variant="contained" onClick={handleCreate}>Add Employee</Button>
             </Box>
@@ -359,7 +382,23 @@ const EmployeeMasterPage = () => {
                         <TextField label="Address Line 2" name="address2" value={selectedEmployee.address2} onChange={handleChange} fullWidth />
                         <TextField label="City" name="city" value={selectedEmployee.city} onChange={handleChange} fullWidth />
                         <TextField label="State" name="state" value={selectedEmployee.state} onChange={handleChange} fullWidth />
-                        {/* <TextField type="file" name="image" onChange={handleFileChange} fullWidth InputLabelProps={{ shrink: true }} /> */}
+                       <div>
+                       <Stack direction="row" spacing={1}>
+                    <TextField
+                    type="file"
+                    name="image"
+                    onChange={handleFileChange}
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                />
+                <Button variant="contained" onClick={handleImageUpload}>
+                    Upload
+                </Button>
+                </Stack>
+
+                </div>
+
+
                     </Stack>
                 </DialogContent>
                 <DialogActions>
@@ -389,7 +428,7 @@ const EmployeeMasterPage = () => {
                         <TextField label="Address Line 2" value={selectedEmployee.address2} fullWidth disabled/>
                         <TextField label="City" value={selectedEmployee.city} fullWidth disabled/>
                         <TextField label="State" value={selectedEmployee.state} fullWidth disabled/>
-                        {/* <TextField label="Image" value={selectedEmployee.Image} fullWidth disabled /> */}
+                        <TextField label="Image" value={selectedEmployee.Image} fullWidth disabled />
                     </Stack>
                 </DialogContent>
                 <DialogActions>
