@@ -23,9 +23,12 @@ import {
   deleteJobCard
 } from "../../Services/JobCard";
 
+import ExportCSVButton from "../../Components/Export to CSV/ExportCSVButton";
+
 const JobCard = () => {
   const officeId = useSelector((state) => state.user.officeId);
   const userId = useSelector((state) => state.user.userId);
+
   const [jobCards, setJobCards] = useState([]);
   const [assets, setAssets] = useState([]);
   const [operations, setOperations] = useState([]);
@@ -129,11 +132,13 @@ const JobCard = () => {
     id: job.id,
     orderNo: job.orderNo,
     isCode: job.isCode,
+    date: job.date,
     assetId: job.assetId,
     shiftId: job.shiftId,
     operationId: job.operationId,
     size: job.size,
     noDiaOfStands: job.noDiaOfStands,
+    shape: job.shape,
     isCompacted: job.isCompacted ? "yes" : "no",
     compound: job.compound,
     color: job.color,
@@ -144,12 +149,10 @@ const JobCard = () => {
     takeUpDrumSize: job.takeUpDrumSize,
     embrossing: job.embrossing,
     remark: job.remark,
-    date: job.date,
-    shape: job.shape,
   });
 
   const handleEdit = (data) => {
-    setFormData({ ...data, isCompacted: data.isCompacted ? "yes" : "no" });
+    setFormData(populateFormData(data));
     setIsEdit(true);
     setViewOpen(false);
     setDialogOpen(true);
@@ -185,7 +188,7 @@ const JobCard = () => {
       createdOn: new Date().toISOString(),
     };
 
-    if (!formData.orderNo || !formData.assetId || !formData.shiftId || !formData.operationId) {
+    if (!formData.orderNo || !formData.date || !formData.assetId || !formData.shiftId || !formData.operationId) {
       showAlert("error", "Please fill all required fields");
       return;
     }
@@ -201,12 +204,26 @@ const JobCard = () => {
       setDialogOpen(false);
       await fetchJobCardData();
     } catch (error) {
-      console.error("Save failed:", error.response?.data || error.message || error);
       showAlert("error", error.response?.data?.message || "Failed to save job card");
     }
   };
 
+  // CSV Export Setup
+  const csvHeaders = [
+    { label: "Order No", key: "orderNo" },
+    { label: "Asset", key: "assetName" },
+    { label: "Operation", key: "operationName" },
+    { label: "Shift", key: "shiftName" },
+    { label: "Is Compacted", key: "isCompacted" },
+  ];
 
+  const transformedStockData = jobCards.map((job) => ({
+    orderNo: job.orderNo,
+    assetName: assets.find((a) => a.assetId === job.assetId)?.assetName || "-",
+    operationName: operations.find((o) => o.operationId === job.operationId)?.operationName || "-",
+    shiftName: shift.find((s) => s.shiftId === job.shiftId)?.shiftName || "-",
+    isCompacted: job.isCompacted ? "Yes" : "No",
+  }));
 
   return (
     <Container maxWidth={false}>
@@ -224,6 +241,13 @@ const JobCard = () => {
                 </InputAdornment>
               )
             }}
+            size="small"
+            sx={{ width: 300 }}
+          />
+          <ExportCSVButton
+            data={transformedStockData}
+            filename="jobcard_data.csv"
+            headers={csvHeaders}
           />
           <Button variant="contained" onClick={handleCreate}>Create Job Card</Button>
         </Box>
@@ -245,53 +269,48 @@ const JobCard = () => {
           <TableBody>
             {jobCards.filter(j => j.orderNo?.toLowerCase().includes(searchQuery.toLowerCase()))
               .map((job, index) => (
-                <TableRow key={index}>
+                <TableRow key={job.id}>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{job.orderNo}</TableCell>
                   <TableCell>{assets.find(a => a.assetId === job.assetId)?.assetName || '-'}</TableCell>
-                  <TableCell>{operations.find(o => o.operationId == job.operationId)?.operationName || '-'}</TableCell>
+                  <TableCell>{operations.find(o => o.operationId === job.operationId)?.operationName || '-'}</TableCell>
                   <TableCell>{shift.find(s => s.shiftId === job.shiftId)?.shiftName || '-'}</TableCell>
                   <TableCell>{job.isCompacted ? "Yes" : "No"}</TableCell>
                   <TableCell>
                     <Tooltip title="View"><IconButton onClick={() => handleView(job)} color="info"><VisibilityIcon /></IconButton></Tooltip>
-                    <Tooltip title="Edit" ><IconButton onClick={() => handleEdit(job)} color="primary"><EditIcon /></IconButton></Tooltip>
+                    <Tooltip title="Edit"><IconButton onClick={() => handleEdit(job)} color="primary"><EditIcon /></IconButton></Tooltip>
                     <Tooltip title="Delete"><IconButton onClick={() => handleDelete(job)} color="error"><DeleteIcon /></IconButton></Tooltip>
                   </TableCell>
                 </TableRow>
               ))}
           </TableBody>
         </Table>
+        {jobCards.length === 0 && (
+          <Box p={2} textAlign="center">
+            <Typography variant="body1">No job cards found.</Typography>
+          </Box>
+        )}
       </TableContainer>
 
-      {/* Dialog */}
+      {/* Dialogs */}
+      {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="md">
         <DialogTitle>{isEdit ? "Edit Job Card" : "Create Job Card"}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} mt={1}>
+            {/* Left Column */}
             <Grid item xs={12} sm={6}>
               <TextField fullWidth label="Order No" name="orderNo" value={formData.orderNo} onChange={handleChange} />
               <TextField fullWidth label="IS Code" name="isCode" value={formData.isCode} onChange={handleChange} sx={{ mt: 2 }} />
-              <TextField fullWidth label="Date" name="date" value={formData.date} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth type="date" label="Date" name="date" value={formData.date} onChange={handleChange} sx={{ mt: 2 }} InputLabelProps={{ shrink: true }} />
               <TextField select fullWidth label="Asset" name="assetId" value={formData.assetId} onChange={handleChange} sx={{ mt: 2 }}>
-                {assets.map((a) => (
-                  <MenuItem key={a.assetId} value={a.assetId}>
-                    {a.assetName}
-                  </MenuItem>
-                ))}
+                {assets.map((a) => <MenuItem key={a.assetId} value={a.assetId}>{a.assetName}</MenuItem>)}
               </TextField>
               <TextField select fullWidth label="Shift" name="shiftId" value={formData.shiftId} onChange={handleChange} sx={{ mt: 2 }}>
-                {shift.map((s) => (
-                  <MenuItem key={s.shiftId} value={s.shiftId}>
-                    {s.shiftName}
-                  </MenuItem>
-                ))}
+                {shift.map((s) => <MenuItem key={s.shiftId} value={s.shiftId}>{s.shiftName}</MenuItem>)}
               </TextField>
               <TextField select fullWidth label="Operation" name="operationId" value={formData.operationId} onChange={handleChange} sx={{ mt: 2 }}>
-                {operations.map((o) => (
-                  <MenuItem key={o.operationId} value={o.operationId}>
-                    {o.operationName}
-                  </MenuItem>
-                ))}
+                {operations.map((o) => <MenuItem key={o.operationId} value={o.operationId}>{o.operationName}</MenuItem>)}
               </TextField>
               <TextField fullWidth label="Size" name="size" value={formData.size} onChange={handleChange} sx={{ mt: 2 }} />
               <TextField fullWidth label="No. Dia of Stands" name="noDiaOfStands" value={formData.noDiaOfStands} onChange={handleChange} sx={{ mt: 2 }} />
@@ -304,6 +323,7 @@ const JobCard = () => {
                 </RadioGroup>
               </FormControl>
             </Grid>
+            {/* Right Column */}
             <Grid item xs={12} sm={6}>
               <TextField fullWidth label="Compound" name="compound" value={formData.compound} onChange={handleChange} sx={{ mt: 2 }} />
               <TextField fullWidth label="Color" name="color" value={formData.color} onChange={handleChange} sx={{ mt: 2 }} />
@@ -316,7 +336,6 @@ const JobCard = () => {
               <TextField fullWidth label="Remarks" name="remark" value={formData.remark} onChange={handleChange} sx={{ mt: 2 }} />
             </Grid>
           </Grid>
-
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
@@ -324,36 +343,22 @@ const JobCard = () => {
         </DialogActions>
       </Dialog>
 
-
-
       {/* View Dialog */}
       <Dialog open={viewOpen} onClose={() => setViewOpen(false)} fullWidth maxWidth="md">
         <DialogTitle>View Job Card</DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
-            <TextField fullWidth label="Order No" value={formData.orderNo || ''} disabled />
-            <TextField fullWidth label="IS Code" value={formData.isCode || ''} disabled />
-            <TextField fullWidth label="Date" value={formData.date || ''} disabled />
-            <TextField fullWidth label="Asset" value={assets.find(a => a.assetId === formData.assetId)?.assetName || '-'} disabled />
-            <TextField fullWidth label="Shift" value={shift.find(s => s.shiftId === formData.shiftId)?.shiftName || '-'} disabled />
-            <TextField fullWidth label="Operation" value={operations.find(o => o.operationId === formData.operationId)?.operationName || '-'} disabled />
-            <TextField fullWidth label="Size" value={formData.size || ''} disabled />
-            <TextField fullWidth label="No. Dia of Stands" value={formData.noDiaOfStands || ''} disabled />
-            <TextField fullWidth label="Shape" value={formData.shape || ''} disabled />
-            <TextField fullWidth label="Is Compacted" value={formData.isCompacted === "yes" ? "Yes" : "No"} disabled />
-            <TextField fullWidth label="Compound" value={formData.compound || ''} disabled />
-            <TextField fullWidth label="Color" value={formData.color || ''} disabled />
-            <TextField fullWidth label="Thickness" value={formData.thickness || ''} disabled />
-            <TextField fullWidth label="Length" value={formData.length || ''} disabled />
-            <TextField fullWidth label="No. Dia of AM Wire" value={formData.noDiaOfAmWire || ''} disabled />
-            <TextField fullWidth label="Pay Off Dno" value={formData.payOffDno || ''} disabled />
-            <TextField fullWidth label="Take Up Drum Size" value={formData.takeUpDrumSize || ''} disabled />
-            <TextField fullWidth label="Embrossing" value={formData.embrossing || ''} disabled />
-            <TextField fullWidth label="Remarks" value={formData.remark || ''} disabled />
-
+            {Object.entries({
+              ...formData,
+              assetId: assets.find(a => a.assetId === formData.assetId)?.assetName || "-",
+              operationId: operations.find(o => o.operationId === formData.operationId)?.operationName || "-",
+              shiftId: shift.find(s => s.shiftId === formData.shiftId)?.shiftName || "-",
+              isCompacted: formData.isCompacted === "yes" ? "Yes" : "No",
+            }).map(([key, value]) => (
+              <TextField key={key} fullWidth label={key} value={value || ''} disabled />
+            ))}
           </Stack>
         </DialogContent>
-
         <DialogActions>
           <Button onClick={() => setViewOpen(false)}>Close</Button>
         </DialogActions>
@@ -369,4 +374,4 @@ const JobCard = () => {
   );
 };
 
-export default JobCard; 
+export default JobCard;

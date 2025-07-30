@@ -33,6 +33,7 @@ import {
     updateVendor,
 } from '../../Services/InventoryService.jsx';
 import { useSelector } from 'react-redux';
+import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton.jsx';
 
 const Vendor = () => {
     const officeId = useSelector((state) => state.user.officeId);
@@ -118,6 +119,19 @@ const Vendor = () => {
         v.contactNumber?.includes(searchQuery) ||
         v.email?.toLowerCase().includes(searchQuery.toLowerCase()) 
  );
+
+    const csvHeaders = [
+        { label: "Name", key: "name" }, 
+        { label: "Contact Person", key: "contactPerson" },
+        { label: "Contact Number", key: "contactNumber" },
+        { label: "Email", key: "email" },
+        { label: "Address", key: "address" },
+        { label: "GST Number", key: "gstNumber" },
+        { label: "PAN Number", key: "panNumber" },
+        { label: "Website URL", key: "websiteUrl" },
+        { label: "Active", key: "isActive" }
+    ];
+
     return (
         <div className="col-12">
              <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
@@ -136,6 +150,11 @@ const Vendor = () => {
                         }}
                         size="small"
                         sx={{ width: 300 }}
+                    />
+                    <ExportCSVButton
+                        data={vendors}
+                        filename={`Vendors.csv`}
+                        headers={csvHeaders}
                     />
                     <Button variant="contained" color="primary" onClick={handleCreateNew}>
                         Create New Vendor

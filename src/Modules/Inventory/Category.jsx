@@ -30,6 +30,7 @@ import {
     updateCategory,
 } from '../../Services/InventoryService.jsx';
 import { useSelector } from 'react-redux';
+import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton.jsx';
 
 const Category = () => {
     const officeId = useSelector((state) => state.user.officeId);
@@ -107,6 +108,13 @@ const Category = () => {
         }
     };
 
+    const csvHeaders = [
+        { label: "Category ID", key: "id" },    
+        { label: "Category Name", key: "name" },
+        { label: "Description", key: "description" },
+        { label: "Is Active", key: "isActive" },
+        { label: "Is Approved", key: "isApproved" },
+    ];
 
     const filteredCategories = categories.filter(category =>
         category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -134,6 +142,11 @@ const Category = () => {
                         size="small"
                         sx={{ width: 300 }}
                     />
+                    <ExportCSVButton
+                data={filteredCategories}
+                 filename={`Category.csv`}
+                 headers={csvHeaders}
+                />
                     <Button variant="contained" color="primary" onClick={handleCreateNew}>
                         Create New Category
                     </Button>

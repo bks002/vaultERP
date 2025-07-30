@@ -5,7 +5,7 @@ import {
     TextField, Stack, Switch, FormControlLabel, InputAdornment, Select, MenuItem, InputLabel,
     FormControl, Checkbox
 } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
+// import EditIcon from '@mui/icons-material/Edit';
 import SearchIcon from '@mui/icons-material/Search';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ViewIcon from '@mui/icons-material/Visibility';
@@ -13,6 +13,7 @@ import { useSelector } from 'react-redux';
 import { getProductMasters } from "../../Services/ProductMasterService";
 import { getPartyMasters } from '../../Services/PartyMasterService';
 import { getWorkOrders, createWorkOrder, updateWorkOrder, deleteWorkOrder } from '../../Services/WorkOrderService';
+import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton';
 
 const WorkOrder = () => {
     const officeId = useSelector((state) => state.user.officeId);
@@ -64,6 +65,18 @@ const WorkOrder = () => {
             alert('Failed to fetch product list');
         }
     };
+
+    const csvHeaders = [
+        { label: "PO Number", key: "poNo" },
+        { label: "PO Date", key: "poDate" },
+        { label: "PO Amount", key: "poAmount" },
+        { label: "Board Name", key: "boardName" },
+        { label: "Party Name", key: "partyName" },
+        { label: "Products", key: "productNames" },
+        { label: "Quantity", key: "quantity" },
+        { label: "Store", key: "store" },
+    ];
+
 
     // const handleEdit = async (workOrder) => {
     //     if (!partyList.length) {
@@ -140,8 +153,8 @@ const WorkOrder = () => {
             //     await updateWorkOrder(selectedWorkOrder.id, workOrderToSend);
             //     alert('Work Order updated successfully!');
             // } else {
-                await createWorkOrder(workOrderToSend);
-                alert('Work Order created successfully!');
+            await createWorkOrder(workOrderToSend);
+            alert('Work Order created successfully!');
             // }
             setDialogOpen(false);
             loadWorkOrders();
@@ -201,6 +214,27 @@ const WorkOrder = () => {
         wo.boardName?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const csvData = filteredWorkOrders.map(order => {
+    const productNames = order.products?.map(p => {
+        const prod = productList.find(prod => String(prod.id) === String(p.productId));
+        return prod?.product_name || '';
+    }).join('\n');
+
+    const quantity = order.products?.map(p => p.quantity || '').join('\n');
+    const store = order.products?.map(p => p.store || '').join('\n');
+
+    return {
+        poNo: order.poNo,
+        poDate: order.poDate,
+        poAmount: order.poAmount,
+        boardName: order.boardName,
+        partyName: order.partyName,
+        productNames,
+        quantity,
+        store
+    };
+});
+
     return (
         <div className="col-12">
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
@@ -219,6 +253,11 @@ const WorkOrder = () => {
                         }}
                         size="small"
                         sx={{ width: 300 }}
+                    />
+                    <ExportCSVButton
+                        data={csvData}
+                        filename="WorkOrders.csv"
+                        headers={csvHeaders}
                     />
                     <Button variant="contained" color="primary" onClick={handleCreateNew}>
                         Create New Work Order

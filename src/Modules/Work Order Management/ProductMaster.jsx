@@ -11,6 +11,9 @@ import SearchIcon from '@mui/icons-material/Search';
 import {getProductMasters, createProductMaster, updateProductMaster, deleteProductMaster} from '../../Services/ProductMasterService';
 import { useSelector } from 'react-redux';
 
+import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton';
+
+
 const ProductMaster = () => {
   const officeId = useSelector((state) => state.user.officeId);
   const [searchQuery, setSearchQuery] = useState('');
@@ -88,6 +91,9 @@ const ProductMaster = () => {
     office_id: Number(officeId),
   };
 
+
+  console.log('Payload:', payload);
+
   try {
     if (isEdit) {
       await updateProductMaster(selectedVendor.id, payload);
@@ -112,6 +118,13 @@ const ProductMaster = () => {
     v.unit?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const csvHeaders = [
+    { label: 'Name', key: 'product_name' },
+    { label: 'Description', key: 'description' },
+    { label: 'Price', key: 'rate' },
+    { label: 'Unit', key: 'unit' },
+  ];
+
   return (
     <div className="col-12">
       <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
@@ -131,6 +144,13 @@ const ProductMaster = () => {
             size="small"
             sx={{ width: 300 }}
           />
+
+          <ExportCSVButton
+            data={filteredVendors}
+            filename="ProductMasters.csv"
+            headers={csvHeaders}
+          />
+
           <Button variant="contained" color="primary" onClick={handleCreateNew}>
             Create New Product Master
           </Button>
