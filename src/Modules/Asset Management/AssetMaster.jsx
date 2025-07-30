@@ -10,8 +10,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SettingsIcon from '@mui/icons-material/Settings';
-
-
 import { assetTypes } from "../../Components/constant";
 
 import { getAllAssets, createAssets, EditAssets, deleteAsset } from "../../Services/AssetService";
@@ -139,7 +137,6 @@ const AssetMaster = () => {
     { label: "Supplier", key: "supplier" }
   ];
 
-
   const handleCheckboxChange = (assetId) => {
     setSelectedIds((prev) =>
       prev.includes(assetId)
@@ -211,7 +208,6 @@ const AssetMaster = () => {
             sx={{ width: 300 }}
 
             placeholder="Search by Asset name, Manufacturer"
-
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             InputProps={{
@@ -229,7 +225,6 @@ const AssetMaster = () => {
             filename="Assets.csv"
             headers={csvHeaders}
           />
-
           <Button variant="contained" color="primary" onClick={handleCreate}>
             Add Asset Master
           </Button>
@@ -288,8 +283,6 @@ const AssetMaster = () => {
 
             <Grid item xs={12} md={6} size={6}>
               <TextField fullWidth label="Asset Code" name="assetCode" value={formData.assetCode} onChange={handleChange} />
-
-
               <TextField select fullWidth label="Asset Type" name="assetTypeId" value={formData.assetTypeId} onChange={handleChange} sx={{ mt: 2 }} >
 
                 {assetTypes.map((type) => (
