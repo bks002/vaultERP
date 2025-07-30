@@ -88,7 +88,6 @@ const POQuantity = ({ open, onClose, selectedItems = [] }) => {
         try {
             console.log(finalPOs)
             const result = await createPurchaseOrder(finalPOs);
-            console.log("Purchase Orders Created:", result);
             alert("Purchase Orders Created Successfully!");
             setDialogOpen(false);
             onClose();

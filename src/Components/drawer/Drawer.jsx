@@ -184,7 +184,6 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemText primary="Asset Operation Master" />
                     </ListItemButton>
                 </ListItem>
-
             </List>
             <Divider />
             <List>
@@ -219,11 +218,15 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemText primary="Product Master" />
                     </ListItemButton>
                 </ListItem>
+
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Work Order Management/WorkOrder"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Work Order" />
+                    </ListItemButton>
+                </ListItem>
+
             </List>
         </Drawer>
-
-        
-        
-        
     );
 }
