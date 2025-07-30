@@ -126,17 +126,11 @@ const AssetMaster = () => {
     }
   };
 
-
-  const filteredAssets = assets.filter((asset) =>
-    asset.assetName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    asset.manufacturer?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   const csvHeaders = [
     { label: "Asset Id", key: "assetId" },
     { label: "Asset Code", key: "assetCode" },
     { label: "Asset Name", key: "assetName" },
-    { label: "Asset Type Id", key: "assetTypeId" },
+    { label: "Asset Type", key: "assetType" },
     { label: "Manufacturer", key: "manufacturer" },
     { label: "Model Number", key: "modelNumber" },
     { label: "Serial Number", key: "serialNumber" },
@@ -144,7 +138,6 @@ const AssetMaster = () => {
     { label: "Warranty Expiry", key: "warrantyExpiry" },
     { label: "Supplier", key: "supplier" }
   ];
-
 
   const handleCheckboxChange = (assetId) => {
     setSelectedIds((prev) =>
@@ -195,11 +188,15 @@ const AssetMaster = () => {
     }
   };
 
-
-  const filteredAssets = assets.filter((v) =>
-    v.assetName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    v.manufacturer?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredAssets = assets
+    .filter((v) =>
+      v.assetName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      v.manufacturer?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .map((v) => ({
+      ...v,
+      assetType: assetTypes.find((t) => t.id === v.assetTypeId)?.type || ''
+    }));
 
   return (
     <Container maxWidth={false}>
@@ -209,7 +206,6 @@ const AssetMaster = () => {
         <Box display="flex" alignItems="center" gap={2}>
           <TextField
 
-            placeholder="Search Assets..."
             variant="outlined"
             sx={{ width: 300 }}
 
@@ -225,7 +221,12 @@ const AssetMaster = () => {
               ),
             }}
             size="small"
-            sx={{ width: 300 }}
+          />
+
+          <ExportCSVButton
+            data={filteredAssets}
+            filename="Assets.csv"
+            headers={csvHeaders}
           />
 
           <ExportCSVButton
@@ -361,7 +362,14 @@ const AssetMaster = () => {
             <TextField fullWidth label="Asset Code" value={formData.assetCode} disabled />
             <TextField fullWidth label="Model Number" value={formData.modelNumber} disabled />
             <TextField fullWidth label="Serial Number" value={formData.serialNumber} disabled />
-            <TextField fullWidth label="Asset Type Id" value={formData.assetTypeId} disabled />
+            <TextField
+              fullWidth
+              label="Asset Type"
+              value={
+                assetTypes.find((type) => type.id === formData.assetTypeId)?.type || ''
+              }
+              disabled
+            />
             <TextField fullWidth label="Manufacturer" value={formData.manufacturer} disabled />
             <TextField fullWidth label="Supplier" value={formData.supplier} disabled />
             <TextField fullWidth label="Purchase Date" value={formData.purchaseDate?.split("T")[0] || ""} type="date" InputLabelProps={{ shrink: true }} disabled />

@@ -3,7 +3,7 @@ import {
     Container, Typography, Button, TextField, Dialog,
     DialogTitle, DialogContent, DialogActions, Box,
     IconButton, Tooltip, Table, TableHead, TableRow,
-    TableCell, TableBody, Grid,  InputAdornment,
+    TableCell, TableBody, Grid, InputAdornment,
 } from '@mui/material';
 import { getAllEmployees } from '../../Services/EmployeeService.js';
 import { getAllOperation } from '../../Services/OperationService.js';
@@ -39,7 +39,7 @@ const DailyPlanningSheet = () => {
     const [planningData, setPlanningData] = useState([]);
     const [shifts, setShifts] = useState([]);
     const [selectedShift, setSelectedShift] = useState({
-        officeId:0,
+        officeId: 0,
         id: 0,
         itemId: 0,
         planDate: '',
@@ -67,13 +67,13 @@ const DailyPlanningSheet = () => {
         }
     }, [officeId]);
 
-    const loadPlanningData = async()=>{
+    const loadPlanningData = async () => {
         try {
             const data = await getAllPlanningByOffice(officeId);
             setPlanningData(data);
         }
         catch {
-            showAlert('error','Failed to load planning data')
+            showAlert('error', 'Failed to load planning data')
         }
     }
 
@@ -218,45 +218,42 @@ const DailyPlanningSheet = () => {
         XLSX.writeFile(workbook, 'DailyPlanningSheet.xlsx');
     };
     const filteredPlanningData = planningData.filter((entry) => {
-    const employeeName = Employees.find(e => e.employeeId === entry.employeeId)?.employeeName || '';
-    const shiftName = shifts.find(s => s.shiftId === entry.shiftId)?.shiftName || '';
-    return (
-        employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        shiftName.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-});
+        const employeeName = Employees.find(e => e.employeeId === entry.employeeId)?.employeeName || '';
+        const shiftName = shifts.find(s => s.shiftId === entry.shiftId)?.shiftName || '';
+        return (
+            employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            shiftName.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    });
 
 
     return (
         <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-    <Typography variant="h4">Daily Planning Sheet</Typography>
-    <Box display="flex" alignItems="center" gap={2}>
-        <TextField
-            placeholder="Search by employee name or shift"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-                startAdornment: (
-                    <InputAdornment position="start">
-                        <SearchIcon />
-                    </InputAdornment>
-                ),
-            }}
-            size="small"
-            sx={{ width: 300 }}
-        />
-        <Button variant="outlined" onClick={handleExport}>
-            Export to Excel
-        </Button>
-        <Button variant="contained" onClick={handleCreate}>
-            Create Planning
-        </Button>
-    </Box>
-</Box>
-
-
-
+                <Typography variant="h4">Daily Planning Sheet</Typography>
+                <Box display="flex" alignItems="center" gap={2}>
+                    <TextField
+                        placeholder="Search by employee name or shift"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon />
+                                </InputAdornment>
+                            ),
+                        }}
+                        size="small"
+                        sx={{ width: 300 }}
+                    />
+                    <Button variant="outlined" onClick={handleExport}>
+                        Export to Excel
+                    </Button>
+                    <Button variant="contained" onClick={handleCreate}>
+                        Create Planning
+                    </Button>
+                </Box>
+            </Box>
             <Table>
                 <TableHead>
                     <TableRow>
@@ -271,7 +268,7 @@ const DailyPlanningSheet = () => {
                 </TableHead>
                 <TableBody>
                     {filteredPlanningData.length > 0 ? (
-    filteredPlanningData.map((emp, index) => (
+                        filteredPlanningData.map((emp, index) => (
 
                             <TableRow key={emp.id}>
                                 <TableCell>{index + 1}</TableCell>
