@@ -29,7 +29,6 @@ import { getAllItems,getVendors  } from '../../Services/InventoryService.jsx';
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton.jsx';
 
 
 const RateCard = () => {
@@ -132,14 +131,6 @@ const RateCard = () => {
         rate.vendorName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
          rate.categoryName?.toLowerCase().includes(searchQuery.toLowerCase())
     );
-    const csvHeaders = [
-        { label: "Category", key: "categoryName" },
-        { label: "Item", key: "itemName" },
-        { label: "Vendor", key: "vendorName" },
-        { label: "Price", key: "price" },
-        { label: "Valid Till", key: "validTill" }
-    ];
-
     return (
         <div className="col-12">
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
@@ -158,11 +149,6 @@ const RateCard = () => {
                         }}
                         size="small"
                         sx={{ width: 300 }}
-                    />
-                    <ExportCSVButton
-                        data={filteredRateCards}    
-                        filename={`RateCard.csv`}
-                        headers={csvHeaders}
                     />
                     <Button variant="contained" color="primary" onClick={handleCreateNew}>
                         Create New Rate Card

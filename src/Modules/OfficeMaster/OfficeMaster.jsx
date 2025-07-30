@@ -11,7 +11,6 @@ import SearchIcon from "@mui/icons-material/Search";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton';
 
 const OfficeMasterPage = () => {
     const [offices, setOffices] = useState([]);
@@ -112,19 +111,6 @@ const OfficeMasterPage = () => {
         po.state.toLowerCase().includes(searchQuery.toLowerCase()) ||
         po.email.toLowerCase().includes(searchQuery.toLowerCase())
     );
-    const csvHeaders = [
-        { label: 'Office Name', key: 'officeName' },
-        { label: 'City', key: 'city' },
-        { label: 'State', key: 'state' },
-        { label: 'Office Type', key: 'officeType' },
-        { label: 'Email', key: 'email' },
-        { label: 'Region', key: 'region' },
-        { label: 'Pincode', key: 'pincode' },
-        { label: 'Address Line 1', key: 'addressLine1' },
-        { label: 'Address Line 2', key: 'addressLine2' },
-        { label: 'Contact Number', key: 'contactNumber' },
-    ];
-
     return (
         <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
@@ -143,11 +129,6 @@ const OfficeMasterPage = () => {
                         }}
                         size="small"
                         sx={{ width: 300 }}
-                    />
-                    <ExportCSVButton
-                        data={filteredOfficeMasters}
-                        filename="OfficeMasters.csv"
-                        headers={csvHeaders}
                     />
                     <Button variant="contained" color="primary" onClick={handleCreate} >
                         Add Office Master
