@@ -19,12 +19,17 @@ export const OperationMapping = async ({ assetId, operationIds, updatedBy }) => 
         updatedBy
       })
     });
+
+    // Check for HTTP errors (non-2xx responses)
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `Server returned ${response.status}`);
+    }
+
     const data = await response.json();
     return data;
+
   } catch (error) {
     throw new Error(error.message || 'Failed to map operations');
   }
 };
-
-
-

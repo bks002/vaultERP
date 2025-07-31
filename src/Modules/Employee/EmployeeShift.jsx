@@ -23,7 +23,6 @@ const EmployeeShiftPage = () => {
     const [employees, setEmployees] = useState([]);
     const [shift, setShift] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
-
     const [employeeShiftList, setEmployeeShiftList] = useState([]);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [viewOpen, setViewOpen] = useState(false);

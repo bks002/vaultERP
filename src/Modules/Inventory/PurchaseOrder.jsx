@@ -37,7 +37,6 @@ const PurchaseOrder = () => {
 
 
     const loadPurchaseOrders = async () => {
-        console.log('Loading Purchase Orders for Office ID:', officeId);
         setLoading(true);
 
         try {
@@ -57,7 +56,7 @@ const PurchaseOrder = () => {
         po.poNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
         po.vendorName.toLowerCase().includes(searchQuery.toLowerCase())
     );
-    
+  
     const csvHeaders = [
         { label: "PO Number", key: "poNumber" },
         { label: "Vendor Name", key: "vendorName" },
@@ -75,7 +74,7 @@ const PurchaseOrder = () => {
                     {/* ✅ Search Bar */}
                     <TextField
                         placeholder="Search PO Number or Vendor..."
-                       
+
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         InputProps={{
@@ -85,7 +84,8 @@ const PurchaseOrder = () => {
                                 </InputAdornment>
                             )
                         }}
-                         size="small"
+                        size="small"
+
                         sx={{ width: 300 }}
                     />
                     <ExportCSVButton

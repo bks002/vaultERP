@@ -86,8 +86,7 @@ const POQuantity = ({ open, onClose, selectedItems = [] }) => {
 
     const handleCreatePO = async (finalPOs) => {
         try {
-            console.log(finalPOs)
-            const result = await createPurchaseOrder(finalPOs);
+            await createPurchaseOrder(finalPOs);
             alert("Purchase Orders Created Successfully!");
             setDialogOpen(false);
             onClose();
@@ -117,6 +116,7 @@ const POQuantity = ({ open, onClose, selectedItems = [] }) => {
                     onChange={(e) =>
                         handleQuantityChange(params.row.itemId, Number(e.target.value))
                     }
+                    inputProps={{ min: 0 }}
                 />
             ),
         },
