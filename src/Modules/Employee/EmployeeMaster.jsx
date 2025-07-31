@@ -36,7 +36,6 @@ const EmployeeMasterPage = () => {
     const [isEdit, setIsEdit] = useState(false);
     const [settingOpen, setSettingOpen] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]);
-    const [image, setImage] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
 
 
@@ -121,6 +120,7 @@ const EmployeeMasterPage = () => {
         });
         setDialogOpen(true);
     };
+    
 
 
     const handleEdit = (emp) => {
@@ -162,13 +162,14 @@ const EmployeeMasterPage = () => {
         const { name, value } = e.target;
         setSelectedEmployee({ ...selectedEmployee, [name]: value });
     };
+     
+ const handleFileChange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    setSelectedFile(file);
+  }
+};
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setSelectedFile(file);
-        }
-    };
 
     const handleImageUpload = async () => {
         if (!selectedFile) {

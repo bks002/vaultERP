@@ -4,7 +4,9 @@ import SearchIcon from "@mui/icons-material/Search";
 import {
   Container, Typography, Grid, TextField, Box, Button, Dialog, DialogTitle, DialogContent, DialogActions,
   MenuItem, Table, TableBody, TableCell, TableContainer, TableHead,
+
   TableRow, InputAdornment, IconButton, Tooltip, Stack, Paper, FormControl,
+
   FormLabel, RadioGroup, FormControlLabel, Radio,
 } from "@mui/material";
 import EditIcon from '@mui/icons-material/Edit';
@@ -37,6 +39,9 @@ const JobCard = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+
   const [alert, setAlert] = useState({ open: false, type: "success", message: "" });
 
   const defaultFormData = {
@@ -61,7 +66,9 @@ const JobCard = () => {
     embrossing: "",
     remark: "",
     createdBy: userId,
-    createdOn: "",
+
+    createdOn:"",
+
     updatedBy: userId,
     updatedOn: "",
   };
@@ -128,7 +135,9 @@ const JobCard = () => {
     setDialogOpen(true);
   };
 
-  const populateFormData = (job) => ({
+
+ const populateFormData = (job) => ({
+
     id: job.id,
     orderNo: job.orderNo,
     isCode: job.isCode,
@@ -165,7 +174,10 @@ const JobCard = () => {
   };
 
   const handleDelete = async (job) => {
-    if (window.confirm(`Are you sure you want to delete job card "${job.orderNo}"?`)) {
+
+if (window.confirm(`Are you sure you want to delete job card "${job.orderNo}"?`)) {
+
+   
       try {
         await deleteJobCard(job.id);
         showAlert("success", "Job card deleted successfully");
@@ -175,6 +187,7 @@ const JobCard = () => {
       }
     }
   };
+
 
   const handleSave = async () => {
     const payload = {
@@ -227,6 +240,7 @@ const JobCard = () => {
   return (
     <Container maxWidth={false}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+
         <Typography variant="h4">Job Card</Typography>
         <Box display="flex" gap={2}>
           <TextField
@@ -238,6 +252,7 @@ const JobCard = () => {
                 <InputAdornment position="start">
                   <SearchIcon />
                 </InputAdornment>
+
               )
             }}
             size="small"
@@ -248,6 +263,13 @@ const JobCard = () => {
             filename="jobcard_data.csv"
             headers={csvHeaders}
           />
+
+          <ExportCSVButton
+            data={transformedStockData}
+            filename="stock_data.csv"
+            headers={csvHeaders}
+          />
+
           <Button variant="contained" onClick={handleCreate}>Create Job Card</Button>
         </Box>
       </Box>
@@ -276,9 +298,11 @@ const JobCard = () => {
                   <TableCell>{shift.find(s => s.shiftId === job.shiftId)?.shiftName || '-'}</TableCell>
                   <TableCell>{job.isCompacted ? "Yes" : "No"}</TableCell>
                   <TableCell>
+
                     <Tooltip title="View"><IconButton onClick={() => handleView(job)} color="info"><VisibilityIcon /></IconButton></Tooltip>
                     <Tooltip title="Edit"><IconButton onClick={() => handleEdit(job)} color="primary"><EditIcon /></IconButton></Tooltip>
                     <Tooltip title="Delete"><IconButton onClick={() => handleDelete(job)} color="error"><DeleteIcon /></IconButton></Tooltip>
+
                   </TableCell>
                 </TableRow>
               ))}

@@ -3,7 +3,8 @@ import {
   Box, Typography, Tabs, Tab, Paper, Stack, Chip, Button, Dialog,
   DialogTitle, DialogContent, DialogActions, MenuItem, TextField
 } from "@mui/material";
-import { getCategories, getAllItems } from "../../Services/InventoryService";
+import { getCategories } from "../../Services/InventoryService";
+import { getAllStock } from "../../Services/StockService";
 import { useSelector } from "react-redux";
 import ExportCSVButton from "../../Components/Export to CSV/ExportCSVButton";
 
@@ -37,8 +38,14 @@ const Stock = () => {
 
   const loadItems = async () => {
     try {
-      const data = await getAllItems(officeId);
-      setItems(data || []);
+      const data = await getAllStock(officeId); // ✅ New API call
+      const mappedItems = data.map((item) => ({
+        id: item.item_id,
+        name: item.name,
+        categoryId: item.category_id,
+        current_qty: item.current_qty
+      }));
+      setItems(mappedItems || []);
     } catch (err) {
       console.error("Failed to fetch items:", err.message);
     }
@@ -71,7 +78,6 @@ const Stock = () => {
     }
   };
 
-
   const csvHeaders = [
     { label: "Item ID", key: "itemId" },
     { label: "Item Name", key: "name" },
@@ -85,21 +91,20 @@ const Stock = () => {
   return (
     <Box p={1}>
       <Box display="flex" justifyContent="space-between" alignItems="center">
-  <Typography variant="h4" gutterBottom>
-    Stock Page
-  </Typography>
-  <Stack direction="row" spacing={2}>
-    <ExportCSVButton
+        <Typography variant="h4" gutterBottom>
+          Stock Page
+        </Typography>
+        <Stack direction="row" spacing={2}>
+          <ExportCSVButton
             data={itemsInCategory}
             filename="stock.csv"
             headers={csvHeaders}
           />
-    <Button variant="contained" color="primary" onClick={() => setOpenDialog(true)}>
-      Add Stock
-    </Button>
-  </Stack>
-</Box>
-
+          <Button variant="contained" color="primary" onClick={() => setOpenDialog(true)}>
+            Add Stock
+          </Button>
+        </Stack>
+      </Box>
 
       <Tabs
         value={selectedTab}
@@ -120,33 +125,31 @@ const Stock = () => {
         {itemsInCategory.length > 0 ? (
           itemsInCategory.map((item) => {
             const stock = stockData.find(s => s.itemId === item.id);
-            const quantity = stock?.quantity || 0;
+            const quantity = stock?.quantity || item.current_qty || 0;
             const isHighStock = quantity >= 1000;
 
             return (
-            <Box key={item.id} display="flex" alignItems="center" gap={2}>
-  <Box width="200px" flexShrink={0}>
-    <Typography fontWeight={600}>
-      {item.name}
-    </Typography>
-  </Box>
-  <Paper
-    elevation={2}
-    sx={{
-      flexGrow: 1,
-      borderRadius: "12px",
-      backgroundColor: isHighStock ? "#e8f5e9" : "#ffe5e5",
-      px: 2,
-      py: 1,
-    }}
-  >
-    <Box display="flex" justifyContent="flex-end" alignItems="center">
-      <Chip label={`Qty: ${quantity}`} color={isHighStock ? "success" : "default"} />
-    </Box>
-  </Paper>
-</Box>
-
-
+              <Box key={item.id} display="flex" alignItems="center" gap={2}>
+                <Box width="200px" flexShrink={0}>
+                  <Typography fontWeight={600}>
+                    {item.name}
+                  </Typography>
+                </Box>
+                <Paper
+                  elevation={2}
+                  sx={{
+                    flexGrow: 1,
+                    borderRadius: "12px",
+                    backgroundColor: isHighStock ? "#e8f5e9" : "#ffe5e5",
+                    px: 2,
+                    py: 1,
+                  }}
+                >
+                  <Box display="flex" justifyContent="flex-end" alignItems="center">
+                    <Chip label={`Qty: ${quantity}`} color={isHighStock ? "success" : "default"} />
+                  </Box>
+                </Paper>
+              </Box>
             );
           })
         ) : (
