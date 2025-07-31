@@ -112,6 +112,7 @@ const AssetMaster = () => {
 
   const handleSaveSettings = async () => {
     try {
+      console.log("userId", userId);
       const payload = {
         assetId: formData.assetId,
         operationIds: selectedIds,
@@ -157,7 +158,7 @@ const AssetMaster = () => {
     } catch (err) {
       showAlert("error", "Failed to load mapped operations");
     }
-  };
+  };  
 
   const handleEdit = (asset) => {
     setIsEdit(true)
@@ -205,12 +206,9 @@ const AssetMaster = () => {
         <Typography variant="h4">Asset Master</Typography>
         <Box display="flex" alignItems="center" gap={2}>
           <TextField
-
             variant="outlined"
             sx={{ width: 300 }}
-
             placeholder="Search by Asset name, Manufacturer"
-
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             InputProps={{
@@ -221,12 +219,6 @@ const AssetMaster = () => {
               ),
             }}
             size="small"
-          />
-
-          <ExportCSVButton
-            data={filteredAssets}
-            filename="Assets.csv"
-            headers={csvHeaders}
           />
 
           <ExportCSVButton
