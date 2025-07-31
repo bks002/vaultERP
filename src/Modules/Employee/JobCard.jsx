@@ -43,14 +43,14 @@ const JobCard = () => {
   const [alert, setAlert] = useState({ open: false, type: "success", message: "" });
 
   const defaultFormData = {
-    id: "",
+    id: 0,
     orderNo: "",
     isCode: "",
     date: "",
     assetId: "",
     shiftId: "",
     operationId: "",
-    size: "",
+    size: 0,
     noDiaOfStands: "",
     shape: "",
     isCompacted: "",
@@ -64,7 +64,7 @@ const JobCard = () => {
     embrossing: "",
     remark: "",
     createdBy: userId,
-
+    officeId: officeId,
     createdOn: "",
 
     updatedBy: userId,
