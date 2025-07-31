@@ -208,7 +208,6 @@ const JobCard = () => {
     }
   };
 
-  // CSV Export Setup
   const csvHeaders = [
     { label: "Order No", key: "orderNo" },
     { label: "Asset", key: "assetName" },

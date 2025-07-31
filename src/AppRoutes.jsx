@@ -21,13 +21,10 @@ import DailyPlanningSheet from "./Modules/Employee/DailyPlanningSheet.jsx";
 import EmployeeShift from "./Modules/Employee/EmployeeShift.jsx";
 import JobCard from "./Modules/Employee/JobCard.jsx";
 import PartyMaster from "./Modules/Work Order Management/PartyMaster.jsx";
-
-
 import Stock from "./Modules/Inventory/Stock.jsx";  
-// Assuming this is the correct import path
-
 import WorkOrder from "./Modules/Work Order Management/WorkOrder.jsx";
 import ProductMaster from "./Modules/Work Order Management/ProductMaster.jsx"; 
+import ProcessChartMaster from "./Modules/Employee/ProcessChart.jsx";
 
 
 function AppRoutes() {
@@ -51,12 +48,10 @@ function AppRoutes() {
       <Route path="/employeeshift" element={<AuthWrapper><EmployeeShift /></AuthWrapper>} />
       <Route path="/JobCard" element={<AuthWrapper><JobCard /></AuthWrapper>} />
       <Route path="Work Order Management/PartyMaster" element={<AuthWrapper><PartyMaster /></AuthWrapper>} />
-
-     
       <Route path="/inventory/Stock" element={<AuthWrapper><Stock /></AuthWrapper>} />
-
       <Route path="Work Order Management/WorkOrder" element={<AuthWrapper><WorkOrder /></AuthWrapper>} />
       <Route path="Work Order Management/ProductMaster" element={<AuthWrapper><ProductMaster /></AuthWrapper>} />
+      <Route path="/processchart" element={<AuthWrapper><ProcessChartMaster /></AuthWrapper>} />
 
       
       {/* Redirect to dashboard if no match */}
