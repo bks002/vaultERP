@@ -56,7 +56,7 @@ const PurchaseOrder = () => {
         po.poNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
         po.vendorName.toLowerCase().includes(searchQuery.toLowerCase())
     );
-
+  
     const csvHeaders = [
         { label: "PO Number", key: "poNumber" },
         { label: "Vendor Name", key: "vendorName" },
@@ -85,6 +85,7 @@ const PurchaseOrder = () => {
                             )
                         }}
                         size="small"
+
                         sx={{ width: 300 }}
                     />
                     <ExportCSVButton
