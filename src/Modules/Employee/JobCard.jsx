@@ -43,7 +43,7 @@ const JobCard = () => {
   const [alert, setAlert] = useState({ open: false, type: "success", message: "" });
 
   const defaultFormData = {
-    id: 0,
+    id: "",
     orderNo: "",
     isCode: "",
     date: "",

@@ -27,7 +27,6 @@ import ProductMaster from "./Modules/Work Order Management/ProductMaster.jsx";
 import ProcessChartMaster from "./Modules/Employee/ProcessChart.jsx";
 
 
-
 function AppRoutes() {
   return (
     <Routes>
@@ -53,6 +52,7 @@ function AppRoutes() {
       <Route path="Work Order Management/WorkOrder" element={<AuthWrapper><WorkOrder /></AuthWrapper>} />
       <Route path="Work Order Management/ProductMaster" element={<AuthWrapper><ProductMaster /></AuthWrapper>} />
       <Route path="/processchart" element={<AuthWrapper><ProcessChartMaster /></AuthWrapper>} />
+
 
       
       {/* Redirect to dashboard if no match */}
