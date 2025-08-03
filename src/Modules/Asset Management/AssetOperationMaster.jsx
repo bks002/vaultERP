@@ -52,6 +52,7 @@ const AssetOperationMaster = () => {
         try {
             await createOperation(selectedType);
             showAlert('success', 'Operation added successfully');
+            fetchTypes();
             setDialogOpen(false);
         } catch {
             showAlert('error', 'Failed to save operation');
