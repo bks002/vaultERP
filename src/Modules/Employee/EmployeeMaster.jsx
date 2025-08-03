@@ -123,6 +123,7 @@ const EmployeeMasterPage = () => {
     
 
 
+
     const handleEdit = (emp) => {
         setSelectedEmployee({ ...emp });
         setIsEdit(true);

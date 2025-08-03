@@ -259,7 +259,7 @@ const JobCard = () => {
           />
           <ExportCSVButton
             data={transformedStockData}
-            filename="stock_data.csv"
+            filename="jobcard_data.csv"
             headers={csvHeaders}
           />
 

@@ -35,7 +35,7 @@ const AssetMaster = () => {
   const [viewOpen, setViewOpen] = useState(false);
 
   const defaultFormData = {
-    assetId: "",
+    assetId: 0,
     assetCode: "",
     assetName: "",
     assetTypeId: "",
@@ -111,19 +111,26 @@ const AssetMaster = () => {
   };
 
   const handleSaveSettings = async () => {
-    try {
-      console.log("userId", userId);
-      const payload = {
-        assetId: formData.assetId,
+    if (!formData.assetId || isNaN(parseInt(formData.assetId))) {
+      showAlert("error", "Invalid Asset ID");
+      return;
+    }
+
+    const payload = {
+      dto: {
+        assetId: parseInt(formData.assetId),
         operationIds: selectedIds,
-        updatedBy: userId
-      };
-      await OperationMapping(payload);
+        updatedBy: parseInt(userId)
+      }
+    };
+
+    try {
+      await OperationMapping(payload);  // Make sure this sends raw JSON with dto
       showAlert("success", "Operations mapped successfully");
       setSettingOpen(false);
       loadAllassets();
     } catch (error) {
-      showAlert("error", error.message || "Failed to map operations");
+      showAlert("error", error.response?.data?.title || "Failed to map operations");
     }
   };
 
