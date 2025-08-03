@@ -24,8 +24,7 @@ import PartyMaster from "./Modules/Work Order Management/PartyMaster.jsx";
 import Stock from "./Modules/Inventory/Stock.jsx";  
 import WorkOrder from "./Modules/Work Order Management/WorkOrder.jsx";
 import ProductMaster from "./Modules/Work Order Management/ProductMaster.jsx"; 
-// import ProcessChartMaster from "./Modules/Employee/ProcessChart.jsx";
-
+import ProcessChartMaster from "./Modules/Employee/ProcessChart.jsx";
 
 
 function AppRoutes() {
@@ -52,7 +51,8 @@ function AppRoutes() {
       <Route path="/inventory/Stock" element={<AuthWrapper><Stock /></AuthWrapper>} />
       <Route path="Work Order Management/WorkOrder" element={<AuthWrapper><WorkOrder /></AuthWrapper>} />
       <Route path="Work Order Management/ProductMaster" element={<AuthWrapper><ProductMaster /></AuthWrapper>} />
-      {/* <Route path="/processchart" element={<AuthWrapper><ProcessChartMaster /></AuthWrapper>} /> */}
+      <Route path="/processchart" element={<AuthWrapper><ProcessChartMaster /></AuthWrapper>} />
+
 
       
       {/* Redirect to dashboard if no match */}

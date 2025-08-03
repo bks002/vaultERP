@@ -50,7 +50,7 @@ const JobCard = () => {
     assetId: "",
     shiftId: "",
     operationId: "",
-    size: "",
+    size: 0,
     noDiaOfStands: "",
     shape: "",
     isCompacted: "",
@@ -64,7 +64,7 @@ const JobCard = () => {
     embrossing: "",
     remark: "",
     createdBy: userId,
-
+    officeId: officeId,
     createdOn: "",
 
     updatedBy: userId,

@@ -126,6 +126,12 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemText primary="Job Card" />
                     </ListItemButton>
                 </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/processchart"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Process Chart" />
+                    </ListItemButton>
+                </ListItem>
             </List>
             <Divider />
             <List>
