@@ -21,7 +21,8 @@ import DailyPlanningSheet from "./Modules/Employee/DailyPlanningSheet.jsx";
 import EmployeeShift from "./Modules/Employee/EmployeeShift.jsx";
 import JobCard from "./Modules/Employee/JobCard.jsx";
 import PartyMaster from "./Modules/Work Order Management/PartyMaster.jsx";
-
+import Attendance from "./Modules/Attendance Management/Attendance.jsx"; 
+import Leave from "./Modules/Attendance Management/Leave.jsx"; // Assuming this is the correct import path
 
 import Stock from "./Modules/Inventory/Stock.jsx";  
 // Assuming this is the correct import path
@@ -57,6 +58,8 @@ function AppRoutes() {
 
       <Route path="Work Order Management/WorkOrder" element={<AuthWrapper><WorkOrder /></AuthWrapper>} />
       <Route path="Work Order Management/ProductMaster" element={<AuthWrapper><ProductMaster /></AuthWrapper>} />
+      <Route path="/Attendance/Attendance" element={<AuthWrapper><Attendance /></AuthWrapper>} />
+      <Route path="/Attendance/Leave" element={<AuthWrapper><Leave /></AuthWrapper>} />
 
       
       {/* Redirect to dashboard if no match */}

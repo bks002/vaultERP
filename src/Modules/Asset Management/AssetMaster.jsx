@@ -229,12 +229,6 @@ const AssetMaster = () => {
             headers={csvHeaders}
           />
 
-          <ExportCSVButton
-            data={filteredAssets}
-            filename="Assets.csv"
-            headers={csvHeaders}
-          />
-
           <Button variant="contained" color="primary" onClick={handleCreate}>
             Add Asset Master
           </Button>
