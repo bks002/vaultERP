@@ -121,9 +121,6 @@ const EmployeeMasterPage = () => {
         setDialogOpen(true);
     };
     
-
-
-
     const handleEdit = (emp) => {
         setSelectedEmployee({ ...emp });
         setIsEdit(true);

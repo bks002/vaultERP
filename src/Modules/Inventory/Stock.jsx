@@ -104,11 +104,12 @@ const Stock = () => {
     { label: "Item ID", key: "itemId" },
     { label: "Item Name", key: "name" },
     { label: "Category ID", key: "categoryId" },
-    { label: "Quantity", key: "quantity" },
+    { label: "Quantity", key: "current_qty" },
   ];
-
-  const selectedCategory = categories[selectedTab];
-  const itemsInCategory = items.filter(i => i.categoryId === selectedCategory?.id);
+  const itemsInCategory = items.filter(item => item.categoryId === (categories[selectedTab]?.id || ""));
+  if (categories.length === 0) {
+    return <Typography>No categories available.</Typography>;
+  }
 
   return (
     <Box p={1}>
