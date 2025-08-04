@@ -1,127 +1,168 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
-  Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, TextField, Button, IconButton, InputAdornment, Typography
-} from '@mui/material';
-import SearchIcon from "@mui/icons-material/Search";
-import { Check, Close } from '@mui/icons-material';
-import axios from 'axios';
+  Box,
+  Typography,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Stack,
+} from "@mui/material";
+import { useSelector } from "react-redux";
+import { fetchLeaves, approveLeave } from "../../Services/LeaveService";
 
 const Leave = () => {
+    const officeId = useSelector((state) => state.user.officeId);
   const [leaveData, setLeaveData] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const [selectedLeave, setSelectedLeave] = useState(null);
 
-  // ✅ Fetch leaves on component mount
+  // Fetch data on mount
   useEffect(() => {
-    fetchLeaves();
-  }, []);
+    const loadLeaves = async () => {
+      try {
+        const data = await fetchLeaves(officeId); // Replace with dynamic officeId if needed
+        setLeaveData(
+  data.map((item) => ({
+    ...item,
+    isApproved: item.isApproved === "Yes" || item.isApproved === true,
+    isRejected: item.isRejected === "Yes" || item.isRejected === true,
+  }))
+);
 
-  const fetchLeaves = async () => {
-    try {
-      const response = await axios.get("https://localhost:7093/api/LeaveRequest/get-leaves/office/1");
-      setLeaveData(response.data);
-    } catch (error) {
-      console.error("Error fetching leaves:", error);
-    }
+      } catch (err) {
+        console.error("Error loading leaves:", err.message);
+      }
+    };
+    loadLeaves();
+  }, [officeId]);
+
+  const handleView = (leave) => {
+    setSelectedLeave(leave);
+    setOpen(true);
   };
 
-  // ✅ Handle approve/reject action
-  const handleAction = async (leaveId, type) => {
-    try {
-      const approve = type === 'approve';
-
-      await axios.post(`https://localhost:7093/api/LeaveRequest/approve-leave/${leaveId}`, {
-        isApproved: approve,
-        isRejected: !approve,
-      });
-
-      // ✅ Update local state after successful API call
-      const updated = leaveData.map(item =>
-        item.leaveId === leaveId
-          ? { ...item, isApproved: approve ? "Yes" : "No", isRejected: !approve ? "Yes" : "No" }
-          : item
-      );
-      setLeaveData(updated);
-    } catch (error) {
-      console.error(`Error ${type === 'approve' ? "approving" : "rejecting"} leave:`, error);
-    }
+  const handleClose = () => {
+    setOpen(false);
+    setSelectedLeave(null);
   };
 
-  // 🔍 Filter search
-  const filteredData = leaveData.filter(item =>
-    Object.values(item).some(val =>
-      String(val).toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  );
+  const handleAction = async (index, type) => {
+  const leave = leaveData[index];
+  const isApproved = type === "approve";
+
+  try {
+    await approveLeave(leave.leaveId, isApproved);
+
+    const updated = leaveData.map((item, i) =>
+      i === index
+        ? {
+            ...item,
+            isApproved: isApproved,
+            isRejected: !isApproved,
+          }
+        : item
+    );
+
+    setLeaveData(updated);
+  } catch (err) {
+    console.error("Approval failed:", err.message);
+  }
+};
+
 
   return (
     <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-        <Typography variant="h4">Leave</Typography>
-        <TextField
-          placeholder="Search by..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-          size="small"
-          sx={{ width: 300 }}
-        />
-      </Box>
+      <Typography variant="h5" sx={{ mb: 2 }}>
+        Leave Management
+      </Typography>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell><strong>Employee Name</strong></TableCell>
-              <TableCell><strong>From Date</strong></TableCell>
-              <TableCell><strong>To Date</strong></TableCell>
-              <TableCell><strong>Reason</strong></TableCell>
-              <TableCell><strong>Leave Type</strong></TableCell>
-              <TableCell><strong>Is Approved</strong></TableCell>
-              <TableCell><strong>Is Rejected</strong></TableCell>
-              <TableCell><strong>Action</strong></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredData.map((row, index) => (
-              <TableRow key={index}>
-                <TableCell>{row.employeeName}</TableCell>
-                <TableCell>{row.fromDate}</TableCell>
-                <TableCell>{row.toDate}</TableCell>
-                <TableCell>{row.reason}</TableCell>
-                <TableCell>{row.leaveType}</TableCell>
-                <TableCell>{row.isApproved === true ? "Yes" : "No"}</TableCell>
-                <TableCell>{row.isRejected === true ? "Yes" : "No"}</TableCell>
-                <TableCell>
-                  <IconButton
-                    color="success"
-                    onClick={() => handleAction(row.leaveId, 'approve')}
-                  >
-                    <Check />
-                  </IconButton>
-                  <IconButton
-                    color="error"
-                    onClick={() => handleAction(row.leaveId, 'reject')}
-                  >
-                    <Close />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-            {filteredData.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={8} align="center">No data found</TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>Employee</TableCell>
+            <TableCell>From</TableCell>
+            <TableCell>To</TableCell>
+            <TableCell>Reason</TableCell>
+            <TableCell>Type</TableCell>
+            <TableCell>Status</TableCell>
+            <TableCell>Actions</TableCell>
+          </TableRow>
+        </TableHead>
+       <TableBody>
+  {leaveData.map((row, index) => (
+   <TableRow
+  key={index}
+  sx={{
+    backgroundColor: row.isApproved ? "#d0f0c0" : "inherit",
+  }}
+>
+
+      <TableCell>{row.mobileNo || "-"}</TableCell>
+      <TableCell>{row.fromDate}</TableCell>
+      <TableCell>{row.toDate}</TableCell>
+      <TableCell>{row.reason}</TableCell>
+      <TableCell>{row.leaveType}</TableCell>
+      <TableCell>
+       {row.isApproved
+  ? "Approved"
+  : row.isRejected
+  ? "Rejected"
+  : "Pending"}
+
+      </TableCell>
+      <TableCell>
+        <Button
+  variant="outlined"
+  color={row.isApproved ? "success" : "inherit"}
+  onClick={() => handleAction(index, "approve")}
+  disabled={row.isApproved}
+>
+  ✔
+</Button>
+
+      </TableCell>
+    </TableRow>
+  ))}
+</TableBody>
+
+      </Table>
+
+      {/* View Dialog */}
+      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+        <DialogTitle>Leave Details</DialogTitle>
+        <DialogContent dividers>
+          {selectedLeave && (
+            <Box>
+              <Typography><strong>Employee:</strong> {selectedLeave.mobileNo}</Typography>  
+              <Typography><strong>Employee:</strong> {selectedLeave.mobileNo}</Typography>
+              <Typography><strong>From:</strong> {selectedLeave.fromDate}</Typography>
+              <Typography><strong>To:</strong> {selectedLeave.toDate}</Typography>
+              <Typography><strong>Type:</strong> {selectedLeave.leaveType}</Typography>
+              <Typography><strong>Reason:</strong> {selectedLeave.reason}</Typography>
+              <Typography><strong>Status:</strong> 
+  {selectedLeave.isApproved
+    ? "Approved"
+    : selectedLeave.isRejected
+    ? "Rejected"
+    : "Pending"}
+</Typography>
+
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} variant="contained">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
