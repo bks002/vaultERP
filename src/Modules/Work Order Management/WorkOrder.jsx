@@ -16,6 +16,7 @@ import { getWorkOrders, createWorkOrder, updateWorkOrder, deleteWorkOrder } from
 import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton';
 
 const WorkOrder = () => {
+    const todayDate = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
     const officeId = useSelector((state) => state.user.officeId);
     const userId = useSelector((state) => state.user.userId);
     const [searchQuery, setSearchQuery] = useState('');
@@ -106,7 +107,15 @@ const WorkOrder = () => {
                 productName: fullProduct?.product_name || ''
             };
         });
-        setSelectedWorkOrder({ ...workOrder, products: enrichedProducts });
+
+        const formattedDate = workOrder.poDate?.split('T')[0]; // keep only YYYY-MM-DD
+
+        setSelectedWorkOrder({
+            ...workOrder,
+            poDate: formattedDate || '',
+            products: enrichedProducts
+        });
+
         setIsEdit(false);
         setIsView(true);
         setDialogOpen(true);
@@ -215,25 +224,25 @@ const WorkOrder = () => {
     );
 
     const csvData = filteredWorkOrders.map(order => {
-    const productNames = order.products?.map(p => {
-        const prod = productList.find(prod => String(prod.id) === String(p.productId));
-        return prod?.product_name || '';
-    }).join('\n');
+        const productNames = order.products?.map(p => {
+            const prod = productList.find(prod => String(prod.id) === String(p.productId));
+            return prod?.product_name || '';
+        }).join('\n');
 
-    const quantity = order.products?.map(p => p.quantity || '').join('\n');
-    const store = order.products?.map(p => p.store || '').join('\n');
+        const quantity = order.products?.map(p => p.quantity || '').join('\n');
+        const store = order.products?.map(p => p.store || '').join('\n');
 
-    return {
-        poNo: order.poNo,
-        poDate: order.poDate,
-        poAmount: order.poAmount,
-        boardName: order.boardName,
-        partyName: order.partyName,
-        productNames,
-        quantity,
-        store
-    };
-});
+        return {
+            poNo: order.poNo,
+            poDate: order.poDate,
+            poAmount: order.poAmount,
+            boardName: order.boardName,
+            partyName: order.partyName,
+            productNames,
+            quantity,
+            store
+        };
+    });
 
     return (
         <div className="col-12">
@@ -286,7 +295,7 @@ const WorkOrder = () => {
                                     <TableRow key={wo.id || index}>
                                         <TableCell>{index + 1}</TableCell>
                                         <TableCell>{wo.poNo}</TableCell>
-                                        <TableCell>{wo.poDate}</TableCell>
+                                       <TableCell>{wo.poDate ? wo.poDate.split('T')[0] : '-'}</TableCell>
                                         <TableCell>{wo.poAmount}</TableCell>
                                         <TableCell>{wo.boardName}</TableCell>
                                         <TableCell align="center">
@@ -359,6 +368,7 @@ const WorkOrder = () => {
                             value={selectedWorkOrder.poDate}
                             onChange={(e) => setSelectedWorkOrder({ ...selectedWorkOrder, poDate: e.target.value })}
                             InputLabelProps={{ shrink: true }}
+                            inputProps={{ max: todayDate }}
                             required
                             fullWidth
                             disabled={isView}
