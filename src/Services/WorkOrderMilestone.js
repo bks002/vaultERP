@@ -12,9 +12,9 @@ export const createMilestone = async (data) => {
 };
 
 export const updateMilestone = async (id, data) => {
-    return await axios.put(`${BASE_URL}/${id}`, data);
+    return await axios.put(`${BASE_URL}${id}`, data);
 };
 
 export const deleteMilestone = async (id) => {
-    return await axios.delete(`${BASE_URL}/${id}`);
+    return await axios.delete(`${BASE_URL}${id}`);
 };
