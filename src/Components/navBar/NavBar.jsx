@@ -14,10 +14,14 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 import MoreIcon from "@mui/icons-material/MoreVert";
 import OfficeDropdown from "../officeDropdown/OfficeDropdown.jsx";
 import { Link } from 'react-router-dom';
-
+import { useDispatch } from 'react-redux';
+import { clearUserData } from '../../Redux/userSlice'; 
+import { persistor } from '../../Redux/store';
 import { useNavigate } from "react-router-dom";
 
 export default function PrimarySearchAppBar({ drawer, handleDrawer }) {
+    
+const dispatch = useDispatch();
     const [anchorEl, setAnchorEl] = React.useState(null);
     const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = React.useState(null);
     const navigate = useNavigate();
@@ -38,17 +42,21 @@ export default function PrimarySearchAppBar({ drawer, handleDrawer }) {
     };
 
     const handleLogout = () => {
-        localStorage.removeItem("isAuthenticated");
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        localStorage.removeItem("loginTime");
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("loginTime");
 
-        sessionStorage.removeItem("isAuthenticated");
-        sessionStorage.removeItem("token");
-        sessionStorage.removeItem("user");
+    sessionStorage.removeItem("isAuthenticated");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
 
-        navigate("/");
-    };
+    dispatch(clearUserData());
+    persistor.purge(); // <-- This clears Redux-persisted storage
+
+    navigate("/");
+};
+
 
     const handleMobileMenuOpen = (event) => {
         setMobileMoreAnchorEl(event.currentTarget);

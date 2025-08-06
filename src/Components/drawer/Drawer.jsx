@@ -210,7 +210,7 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemText primary="Shift Master" />
                     </ListItemButton>
                 </ListItem>
-                {/* <ListItem disablePadding>
+                <ListItem disablePadding>
                     <ListItemButton component={Link} to="/Attendance/Attendance"  >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
                         <ListItemText primary="Attendance" />
@@ -221,7 +221,7 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemIcon><InboxIcon /></ListItemIcon>
                         <ListItemText primary="Leave" />
                     </ListItemButton>
-                </ListItem> */}
+                </ListItem>
             </List>
             <Divider />
             <List>
