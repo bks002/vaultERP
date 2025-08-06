@@ -216,6 +216,7 @@ const AssetMaster = () => {
             variant="outlined"
             sx={{ width: 300 }}
             placeholder="Search by Asset name, Manufacturer"
+
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             InputProps={{

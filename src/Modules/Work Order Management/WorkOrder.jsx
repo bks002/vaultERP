@@ -5,19 +5,23 @@ import {
     TextField, Stack, Switch, FormControlLabel, InputAdornment, Select, MenuItem, InputLabel,
     FormControl, Checkbox
 } from '@mui/material';
-// import EditIcon from '@mui/icons-material/Edit';
+import EditIcon from '@mui/icons-material/Edit';
+import MilestoneIcon from '@mui/icons-material/Flag';
 import SearchIcon from '@mui/icons-material/Search';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ViewIcon from '@mui/icons-material/Visibility';
 import { useSelector } from 'react-redux';
 import { getProductMasters } from "../../Services/ProductMasterService";
 import { getPartyMasters } from '../../Services/PartyMasterService';
-import { getWorkOrders, createWorkOrder, updateWorkOrder, deleteWorkOrder } from '../../Services/WorkOrderService';
+import { getWorkOrders, createWorkOrder, deleteWorkOrder } from '../../Services/WorkOrderService';
 import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton';
+import { getMilestones, deleteMilestone, updateMilestone, createMilestone } from '../../Services/WorkOrderMilestone';
 
 const WorkOrder = () => {
+    const todayDate = new Date().toISOString().split('T')[0];
     const officeId = useSelector((state) => state.user.officeId);
     const userId = useSelector((state) => state.user.userId);
+
     const [searchQuery, setSearchQuery] = useState('');
     const [workOrders, setWorkOrders] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -25,6 +29,7 @@ const WorkOrder = () => {
     const [selectedWorkOrder, setSelectedWorkOrder] = useState({
         partyId: '', poNo: '', poDate: '', products: [],
         poAmount: '', boardName: '', isActive: true, officeId: officeId,
+        totalDeliverable: 0, deliveryDate: ''
     });
     const [isEdit, setIsEdit] = useState(false);
     const [isView, setIsView] = useState(false);
@@ -33,6 +38,11 @@ const WorkOrder = () => {
     const [productDialogOpen, setProductDialogOpen] = useState(false);
     const [selectedProducts, setSelectedProducts] = useState([]);
     const [productSearch, setProductSearch] = useState("");
+    const [milestoneDialogOpen, setMilestoneDialogOpen] = useState(false);
+    const [milestoneWorkOrderId, setMilestoneWorkOrderId] = useState(null);
+    const [milestones, setMilestones] = useState([]);
+    const [newMilestone, setNewMilestone] = useState({ targetDate: '', target: '' });
+    const [editingMilestoneId, setEditingMilestoneId] = useState(null);
 
     useEffect(() => {
         if (officeId) {
@@ -66,38 +76,6 @@ const WorkOrder = () => {
         }
     };
 
-    const csvHeaders = [
-        { label: "PO Number", key: "poNo" },
-        { label: "PO Date", key: "poDate" },
-        { label: "PO Amount", key: "poAmount" },
-        { label: "Board Name", key: "boardName" },
-        { label: "Party Name", key: "partyName" },
-        { label: "Products", key: "productNames" },
-        { label: "Quantity", key: "quantity" },
-        { label: "Store", key: "store" },
-    ];
-
-
-    // const handleEdit = async (workOrder) => {
-    //     if (!partyList.length) {
-    //         await fetchPartyList();
-    //     }
-    //     const enrichedProducts = workOrder.products.map(p => {
-    //         const fullProduct = productList.find(prod => prod.id === p.productId);
-    //         return {
-    //             ...p,
-    //             productName: fullProduct?.product_name || ''
-    //         };
-    //     });
-    //     setSelectedWorkOrder({
-    //         ...workOrder,
-    //         partyId: String(workOrder.partyId),
-    //         products: enrichedProducts
-    //     });
-    //     setIsEdit(true);
-    //     setDialogOpen(true);
-    // };
-
     const handleView = (workOrder) => {
         const enrichedProducts = workOrder.products.map(p => {
             const fullProduct = productList.find(prod => String(prod.id) === String(p.productId));
@@ -106,7 +84,15 @@ const WorkOrder = () => {
                 productName: fullProduct?.product_name || ''
             };
         });
-        setSelectedWorkOrder({ ...workOrder, products: enrichedProducts });
+
+        const formattedDate = workOrder.poDate?.split('T')[0];
+
+        setSelectedWorkOrder({
+            ...workOrder,
+            poDate: formattedDate || '',
+            products: enrichedProducts
+        });
+
         setIsEdit(false);
         setIsView(true);
         setDialogOpen(true);
@@ -127,7 +113,8 @@ const WorkOrder = () => {
     const handleCreateNew = () => {
         setSelectedWorkOrder({
             partyId: '', poNo: '', poDate: '', products: [],
-            poAmount: '', boardName: '', isActive: true
+            poAmount: '', boardName: '', isActive: true, deliveryDate: '',
+            totalDeliverable: 0
         });
         setIsEdit(false);
         setDialogOpen(true);
@@ -139,6 +126,9 @@ const WorkOrder = () => {
                 ...selectedWorkOrder,
                 isActive: selectedWorkOrder.isActive ? 1 : 0,
                 partyId: selectedWorkOrder.partyId,
+                poDate: selectedWorkOrder.poDate,
+                deliveryDate: selectedWorkOrder.deliveryDate,
+                totalDeliverable: selectedWorkOrder.totalDeliverable || 0,
                 products: selectedWorkOrder.products.map(p => ({
                     productId: p.productId,
                     quantity: p.quantity ?? '',
@@ -148,20 +138,27 @@ const WorkOrder = () => {
                 createdBy: userId,
                 createdOn: new Date().toISOString(),
             };
-
-            // if (isEdit) {
-            //     await updateWorkOrder(selectedWorkOrder.id, workOrderToSend);
-            //     alert('Work Order updated successfully!');
-            // } else {
             await createWorkOrder(workOrderToSend);
             alert('Work Order created successfully!');
-            // }
             setDialogOpen(false);
             loadWorkOrders();
         } catch (error) {
             alert(error.message);
         }
     };
+
+    const handleMilestone = async (workOrder) => {
+        setMilestoneWorkOrderId(workOrder.id);
+        setSelectedWorkOrder(workOrder);
+        setMilestoneDialogOpen(true);
+        try {
+            const data = await getMilestones(workOrder.id);
+            setMilestones(data);
+        } catch (error) {
+            alert('Failed to fetch milestones');
+        }
+    };
+
 
     const handleAddProductClick = () => {
         setSelectedProducts([]);
@@ -215,25 +212,40 @@ const WorkOrder = () => {
     );
 
     const csvData = filteredWorkOrders.map(order => {
-    const productNames = order.products?.map(p => {
-        const prod = productList.find(prod => String(prod.id) === String(p.productId));
-        return prod?.product_name || '';
-    }).join('\n');
+        const productNames = order.products?.map(p => {
+            const prod = productList.find(prod => String(prod.id) === String(p.productId));
+            return prod?.product_name || '';
+        }).join('\n');
 
-    const quantity = order.products?.map(p => p.quantity || '').join('\n');
-    const store = order.products?.map(p => p.store || '').join('\n');
+        const quantity = order.products?.map(p => p.quantity || '').join('\n');
+        const store = order.products?.map(p => p.store || '').join('\n');
 
-    return {
-        poNo: order.poNo,
-        poDate: order.poDate,
-        poAmount: order.poAmount,
-        boardName: order.boardName,
-        partyName: order.partyName,
-        productNames,
-        quantity,
-        store
-    };
-});
+        return {
+            poNo: order.poNo,
+            poDate: order.poDate,
+            poAmount: order.poAmount,
+            boardName: order.boardName,
+            partyName: order.partyName,
+            deliveryDate: order.deliveryDate,
+            totalDeliverable: order.totalDeliverable,
+            productNames,
+            quantity,
+            store
+        };
+    });
+
+    const csvHeaders = [
+        { label: "PO No", key: "poNo" },
+        { label: "PO Date", key: "poDate" },
+        { label: "PO Amount", key: "poAmount" },
+        { label: "Board Name", key: "boardName" },
+        { label: "Party Name", key: "partyName" },
+        { label: "Delivery Date", key: "deliveryDate" },
+        { label: "Total Deliverable", key: "totalDeliverable" },
+        { label: "Product Names", key: "productNames" },
+        { label: "Quantity", key: "quantity" },
+        { label: "Store", key: "store" }
+    ];
 
     return (
         <div className="col-12">
@@ -277,6 +289,8 @@ const WorkOrder = () => {
                                 <TableCell>PO Date</TableCell>
                                 <TableCell>PO Amount</TableCell>
                                 <TableCell>Board Name</TableCell>
+                                <TableCell>Delivery Date</TableCell>
+                                <TableCell>Total Deliverables</TableCell>
                                 <TableCell align="center">Actions</TableCell>
                             </TableRow>
                         </TableHead>
@@ -286,9 +300,11 @@ const WorkOrder = () => {
                                     <TableRow key={wo.id || index}>
                                         <TableCell>{index + 1}</TableCell>
                                         <TableCell>{wo.poNo}</TableCell>
-                                        <TableCell>{wo.poDate}</TableCell>
+                                        <TableCell>{wo.poDate ? wo.poDate.split('T')[0] : '-'}</TableCell>
                                         <TableCell>{wo.poAmount}</TableCell>
                                         <TableCell>{wo.boardName}</TableCell>
+                                        <TableCell >{wo.deliveryDate ? wo.deliveryDate.split('T')[0] : '-'}</TableCell>
+                                        <TableCell>{wo.totalDeliverable ? wo.totalDeliverable : '-'}</TableCell>
                                         <TableCell align="center">
                                             {/* <Tooltip title="Edit">
                                                 <IconButton color="primary" onClick={() => handleEdit(wo)}>
@@ -303,6 +319,11 @@ const WorkOrder = () => {
                                             <Tooltip title="Delete">
                                                 <IconButton color="error" onClick={() => handleDelete(wo)}>
                                                     <DeleteIcon />
+                                                </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Add Milestone">
+                                                <IconButton color="secondary" onClick={() => handleMilestone(wo)}>
+                                                    <MilestoneIcon />
                                                 </IconButton>
                                             </Tooltip>
                                         </TableCell>
@@ -359,6 +380,7 @@ const WorkOrder = () => {
                             value={selectedWorkOrder.poDate}
                             onChange={(e) => setSelectedWorkOrder({ ...selectedWorkOrder, poDate: e.target.value })}
                             InputLabelProps={{ shrink: true }}
+                            inputProps={{ max: todayDate }}
                             required
                             fullWidth
                             disabled={isView}
@@ -436,6 +458,24 @@ const WorkOrder = () => {
                             fullWidth
                             disabled={isView}
                         />
+                        <TextField
+                            label="Delivery Date"
+                            type="date"
+                            value={selectedWorkOrder.deliveryDate}
+                            onChange={(e) => setSelectedWorkOrder({ ...selectedWorkOrder, deliveryDate: e.target.value })}
+                            InputLabelProps={{ shrink: true }}
+                            inputProps={{ min: todayDate }}
+                            fullWidth
+                            disabled={isView}
+                        />
+                        <TextField
+                            label="Total Deliverable"
+                            value={selectedWorkOrder.totalDeliverable}
+                            onChange={(e) => setSelectedWorkOrder({ ...selectedWorkOrder, totalDeliverable: e.target.value })}
+                            fullWidth
+                            disabled={isView}
+                        />
+                        {/* Active Switch */}
                         <FormControlLabel
                             control={
                                 <Switch
@@ -541,6 +581,145 @@ const WorkOrder = () => {
                 <DialogActions>
                     <Button onClick={handleProductDialogClose}>Cancel</Button>
                     <Button onClick={handleProductDialogConfirm} variant="contained" disabled={!selectedProducts.length}>Add</Button>
+                </DialogActions>
+            </Dialog>
+            <Dialog open={milestoneDialogOpen} onClose={() => setMilestoneDialogOpen(false)} fullWidth maxWidth="sm">
+                <DialogTitle>Milestones</DialogTitle>
+                <DialogContent>
+                    <Stack spacing={2}>
+                        <TextField
+                            label="Target Date"
+                            type="date"
+                            value={newMilestone.targetDate}
+                            onChange={(e) => setNewMilestone({ ...newMilestone, targetDate: e.target.value })}
+                            InputLabelProps={{ shrink: true }}
+                            fullWidth
+                        />
+                        <TextField
+                            label="Target"
+                            type="number"
+                            value={newMilestone.target}
+                            onChange={(e) => setNewMilestone({ ...newMilestone, target: Number(e.target.value) })}
+                            fullWidth
+                        />
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={async () => {
+                                const timestamp = new Date().toISOString();
+                                const deliveryDate = selectedWorkOrder.deliveryDate;
+
+                                // Validation: 1 - Target Date should be ≤ Delivery Date
+                                if (new Date(newMilestone.targetDate) > new Date(deliveryDate)) {
+                                    alert('Target date must be on or before the Delivery Date.');
+                                    return;
+                                }
+                                // Validation: 2 - Total target sum should be ≤ totalDeliverables
+                                const totalDeliverable = selectedWorkOrder.totalDeliverable;
+                                const currentTarget = Number(newMilestone.target || 0);
+
+                                const existingSum = milestones.reduce((sum, m) => {
+                                    if (editingMilestoneId && m.id === editingMilestoneId) {
+                                        return sum; // skip current if editing
+                                    }
+                                    return sum + Number(m.target || 0);
+                                }, 0);
+
+                                if ((existingSum + currentTarget) > totalDeliverable) {
+                                    alert(`Total of milestone targets (${existingSum + currentTarget}) exceeds total deliverables.`);
+                                    return;
+                                }
+
+                                const payload = {
+                                    id: editingMilestoneId || 0,
+                                    woid: milestoneWorkOrderId,
+                                    date: newMilestone.targetDate,
+                                    target: currentTarget,
+                                    createdBy: userId,
+                                    createdOn: timestamp,
+                                    updatedBy: userId,
+                                    updatedOn: timestamp,
+                                    isActive: true
+                                };
+
+                                try {
+                                    if (editingMilestoneId) {
+                                        await updateMilestone(editingMilestoneId, payload);
+                                    } else {
+                                        await createMilestone(payload);
+                                    }
+
+                                    const updated = await getMilestones(milestoneWorkOrderId);
+                                    setMilestones(updated);
+                                    setNewMilestone({ targetDate: '', target: '' });
+                                    setEditingMilestoneId(null);
+                                } catch (err) {
+                                    alert('Failed to save milestone');
+                                }
+                            }}
+                            disabled={!newMilestone.targetDate || !newMilestone.target}
+                        >
+                            {editingMilestoneId ? "Update" : "Add"}
+                        </Button>
+                    </Stack>
+
+                    <Table size="small" sx={{ mt: 2 }}>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Target Date</TableCell>
+                                <TableCell>Target</TableCell>
+                                <TableCell>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {milestones.map((m, idx) => (
+                                <TableRow key={m.id || idx}>
+                                    <TableCell>{m.date?.split('T')[0]}</TableCell>
+                                    <TableCell>{m.target}</TableCell>
+                                    <TableCell>
+                                        <Tooltip title="Edit">
+                                            <IconButton
+                                                color="primary"
+                                                onClick={() => {
+                                                    setNewMilestone({ targetDate: m.date?.split('T')[0], target: m.target });
+                                                    setEditingMilestoneId(m.id);
+                                                }}
+                                            >
+                                                <EditIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="Delete">
+                                            <IconButton
+                                                color="error"
+                                                onClick={async () => {
+                                                    if (window.confirm('Are you sure to delete this milestone?')) {
+                                                        try {
+                                                            await deleteMilestone(m.id);
+                                                            const updated = await getMilestones(milestoneWorkOrderId);
+                                                            setMilestones(updated);
+                                                        } catch (error) {
+                                                            alert('Failed to delete milestone');
+                                                        }
+                                                    }
+                                                }}
+                                            >
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => {
+                        setMilestoneDialogOpen(false);
+                        setEditingMilestoneId(null);
+                        setNewMilestone({ targetDate: '', target: '' });
+                    }}>
+                        Close
+                    </Button>
                 </DialogActions>
             </Dialog>
         </div>

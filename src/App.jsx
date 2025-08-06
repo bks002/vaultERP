@@ -1,10 +1,12 @@
+// App.js
 import React, { useState } from "react";
 import PrimarySearchAppBar from "./Components/navBar/NavBar.jsx";
 import MiniDrawer from "./Components/drawer/Drawer.jsx";
 import { BrowserRouter, useLocation } from "react-router-dom";
 import AppRoutes from "./AppRoutes.jsx";
-import store from "./Redux/store.js";
+import store, { persistor } from "./Redux/store.js"; // <-- include persistor
 import { Provider } from "react-redux";
+import { PersistGate } from "redux-persist/integration/react"; // <-- import
 import { useTheme, useMediaQuery } from "@mui/material";
 
 function AppContent() {
@@ -52,9 +54,11 @@ function AppContent() {
 function App() {
   return (
     <Provider store={store}>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
+      <PersistGate loading={null} persistor={persistor}>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </PersistGate>
     </Provider>
   );
 }
