@@ -586,7 +586,7 @@ const WorkOrder = () => {
             <Dialog open={milestoneDialogOpen} onClose={() => setMilestoneDialogOpen(false)} fullWidth maxWidth="sm">
                 <DialogTitle>Milestones</DialogTitle>
                 <DialogContent>
-                    <Stack spacing={2}>
+                    <Stack spacing={2} mt={1}>
                         <TextField
                             label="Target Date"
                             type="date"
