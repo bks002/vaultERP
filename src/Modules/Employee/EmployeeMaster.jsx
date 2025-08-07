@@ -23,10 +23,15 @@ import Checkbox from '@mui/material/Checkbox';
 import { employmentTypes, department, gender } from "../../Components/constant";
 import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton';
 import { uploadImage } from '../../Services/ImageService';
+import LockResetIcon from '@mui/icons-material/LockReset';
+import { resetEmployeePassword } from "../../Services/EmployeeService";
+
 
 const EmployeeMasterPage = () => {
     const officeId = useSelector((state) => state.user.officeId);
     const officeName = useSelector((state) => state.user.officeName);
+    const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+
     const [searchQuery, setSearchQuery] = useState('');
     const userId = useSelector((state) => state.user.userId);
     const [employees, setEmployees] = useState([]);
@@ -243,6 +248,11 @@ const EmployeeMasterPage = () => {
             showAlert("error", error.message || "Failed to map operations");
         }
     };
+
+    const handleChangePassword = (emp) => {
+        setSelectedEmployee({ ...emp });
+        setPasswordDialogOpen(true);
+    };
     const filteredEmployee = employees.filter((rate) =>
         rate.employeeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         rate.email?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -327,6 +337,11 @@ const EmployeeMasterPage = () => {
                                             <SettingsIcon />
                                         </IconButton>
                                     </Tooltip>
+                                     <Tooltip title="Change Password">
+                                        <IconButton onClick={() => handleChangePassword(emp)} color="warning">
+                                            <LockResetIcon />
+                                        </IconButton>
+                                    </Tooltip>
                                 </TableCell>
                             </TableRow>
                         ))
@@ -337,6 +352,28 @@ const EmployeeMasterPage = () => {
                     )}
                 </TableBody>
             </Table>
+
+             {/* Change Password Dialog */}
+                <Dialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)} fullWidth maxWidth="xs">
+                    <DialogTitle>Change Password</DialogTitle>
+                    <DialogContent>
+                        <Typography variant="body1" sx={{ mt: 1 }}>
+                            Do you want to change the password?
+                        </Typography>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setPasswordDialogOpen(false)}>No</Button>
+                        <Button variant="contained" onClick={async () => {
+                            try {
+                                await resetEmployeePassword(selectedEmployee.email);
+                                showAlert('success', 'Password changed successfully');
+                            } catch (error) {
+                                showAlert('error', 'Failed to change password');
+                            }
+                            setPasswordDialogOpen(false);
+                        }}>Yes</Button>
+                    </DialogActions>
+                </Dialog>
 
             {/* Create/Edit Dialog */}
             <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">

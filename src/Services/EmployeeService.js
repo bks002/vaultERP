@@ -43,3 +43,13 @@ export const getEmployeeById = async (id) => {
     if (!response.ok) throw new Error('Failed to fetch employee details');
     return await response.json();
 };
+
+export const resetEmployeePassword = async (email) => {
+    const response = await fetch(`https://admin.urest.in:8089/api/User/reset-password`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+    });
+    if (!response.ok) throw new Error('Failed to reset password');
+    return await response.json();
+};
