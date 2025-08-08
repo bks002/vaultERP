@@ -3,7 +3,7 @@ import {
     Container, Typography, Button, TextField, Dialog,
     DialogTitle, DialogContent, DialogActions, Box,
     IconButton, Tooltip, Table, TableHead, TableRow,
-    TableCell, TableBody, Grid, InputAdornment,
+    TableCell, TableBody, Grid, InputAdornment
 } from '@mui/material';
 import { getAllEmployees } from '../../Services/EmployeeService.js';
 import { getAllOperation } from '../../Services/OperationService.js';
@@ -11,10 +11,11 @@ import { getAllItems } from '../../Services/InventoryService.jsx';
 import { getAllAssets } from '../../Services/AssetService.js';
 import AlertSnackbar from "../../Components/Alert/AlertSnackBar.jsx";
 import SearchIcon from '@mui/icons-material/Search';
-
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useSelector } from "react-redux";
 import { getAllShift } from '../../Services/ShiftService.js';
 import {
@@ -31,7 +32,7 @@ const DailyPlanningSheet = () => {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-
+    const [selectedDate, setSelectedDate] = useState(null);
     const [Employees, setEmployees] = useState([]);
     const [Items, setItems] = useState([]);
     const [Operations, setOperations] = useState([]);
@@ -220,18 +221,33 @@ const DailyPlanningSheet = () => {
     const filteredPlanningData = planningData.filter((entry) => {
         const employeeName = Employees.find(e => e.employeeId === entry.employeeId)?.employeeName || '';
         const shiftName = shifts.find(s => s.shiftId === entry.shiftId)?.shiftName || '';
-        return (
-            employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            shiftName.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-    });
 
+        const matchesSearch =
+            employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            shiftName.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const matchesDate = selectedDate
+            ? entry.planDate?.substring(0, 10) === selectedDate.toISOString().substring(0, 10)
+            : true;
+
+        return matchesSearch && matchesDate;
+    });
 
     return (
         <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Typography variant="h4">Daily Planning Sheet</Typography>
                 <Box display="flex" alignItems="center" gap={2}>
+                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                        <DatePicker
+                            label="Select Date"
+                            value={selectedDate}
+                            onChange={(date) => setSelectedDate(date)}
+                            slotProps={{
+                                textField: { size: 'small', fullWidth: false },
+                            }}
+                        />
+                    </LocalizationProvider>
                     <TextField
                         placeholder="Search by employee name or shift"
                         value={searchQuery}
@@ -246,10 +262,10 @@ const DailyPlanningSheet = () => {
                         size="small"
                         sx={{ width: 300 }}
                     />
-                    <Button variant="outlined" onClick={handleExport}>
+                    <Button variant="outlined" size="small" onClick={handleExport}>
                         Export to Excel
                     </Button>
-                    <Button variant="contained" onClick={handleCreate}>
+                    <Button variant="contained" size="small" onClick={handleCreate}>
                         Create Planning
                     </Button>
                 </Box>
@@ -258,6 +274,7 @@ const DailyPlanningSheet = () => {
                 <TableHead>
                     <TableRow>
                         <TableCell>#</TableCell>
+                        <TableCell>Plan Date</TableCell>
                         <TableCell>Machine Name</TableCell>
                         <TableCell>Operator Name</TableCell>
                         <TableCell>Manpower</TableCell>
@@ -272,6 +289,7 @@ const DailyPlanningSheet = () => {
 
                             <TableRow key={emp.id}>
                                 <TableCell>{index + 1}</TableCell>
+                                <TableCell>{emp.planDate ? emp.planDate.substring(0, 10) : ''}</TableCell>
                                 <TableCell>{Assets.find(a => a.assetId === emp.assetId)?.assetName}</TableCell>
                                 <TableCell>{Employees.find(e => e.employeeId === emp.employeeId)?.employeeName}</TableCell>
                                 <TableCell>{emp.manpower}</TableCell>

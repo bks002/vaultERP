@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   Box, Typography, Tabs, Tab, Paper, Stack, Chip, Button, Dialog,
-  DialogTitle, DialogContent, DialogActions, MenuItem, TextField
+  DialogTitle, DialogContent, DialogActions, MenuItem, TextField, LinearProgress
 } from "@mui/material";
 import { getCategories } from "../../Services/InventoryService";
 import { getAllStock } from "../../Services/StockService";
@@ -19,6 +19,28 @@ const Stock = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedItemId, setSelectedItemId] = useState("");
   const [quantity, setQuantity] = useState("");
+
+  // Function to get color based on percentage
+  const getColorByPercentage = (percentage) => {
+    if (percentage >= 80) return "success";
+    if (percentage >= 50) return "warning";
+    if (percentage >= 20) return "info";
+    return "error";
+  };
+
+  // Function to get percentage color
+  const getPercentageColor = (percentage) => {
+    if (percentage >= 80) return "#4caf50"; // Green
+    if (percentage >= 50) return "#ff9800"; // Orange
+    if (percentage >= 20) return "#2196f3"; // Blue
+    return "#f44336"; // Red
+  };
+
+  // Function to calculate stock percentage (assuming max stock is 1000 for demo)
+  const calculateStockPercentage = (quantity) => {
+    const maxStock = 1000; // You can adjust this based on your business logic
+    return Math.min((quantity / maxStock) * 100, 100);
+  };
 
   useEffect(() => {
     if (officeId > 0) {
@@ -78,8 +100,8 @@ const Stock = () => {
     }
   };
 
- const csvHeaders = [
-    { label: "Item ID", key: "id" },
+  const csvHeaders = [
+    { label: "Item ID", key: "itemId" },
     { label: "Item Name", key: "name" },
     { label: "Category ID", key: "categoryId" },
     { label: "Quantity", key: "current_qty" },
@@ -127,7 +149,8 @@ const Stock = () => {
           itemsInCategory.map((item) => {
             const stock = stockData.find(s => s.itemId === item.id);
             const quantity = stock?.quantity || item.current_qty || 0;
-            const isHighStock = quantity >= 1000;
+            const percentage = calculateStockPercentage(quantity);
+            const color = getPercentageColor(percentage);
 
             return (
               <Box key={item.id} display="flex" alignItems="center" gap={2}>
@@ -141,13 +164,30 @@ const Stock = () => {
                   sx={{
                     flexGrow: 1,
                     borderRadius: "12px",
-                    backgroundColor: isHighStock ? "#e8f5e9" : "#ffe5e5",
                     px: 2,
                     py: 1,
                   }}
                 >
-                  <Box display="flex" justifyContent="flex-end" alignItems="center">
-                    <Chip label={`Qty: ${quantity}`} color={isHighStock ? "success" : "default"} />
+                  <Box display="flex" alignItems="center" gap={2}>
+                    <LinearProgress
+                      variant="determinate"
+                      value={percentage}
+                      sx={{
+                        flexGrow: 1,
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor: '#e0e0e0',
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: color,
+                          borderRadius: 4,
+                        }
+                      }}
+                    />
+                    <Chip 
+                      label={`Qty: ${quantity}`} 
+                      color={getColorByPercentage(percentage)}
+                      size="small"
+                    />
                   </Box>
                 </Paper>
               </Box>

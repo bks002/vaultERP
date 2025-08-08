@@ -40,19 +40,17 @@ const JobCard = () => {
   const [viewOpen, setViewOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
 
-  const [loading, setLoading] = useState(false);
-
   const [alert, setAlert] = useState({ open: false, type: "success", message: "" });
 
   const defaultFormData = {
-    id: 0,
+    id: "",
     orderNo: "",
     isCode: "",
     date: "",
     assetId: "",
     shiftId: "",
     operationId: "",
-    size: "",
+    size: 0,
     noDiaOfStands: "",
     shape: "",
     isCompacted: "",
@@ -66,8 +64,8 @@ const JobCard = () => {
     embrossing: "",
     remark: "",
     createdBy: userId,
-
-    createdOn:"",
+    officeId: officeId,
+    createdOn: "",
 
     updatedBy: userId,
     updatedOn: "",
@@ -136,7 +134,7 @@ const JobCard = () => {
   };
 
 
- const populateFormData = (job) => ({
+  const populateFormData = (job) => ({
 
     id: job.id,
     orderNo: job.orderNo,
@@ -175,9 +173,9 @@ const JobCard = () => {
 
   const handleDelete = async (job) => {
 
-if (window.confirm(`Are you sure you want to delete job card "${job.orderNo}"?`)) {
+    if (window.confirm(`Are you sure you want to delete job card "${job.orderNo}"?`)) {
 
-   
+
       try {
         await deleteJobCard(job.id);
         showAlert("success", "Job card deleted successfully");
@@ -199,6 +197,7 @@ if (window.confirm(`Are you sure you want to delete job card "${job.orderNo}"?`)
       detail: formData.remark || "",
       createdBy: Number(userId),
       createdOn: new Date().toISOString(),
+      updatedOn: new Date().toISOString(),
     };
 
     if (!formData.orderNo || !formData.date || !formData.assetId || !formData.shiftId || !formData.operationId) {
@@ -221,7 +220,6 @@ if (window.confirm(`Are you sure you want to delete job card "${job.orderNo}"?`)
     }
   };
 
-  // CSV Export Setup
   const csvHeaders = [
     { label: "Order No", key: "orderNo" },
     { label: "Asset", key: "assetName" },
@@ -262,12 +260,6 @@ if (window.confirm(`Are you sure you want to delete job card "${job.orderNo}"?`)
           <ExportCSVButton
             data={transformedStockData}
             filename="jobcard_data.csv"
-            headers={csvHeaders}
-          />
-
-          <ExportCSVButton
-            data={transformedStockData}
-            filename="stock_data.csv"
             headers={csvHeaders}
           />
 
