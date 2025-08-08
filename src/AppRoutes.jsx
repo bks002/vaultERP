@@ -22,19 +22,12 @@ import EmployeeShift from "./Modules/Employee/EmployeeShift.jsx";
 import JobCard from "./Modules/Employee/JobCard.jsx";
 import PartyMaster from "./Modules/Work Order Management/PartyMaster.jsx";
 import Attendance from "./Modules/Attendance Management/Attendance.jsx"; 
-<<<<<<< HEAD
-import Leave from "./Modules/Attendance Management/Leave.jsx"; // Assuming this is the correct import path
-
-import Stock from "./Modules/Inventory/Stock.jsx";  
-// Assuming this is the correct import path
-
-=======
 import Leave from "./Modules/Attendance Management/Leave.jsx"; 
 import Stock from "./Modules/Inventory/Stock.jsx";  
->>>>>>> 939570642bcaea149738b895d3073327eb80d304
 import WorkOrder from "./Modules/Work Order Management/WorkOrder.jsx";
 import ProductMaster from "./Modules/Work Order Management/ProductMaster.jsx"; 
 import ProcessChartMaster from "./Modules/Employee/ProcessChart.jsx";
+import WorkOrderMilestone from "./Modules/Work Order Management/WorkOrderMilestone.jsx";
 
 
 
@@ -65,6 +58,7 @@ function AppRoutes() {
       <Route path="/processchart" element={<AuthWrapper><ProcessChartMaster /></AuthWrapper>} />
       <Route path="/Attendance/Attendance" element={<AuthWrapper><Attendance /></AuthWrapper>} />
       <Route path="/Attendance/Leave" element={<AuthWrapper><Leave /></AuthWrapper>} />
+      <Route path="/Work Order Management/WorkOrderMilestone" element={<AuthWrapper><WorkOrderMilestone /></AuthWrapper>} />
 
       
       {/* Redirect to dashboard if no match */}
