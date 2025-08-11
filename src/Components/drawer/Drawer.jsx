@@ -250,12 +250,7 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                     </ListItemButton>
                 </ListItem>
 
-                <ListItem disablePadding>
-                    <ListItemButton component={Link} to="/Work Order Management/WorkOrderMilestone"  >
-                        <ListItemIcon><InboxIcon /></ListItemIcon>
-                        <ListItemText primary="Work Order Milestone" />
-                    </ListItemButton>
-                </ListItem>
+                
 
             </List>
         </Drawer>

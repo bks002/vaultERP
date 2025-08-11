@@ -11,11 +11,12 @@ import ViewIcon from '@mui/icons-material/Visibility';
 import { useSelector } from 'react-redux';
 import { getProductMasters } from "../../Services/ProductMasterService";
 import { getPartyMasters } from '../../Services/PartyMasterService';
-import { getWorkOrders, createWorkOrder, deleteWorkOrder } from '../../Services/WorkOrderService';
+import { getWorkOrders, createWorkOrder, deleteWorkOrder } from '../../Services/InternalWorkOrderService';
 import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton';
 
 
-const WorkOrderMilestone = () => {
+const InternalWorkOrder = () => {
+
     const todayDate = new Date().toISOString().split('T')[0];
     const officeId = useSelector((state) => state.user.officeId);
     const userId = useSelector((state) => state.user.userId);
@@ -25,13 +26,17 @@ const WorkOrderMilestone = () => {
     const [loading, setLoading] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedWorkOrder, setSelectedWorkOrder] = useState({
-        milestone: '',
-        partyName: '',
-        target: '',
-        targetDate: '',
+        id: '',
+        woid: '',
+        quantity: '',
+        dispatchDate: '',
+        totalDeliverable: '0',
         deliveryDate: '',
-        boardName: '',
-        totalDeliverable: 0,
+        isActive: true,
+        createdOn:'',
+        createdBy:'',
+        updatedOn:'',
+        updatedBy:'',
     });
     const [isEdit, setIsEdit] = useState(false);
     const [isView, setIsView] = useState(false);
@@ -41,7 +46,8 @@ const WorkOrderMilestone = () => {
 
     useEffect(() => {
         if (officeId) {
-            loadWorkOrders();
+            getWorkOrders();
+            
             fetchPartyList();
             fetchProductList();
         }
@@ -120,27 +126,31 @@ const WorkOrderMilestone = () => {
     };
 
     const handleSave = async () => {
-        try {
-            const workOrderToSend = {
-                ...selectedWorkOrder,
-                isActive: selectedWorkOrder.isActive ? 1 : 0,
-                products: selectedWorkOrder.products.map(p => ({
-                    productId: p.productId,
-                    quantity: p.quantity ?? '',
-                    store: p.store ?? '',
-                })),
-                officeId: officeId,
-                createdBy: userId,
-                createdOn: new Date().toISOString(),
-            };
-            await createWorkOrder(workOrderToSend);
-            alert('Work Order saved successfully!');
-            setDialogOpen(false);
-            loadWorkOrders();
-        } catch (error) {
-            alert(error.message);
-        }
-    };
+    try {
+        const now = new Date().toISOString();
+        const workOrderToSend = {
+            id: selectedWorkOrder.id || 0,
+            woid: selectedWorkOrder.woid || 0,
+            quantity: Number(selectedWorkOrder.quantity) || 0,
+            dispatchDate: selectedWorkOrder.dispatchDate || now,
+            totalDeliverable: Number(selectedWorkOrder.totalDeliverable) || 0,
+            deliveryDate: selectedWorkOrder.deliveryDate || now,
+            isActive: selectedWorkOrder.isActive,
+            createdOn: selectedWorkOrder.createdOn || now,
+            createdBy: userId?.toString() || 'string',
+            updatedOn: now,
+            updatedBy: userId?.toString() || 'string',
+        };
+
+        await createWorkOrder(workOrderToSend);
+        alert('Work Order saved successfully!');
+        setDialogOpen(false);
+        loadWorkOrders();
+    } catch (error) {
+        alert(error.message || 'Failed to save Work Order');
+    }
+};
+
 
     
 
@@ -353,4 +363,4 @@ const WorkOrderMilestone = () => {
     );
 };
 
-export default WorkOrderMilestone;
+export default InternalWorkOrder;

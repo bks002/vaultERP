@@ -27,7 +27,6 @@ import Stock from "./Modules/Inventory/Stock.jsx";
 import WorkOrder from "./Modules/Work Order Management/WorkOrder.jsx";
 import ProductMaster from "./Modules/Work Order Management/ProductMaster.jsx"; 
 import ProcessChartMaster from "./Modules/Employee/ProcessChart.jsx";
-import WorkOrderMilestone from "./Modules/Work Order Management/WorkOrderMilestone.jsx";
 
 
 
@@ -58,7 +57,6 @@ function AppRoutes() {
       <Route path="/processchart" element={<AuthWrapper><ProcessChartMaster /></AuthWrapper>} />
       <Route path="/Attendance/Attendance" element={<AuthWrapper><Attendance /></AuthWrapper>} />
       <Route path="/Attendance/Leave" element={<AuthWrapper><Leave /></AuthWrapper>} />
-      <Route path="/Work Order Management/WorkOrderMilestone" element={<AuthWrapper><WorkOrderMilestone /></AuthWrapper>} />
 
       
       {/* Redirect to dashboard if no match */}

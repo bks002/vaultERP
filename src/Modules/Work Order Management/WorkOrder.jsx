@@ -13,9 +13,26 @@ import ViewIcon from '@mui/icons-material/Visibility';
 import { useSelector } from 'react-redux';
 import { getProductMasters } from "../../Services/ProductMasterService";
 import { getPartyMasters } from '../../Services/PartyMasterService';
-import { getWorkOrders, createWorkOrder, deleteWorkOrder } from '../../Services/WorkOrderService';
+import {
+  getWorkOrders,
+  createWorkOrder,
+  deleteWorkOrder
+} from '../../Services/WorkOrderService';
 import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton';
-import { getMilestones, deleteMilestone, updateMilestone, createMilestone } from '../../Services/WorkOrderMilestone';
+import {
+  getMilestones,
+  deleteMilestone,
+  updateMilestone,
+  createMilestone
+} from '../../Services/WorkOrderMilestone';
+import {
+  getDetails,
+  createDetail,
+  updateDetail,
+  deleteDetail
+} from '../../Services/InternalWorkOrderService';
+import InfoIcon from '@mui/icons-material/Info';
+
 
 const WorkOrder = () => {
     const todayDate = new Date().toISOString().split('T')[0];
@@ -44,6 +61,13 @@ const WorkOrder = () => {
     const [newMilestone, setNewMilestone] = useState({ targetDate: '', target: '' });
     const [editingMilestoneId, setEditingMilestoneId] = useState(null);
 
+    const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+const [detailWorkOrderId, setDetailWorkOrderId] = useState(null);
+const [details, setDetails] = useState([]);
+const [newDetail, setNewDetail] = useState({ quantity: '', dispatchDate: '' });
+const [editingDetailId, setEditingDetailId] = useState(null);
+
+
     useEffect(() => {
         if (officeId) {
             loadWorkOrders();
@@ -66,6 +90,19 @@ const WorkOrder = () => {
             alert('Failed to fetch party list');
         }
     };
+
+    const handleDetail = async (workOrder) => {
+    setDetailWorkOrderId(workOrder.id);
+    setSelectedWorkOrder(workOrder);
+    try {
+        const data = await getDetails(workOrder.id);
+        setDetails(data);
+        setDetailDialogOpen(true);
+    } catch (error) {
+        alert('Failed to fetch work order details');
+    }
+};
+
 
     const fetchProductList = async () => {
         try {
@@ -326,6 +363,11 @@ const WorkOrder = () => {
                                                     <MilestoneIcon />
                                                 </IconButton>
                                             </Tooltip>
+                                            <Tooltip title="View Details">
+    <IconButton color="info" onClick={() => handleDetail(wo)}>
+        <InfoIcon />
+    </IconButton>
+</Tooltip>
                                         </TableCell>
                                     </TableRow>
                                 ))
@@ -722,6 +764,132 @@ const WorkOrder = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+
+
+            <Dialog open={detailDialogOpen} onClose={() => setDetailDialogOpen(false)} fullWidth maxWidth="sm">
+    <DialogTitle>Work Order Details</DialogTitle>
+    <DialogContent>
+        <Stack spacing={2} mt={1}>
+            <TextField
+                label="Quantity"
+                type="number"
+                value={newDetail.quantity}
+                onChange={(e) => setNewDetail({ ...newDetail, quantity: e.target.value })}
+                fullWidth
+            />
+            <TextField
+                label="Dispatch Date"
+                type="date"
+                value={newDetail.dispatchDate}
+                onChange={(e) => setNewDetail({ ...newDetail, dispatchDate: e.target.value })}
+                InputLabelProps={{ shrink: true }}
+                fullWidth
+            />
+            <Button
+    variant="contained"
+    color="primary"
+    onClick={async () => {
+        const timestamp = new Date().toISOString();
+
+        // Validation: Dispatch Date ≤ Delivery Date
+        if (new Date(newDetail.dispatchDate) > new Date(selectedWorkOrder.deliveryDate)) {
+            alert('Dispatch date must be on or before the Delivery Date.');
+            return;
+        }
+
+        const payload = {
+    id: editingDetailId || 0,
+    woid: detailWorkOrderId,
+    quantity: Number(newDetail.quantity),
+    dispatchDate: newDetail.dispatchDate,
+    createdBy: String(userId),
+    createdOn: timestamp,
+    updatedBy: String(userId),
+    updatedOn: timestamp,
+    isActive: true
+};
+
+
+        try {
+            if (editingDetailId) {
+                await updateDetail(editingDetailId, payload); 
+            } else {
+                await createDetail(payload); 
+            }
+            const updatedDetails = await getDetails(detailWorkOrderId); 
+            setDetails(updatedDetails);
+            setNewDetail({ quantity: '', dispatchDate: '' });
+            setEditingDetailId(null);
+        } catch (err) {
+            alert('Failed to save detail');
+        }
+    }}
+    disabled={!newDetail.quantity || !newDetail.dispatchDate}
+>
+    {editingDetailId ? "Update" : "Add"}
+</Button>
+
+        </Stack>
+
+        <Table size="small" sx={{ mt: 2 }}>
+            <TableHead>
+                <TableRow>
+                  <TableCell>Party Name</TableCell>
+                   <TableCell>Delivery Date</TableCell>
+                  <TableCell>Total Deliverables</TableCell>
+                    <TableCell>Quantity</TableCell>
+                    <TableCell>Dispatch Date</TableCell>
+                    <TableCell>Actions</TableCell>
+                </TableRow>
+            </TableHead>
+            <TableBody>
+                {details.map((d, idx) => (
+                    <TableRow key={d.id || idx}>
+                        <TableCell>
+  {partyList.find(p => p.id === selectedWorkOrder.partyId)?.name || ''}
+</TableCell>
+<TableCell>{selectedWorkOrder.deliveryDate}</TableCell>
+<TableCell>{selectedWorkOrder.totalDeliverable}</TableCell>
+                        <TableCell>{d.quantity}</TableCell>
+                        <TableCell>{d.dispatchDate?.split('T')[0]}</TableCell>
+                        <TableCell>
+                            <IconButton
+                                color="primary"
+                                onClick={() => {
+                                    setNewDetail({
+                                        quantity: d.quantity,
+                                        dispatchDate: d.dispatchDate?.split('T')[0]
+                                    });
+                                    setEditingDetailId(d.id);
+                                }}
+                            >
+                                <EditIcon />
+                            </IconButton>
+                            <IconButton
+                                color="error"
+                                onClick={async () => {
+                                    if (window.confirm('Are you sure to delete this detail?')) {
+                                        await deleteDetail(d.id); // API call
+                                        const updatedDetails = await getDetails(detailWorkOrderId);
+                                        setDetails(updatedDetails);
+                                    }
+                                }}
+                            >
+                                <DeleteIcon />
+                            </IconButton>
+                        </TableCell>
+                    </TableRow>
+                ))}
+            </TableBody>
+        </Table>
+    </DialogContent>
+    <DialogActions>
+        <Button onClick={() => setDetailDialogOpen(false)}>Close</Button>
+    </DialogActions>
+</Dialog>
+
+
         </div>
     );
 };
