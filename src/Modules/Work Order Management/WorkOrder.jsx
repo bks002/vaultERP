@@ -364,11 +364,11 @@ const [editingDetailId, setEditingDetailId] = useState(null);
                                                 </IconButton>
                                             </Tooltip>
                                             <Tooltip title="View Details">
-    <IconButton color="info" onClick={() => handleDetail(wo)}>
-        <InfoIcon />
-    </IconButton>
-</Tooltip>
-                                        </TableCell>
+                                <IconButton color="info" onClick={() => handleDetail(wo)}>
+                                    <InfoIcon />
+                                </IconButton>
+                            </Tooltip>
+                                                                    </TableCell>
                                     </TableRow>
                                 ))
                             ) : (
@@ -768,104 +768,104 @@ const [editingDetailId, setEditingDetailId] = useState(null);
 
 
             <Dialog open={detailDialogOpen} onClose={() => setDetailDialogOpen(false)} fullWidth maxWidth="sm">
-    <DialogTitle>Work Order Details</DialogTitle>
-    <DialogContent>
-        <Stack spacing={2} mt={1}>
-            <TextField
-                label="Quantity"
-                type="number"
-                value={newDetail.quantity}
-                onChange={(e) => setNewDetail({ ...newDetail, quantity: e.target.value })}
-                fullWidth
-            />
-            <TextField
-                label="Dispatch Date"
-                type="date"
-                value={newDetail.dispatchDate}
-                onChange={(e) => setNewDetail({ ...newDetail, dispatchDate: e.target.value })}
-                InputLabelProps={{ shrink: true }}
-                fullWidth
-            />
-            <Button
-    variant="contained"
-    color="primary"
-    onClick={async () => {
-        const timestamp = new Date().toISOString();
+                                    <DialogTitle>Work Order Details</DialogTitle>
+                                    <DialogContent>
+                                        <Stack spacing={2} mt={1}>
+                                            <TextField
+                                                label="Quantity"
+                                                type="number"
+                                                value={newDetail.quantity}
+                                                onChange={(e) => setNewDetail({ ...newDetail, quantity: e.target.value })}
+                                                fullWidth
+                                            />
+                                            <TextField
+                                                label="Dispatch Date"
+                                                type="date"
+                                                value={newDetail.dispatchDate}
+                                                onChange={(e) => setNewDetail({ ...newDetail, dispatchDate: e.target.value })}
+                                                InputLabelProps={{ shrink: true }}
+                                                fullWidth
+                                            />
+                                            <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={async () => {
+                                        const timestamp = new Date().toISOString();
 
-        // Validation: Dispatch Date ≤ Delivery Date
-        if (new Date(newDetail.dispatchDate) > new Date(selectedWorkOrder.deliveryDate)) {
-            alert('Dispatch date must be on or before the Delivery Date.');
-            return;
-        }
+                                        // Validation: Dispatch Date ≤ Delivery Date
+                                        if (new Date(newDetail.dispatchDate) > new Date(selectedWorkOrder.deliveryDate)) {
+                                            alert('Dispatch date must be on or before the Delivery Date.');
+                                            return;
+                                        }
 
-        const payload = {
-    id: editingDetailId || 0,
-    woid: detailWorkOrderId,
-    quantity: Number(newDetail.quantity),
-    dispatchDate: newDetail.dispatchDate,
-    createdBy: String(userId),
-    createdOn: timestamp,
-    updatedBy: String(userId),
-    updatedOn: timestamp,
-    isActive: true
-};
+                                        const payload = {
+                                    id: editingDetailId || 0,
+                                    woid: detailWorkOrderId,
+                                    quantity: Number(newDetail.quantity),
+                                    dispatchDate: newDetail.dispatchDate,
+                                    createdBy: String(userId),
+                                    createdOn: timestamp,
+                                    updatedBy: String(userId),
+                                    updatedOn: timestamp,
+                                    isActive: true
+                                };
 
 
-        try {
-            if (editingDetailId) {
-                await updateDetail(editingDetailId, payload); 
-            } else {
-                await createDetail(payload); 
-            }
-            const updatedDetails = await getDetails(detailWorkOrderId); 
-            setDetails(updatedDetails);
-            setNewDetail({ quantity: '', dispatchDate: '' });
-            setEditingDetailId(null);
-        } catch (err) {
-            alert('Failed to save detail');
-        }
-    }}
-    disabled={!newDetail.quantity || !newDetail.dispatchDate}
->
-    {editingDetailId ? "Update" : "Add"}
-</Button>
+                                        try {
+                                            if (editingDetailId) {
+                                                await updateDetail(editingDetailId, payload); 
+                                            } else {
+                                                await createDetail(payload); 
+                                            }
+                                            const updatedDetails = await getDetails(detailWorkOrderId); 
+                                            setDetails(updatedDetails);
+                                            setNewDetail({ quantity: '', dispatchDate: '' });
+                                            setEditingDetailId(null);
+                                        } catch (err) {
+                                            alert('Failed to save detail');
+                                        }
+                                    }}
+                                    disabled={!newDetail.quantity || !newDetail.dispatchDate}
+                                >
+                                    {editingDetailId ? "Update" : "Add"}
+                                </Button>
 
-        </Stack>
+                                        </Stack>
 
-        <Table size="small" sx={{ mt: 2 }}>
-            <TableHead>
-                <TableRow>
-                  <TableCell>Party Name</TableCell>
-                   <TableCell>Delivery Date</TableCell>
-                  <TableCell>Total Deliverables</TableCell>
-                    <TableCell>Quantity</TableCell>
-                    <TableCell>Dispatch Date</TableCell>
-                    <TableCell>Actions</TableCell>
-                </TableRow>
-            </TableHead>
-            <TableBody>
-                {details.map((d, idx) => (
-                    <TableRow key={d.id || idx}>
-                        <TableCell>
-  {partyList.find(p => p.id === selectedWorkOrder.partyId)?.name || ''}
-</TableCell>
-<TableCell>{selectedWorkOrder.deliveryDate}</TableCell>
-<TableCell>{selectedWorkOrder.totalDeliverable}</TableCell>
-                        <TableCell>{d.quantity}</TableCell>
-                        <TableCell>{d.dispatchDate?.split('T')[0]}</TableCell>
-                        <TableCell>
-                            <IconButton
-                                color="primary"
-                                onClick={() => {
-                                    setNewDetail({
-                                        quantity: d.quantity,
-                                        dispatchDate: d.dispatchDate?.split('T')[0]
-                                    });
-                                    setEditingDetailId(d.id);
-                                }}
-                            >
-                                <EditIcon />
-                            </IconButton>
+                                        <Table size="small" sx={{ mt: 2 }}>
+                                            <TableHead>
+                                                <TableRow>
+                                                <TableCell>Party Name</TableCell>
+                                                <TableCell>Delivery Date</TableCell>
+                                                <TableCell>Total Deliverables</TableCell>
+                                                    <TableCell>Quantity</TableCell>
+                                                    <TableCell>Dispatch Date</TableCell>
+                                                    <TableCell>Actions</TableCell>
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>
+                                                {details.map((d, idx) => (
+                                                    <TableRow key={d.id || idx}>
+                                                        <TableCell>
+                                {partyList.find(p => p.id === selectedWorkOrder.partyId)?.name || ''}
+                                </TableCell>
+                                <TableCell>{selectedWorkOrder.deliveryDate}</TableCell>
+                                <TableCell>{selectedWorkOrder.totalDeliverable}</TableCell>
+                                                        <TableCell>{d.quantity}</TableCell>
+                                                        <TableCell>{d.dispatchDate?.split('T')[0]}</TableCell>
+                                                        <TableCell>
+                                                            <IconButton
+                                                                color="primary"
+                                                                onClick={() => {
+                                                                    setNewDetail({
+                                                                        quantity: d.quantity,
+                                                                        dispatchDate: d.dispatchDate?.split('T')[0]
+                                                                    });
+                                                                    setEditingDetailId(d.id);
+                                                                }}
+                                                            >
+                                                                <EditIcon />
+                                                            </IconButton>
                             <IconButton
                                 color="error"
                                 onClick={async () => {
@@ -882,12 +882,12 @@ const [editingDetailId, setEditingDetailId] = useState(null);
                     </TableRow>
                 ))}
             </TableBody>
-        </Table>
-    </DialogContent>
-    <DialogActions>
-        <Button onClick={() => setDetailDialogOpen(false)}>Close</Button>
-    </DialogActions>
-</Dialog>
+                    </Table>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDetailDialogOpen(false)}>Close</Button>
+                </DialogActions>
+            </Dialog>
 
 
         </div>
