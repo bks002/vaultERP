@@ -32,3 +32,12 @@ export const deleteDetail = async (id) => {
   const response = await axios.delete(`${API_BASE}/${id}`);
   return response.data;
 };
+// 🔹 Get Internal Work Orders by officeId
+export const getInternalWorkOrdersByOffice = async (officeId) => {
+  const response = await axios.get(`${API_BASE}/office/${officeId}`, {
+    headers: {
+      'accept': '*/*'
+    }
+  });
+  return response.data;
+};

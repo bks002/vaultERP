@@ -25,6 +25,8 @@ import {
     updatePlanning
 } from "../../Services/PlanningService.js";
 import * as XLSX from 'xlsx';
+import { getInternalWorkOrdersByOffice } from '../../Services/InternalWorkOrderService.js'; 
+
 
 const DailyPlanningSheet = () => {
     const officeId = useSelector((state) => state.user.officeId);
@@ -42,7 +44,7 @@ const DailyPlanningSheet = () => {
     const [selectedShift, setSelectedShift] = useState({
         officeId: 0,
         id: 0,
-        itemId: 0,
+        internalWorkOrderId: 0,
         planDate: '',
         operationId: 0,
         employeeId: 0,
@@ -52,10 +54,12 @@ const DailyPlanningSheet = () => {
         target: '',
         achieved: 0,
         backfeed: '',
-        remark: '',
-        created_by: userId || 0
+        remarks: '',
+        isActive: true,
+        createdBy: userId || 0
     });
     const [alert, setAlert] = useState({ open: false, type: 'success', message: '' });
+    const [internalWorkOrders, setInternalWorkOrders] = useState([]);
 
     useEffect(() => {
         if (officeId) {
@@ -65,8 +69,18 @@ const DailyPlanningSheet = () => {
             loadItems();
             loadAssets();
             loadShift();
+            loadInternalWorkOrders(); 
         }
     }, [officeId]);
+
+      const loadInternalWorkOrders = async () => {
+        try {
+            const data = await getInternalWorkOrdersByOffice(officeId);
+            setInternalWorkOrders(data);
+        } catch {
+            showAlert('error', 'Failed to load internal work orders');
+        }
+    };
 
     const loadPlanningData = async () => {
         try {
@@ -132,7 +146,7 @@ const DailyPlanningSheet = () => {
         setSelectedShift({
             officeId: officeId,
             id: 0,
-            itemId: 0,
+            internalWorkOrderId: 0,
             planDate: '',
             operationId: 0,
             employeeId: 0,
@@ -141,9 +155,10 @@ const DailyPlanningSheet = () => {
             manpower: '',
             target: '',
             achieved: 0,
+            isActive:true,
             backfeed: '',
-            remark: '',
-            created_by: userId || 0
+            remarks: '',
+            createdBy: userId || 0
         });
         setDialogOpen(true);
     };
@@ -174,7 +189,7 @@ const DailyPlanningSheet = () => {
 
     const handleSave = async () => {
         console.log(selectedShift)
-        if (!selectedShift.employeeId || !selectedShift.itemId || !selectedShift.assetId || !selectedShift.planDate) {
+        if (!selectedShift.employeeId || !selectedShift.internalWorkOrderId || !selectedShift.assetId || !selectedShift.planDate) {
             showAlert('error', 'Please fill required fields');
             return;
         }
@@ -205,11 +220,11 @@ const DailyPlanningSheet = () => {
             'Machine Name': Assets.find(a => a.assetId === p.assetId)?.assetName,
             'Operator Name': Employees.find(e => e.employeeId === p.employeeId)?.employeeName,
             'Manpower': p.manpower,
-            'Item Name': Items.find(i => i.id === p.itemId)?.name,
+            'Item Name': Items.find(i => i.id === p.internalWorkOrderId)?.name,
             'Shift Name': shifts.find(s => s.shiftId === p.shiftId)?.shiftName,
             'Target': p.target,
             'Backfeed': p.backfeed,
-            'Remarks': p.remark
+            'Remarks': p.remarks
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -293,7 +308,7 @@ const DailyPlanningSheet = () => {
                                 <TableCell>{Assets.find(a => a.assetId === emp.assetId)?.assetName}</TableCell>
                                 <TableCell>{Employees.find(e => e.employeeId === emp.employeeId)?.employeeName}</TableCell>
                                 <TableCell>{emp.manpower}</TableCell>
-                                <TableCell>{Items.find(i => i.id === emp.itemId)?.name}</TableCell>
+                                <TableCell>{Items.find(i => i.id === emp.internalWorkOrderId)?.name}</TableCell>
                                 <TableCell>{shifts.find(s => s.shiftId === emp.shiftId)?.shiftName}</TableCell>
                                 <TableCell align="center">
                                     <Tooltip title="Edit">
@@ -318,7 +333,7 @@ const DailyPlanningSheet = () => {
             </Table>
 
             <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
-                <DialogTitle>{isEdit ? 'Edit Shift' : 'Add Shift'}</DialogTitle>
+                <DialogTitle>{isEdit ? 'Edit Shift' : 'Create Daily Planning Sheet'}</DialogTitle>
                 <DialogContent>
                     <Grid container spacing={2} sx={{ mt: 1 }}>
                         <Grid item xs={12} md={6}>
@@ -401,21 +416,25 @@ const DailyPlanningSheet = () => {
                                     <option key={emp.employeeId} value={emp.employeeId}>{emp.employeeName}</option>
                                 ))}
                             </TextField>
-                            <TextField
-                                select
-                                label="Item Name"
-                                name="itemId"
-                                value={selectedShift.itemId}
-                                onChange={handleChange}
-                                fullWidth
-                                sx={{ mt: 2 }}
-                                SelectProps={{ native: true }}
-                            >
-                                <option value=""></option>
-                                {Items.map((i) => (
-                                    <option key={i.id} value={i.id}>{i.name}</option>
-                                ))}
-                            </TextField>
+                           <TextField
+    select
+    label="Internal Work ID"
+    name="internalWorkOrderId" 
+    value={selectedShift.internalWorkOrderId}
+    onChange={handleChange}
+    fullWidth
+    sx={{ mt: 2 }}
+    SelectProps={{ native: true }}
+>
+    <option value=""></option>
+    {internalWorkOrders.map((wo) => (
+        <option key={wo.id} value={wo.id}>
+            {`WO-${wo.woid} | Qty: ${wo.quantity} | Dispatch: ${wo.dispatchDate?.substring(0, 10)}`}
+        </option>
+    ))}
+</TextField>
+
+
                             <TextField
                                 fullWidth
                                 label="Target (KM)"
@@ -435,8 +454,8 @@ const DailyPlanningSheet = () => {
                             <TextField
                                 fullWidth
                                 label="Remarks"
-                                name="remark"
-                                value={selectedShift.remark}
+                                name="remarks"
+                                value={selectedShift.remarks}
                                 onChange={handleChange}
                                 sx={{ mt: 2 }}
                             />
