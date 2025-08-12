@@ -10,10 +10,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SettingsIcon from '@mui/icons-material/Settings';
-
-
 import { assetTypes } from "../../Components/constant";
-
 import { getAllAssets, createAssets, EditAssets, deleteAsset } from "../../Services/AssetService";
 import { getAllOperation } from "../../Services/OperationService";
 import { getAssetOperation, OperationMapping } from "../../Services/AssetOperation";
@@ -44,6 +41,8 @@ const AssetMaster = () => {
     serialNumber: "",
     purchaseDate: "",
     warrantyExpiry: "",
+    lastServiceDate: "",
+    nextServiceDate: "",
     supplier: "",
     operationIds: [],
   };
@@ -143,6 +142,8 @@ const AssetMaster = () => {
     { label: "Model Number", key: "modelNumber" },
     { label: "Serial Number", key: "serialNumber" },
     { label: "Purchase Date", key: "purchaseDate" },
+    { label: "Last Service Date", key: "lastServiceDate" },
+    { label: "Next Service Date", key: "nextServiceDate" },
     { label: "Warranty Expiry", key: "warrantyExpiry" },
     { label: "Supplier", key: "supplier" }
   ];
@@ -305,6 +306,8 @@ const AssetMaster = () => {
               </TextField>
               <TextField fullWidth label="Serial Number" name="serialNumber" value={formData.serialNumber} onChange={handleChange} sx={{ mt: 2 }} />
               <TextField fullWidth label="Warranty Expiry" name="warrantyExpiry" type="date" InputLabelProps={{ shrink: true }} value={formData.warrantyExpiry?.split("T")[0] || ""} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Last Service Date" name="lastServiceDate" type="date" InputLabelProps={{ shrink: true }} value={formData.lastServiceDate?.split("T")[0] || ""} onChange={handleChange} sx={{ mt: 2 }} />
+              <TextField fullWidth label="Next Service Date" name="nextServiceDate" type="date" InputLabelProps={{ shrink: true }} value={formData.nextServiceDate?.split("T")[0] || ""} onChange={handleChange} sx={{ mt: 2 }} />
             </Grid>
           </Grid>
         </DialogContent>
@@ -374,6 +377,8 @@ const AssetMaster = () => {
             <TextField fullWidth label="Supplier" value={formData.supplier} disabled />
             <TextField fullWidth label="Purchase Date" value={formData.purchaseDate?.split("T")[0] || ""} type="date" InputLabelProps={{ shrink: true }} disabled />
             <TextField fullWidth label="Warranty Expiry" value={formData.warrantyExpiry?.split("T")[0] || ""} type="date" InputLabelProps={{ shrink: true }} disabled />
+            <TextField fullWidth label="Last Service Date" value={formData.lastServiceDate?.split("T")[0] || ""} type="date" InputLabelProps={{ shrink: true }} disabled />
+            <TextField fullWidth label="Next Service Date" value={formData.nextServiceDate?.split("T")[0] || ""} type="date" InputLabelProps={{ shrink: true }} disabled />
           </Stack>
         </DialogContent>
         <DialogActions>
