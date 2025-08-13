@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { TableContainer, Paper } from "@mui/material";
-
 import {
   Box,
   Typography,
@@ -19,125 +17,108 @@ import {
   TableBody,
   Tooltip,
   IconButton,
+  TableContainer,
+  Paper,
 } from "@mui/material";
-import { Edit, Delete } from "@mui/icons-material";
-import ViewIcon from '@mui/icons-material/Visibility';
+import ViewIcon from "@mui/icons-material/Visibility";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { useSelector } from "react-redux";
-import DeleteIcon from '@mui/icons-material/Delete';
-import InfoIcon from '@mui/icons-material/Info';
+
 import { getAllOperation } from "../../Services/OperationService.js";
 import { getWorkOrders } from "../../Services/WorkOrderService.js";
-import { getInternalWorkOrdersByOffice } from '../../Services/InternalWorkOrderService.js';
-import { getProductByID } from "../../Services/ProductMasterService.js"; // <-- Add this service
-import axios from "axios";
-import { getConstructionDesignSheets, createConstruction , updateConstructionDesignSheet, deleteConstructionDesignSheet } from "../../Services/ConstructionDesignSheet.js";
+import { getInternalWorkOrdersByOffice } from "../../Services/InternalWorkOrderService.js";
+import { getProductByID } from "../../Services/ProductMasterService.js";
 
+import {
+  getConstructionDesignSheets,
+  createConstruction,
+  updateConstructionDesignSheet,
+  deleteConstructionDesignSheet,
+} from "../../Services/ConstructionDesignSheet.js";
 
 const ConstructionDesignSheet = () => {
   const officeId = useSelector((state) => state.user.officeId);
 
   const [openDialog, setOpenDialog] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [constructionData, setConstructionData] = useState([]);
 
+  const [constructionData, setConstructionData] = useState([]);
 
   // Dropdown states
   const [internalWorkOrders, setInternalWorkOrders] = useState([]);
   const [workOrders, setWorkOrders] = useState([]);
   const [operations, setOperations] = useState([]);
 
+  // Form fields (TOP dialog)
   const [selectedInternalWO, setSelectedInternalWO] = useState("");
-
-  // Map of productId to productName for quick lookup
-  const [productDetailsMap, setProductDetailsMap] = useState({});
-
-  // Table data
-  const [operationData, setOperationData] = useState([]);
-    const [selectedWO, setSelectedWO]= useState("");
-  // Form for adding operation
   const [selectedOperation, setSelectedOperation] = useState("");
   const [specification, setSpecification] = useState("");
   const [value, setValue] = useState("");
 
+  // Misc maps / helpers
+  const [productDetailsMap, setProductDetailsMap] = useState({});
+  const [selectedWO, setSelectedWO] = useState("");
+
+  // Mode control
+  const [isEdit, setIsEdit] = useState(false);
+  const [selectedCDS, setSelectedCDS] = useState(null);
+
+  // Inner table (local-only) rows & handlers
+  const [operationData, setOperationData] = useState([]);
 
   useEffect(() => {
-    if (officeId > 0) {
-      loadInternalWorkOrders();
-      loadOperations();
-    //   loadWorkOrders();
-      loadConstructionData();
+    if (Number(officeId) > 0) {
+      (async () => {
+        setLoading(true);
+        try {
+          await Promise.all([loadInternalWorkOrders(), loadOperations(), loadConstructionData()]);
+        } finally {
+          setLoading(false);
+        }
+      })();
     }
   }, [officeId]);
 
-const loadConstructionData = async () => {
-  try {
-    const data = await getConstructionDesignSheets(officeId);
-    setConstructionData(data || []);
-  } catch (err) {
-    console.error("Error fetching construction design sheets:", err.message);
-  }
-};
-
- const handleSubmit = async () => {
-  try {
-    const payload = [
-      {
-        id: 0,
-        internalWoid: selectedInternalWO, // tumhare form ka value
-        operationId: selectedOperation,
-        specification: specification,
-        value: value,
-        officeId: officeId,
-        isActive: true,
-        createdOn: new Date().toISOString(),
-        createdBy: 0,
-        updatedBy: 0,
-        updatedOn: new Date().toISOString()
-      }
-    ];
-
-    await createConstruction(payload); // service ka function jo tumhare paas hoga
-    alert("Construction data submitted successfully!");
-  } catch (error) {
-    console.error("Error submitting construction data:", error);
-  }
-};
-
+  const loadConstructionData = async () => {
+    try {
+      const data = await getConstructionDesignSheets(officeId);
+      setConstructionData(data || []);
+    } catch (err) {
+      console.error("Error fetching construction design sheets:", err.message);
+    }
+  };
 
   const loadInternalWorkOrders = async () => {
     try {
       const data = await getInternalWorkOrdersByOffice(officeId);
-      console.log("Internal Work Orders fetched:", data);
       setInternalWorkOrders(data || []);
     } catch (err) {
       console.error("Failed to fetch internal work orders:", err.message);
     }
   };
 
-  const loadWorkOrders = async (officeId) => {
+  const loadWorkOrders = async (officeIdParam) => {
     try {
-      const data = await getWorkOrders(officeId);
+      const data = await getWorkOrders(officeIdParam);
       setWorkOrders(data || []);
 
-      // Extract all product IDs from all work orders
+      // Collect productIds
       let productIds = [];
-      data.forEach(wo => {
-        if (wo.products && wo.products.length > 0) {
-          productIds = productIds.concat(
-            wo.products.map(p => p.productId)
-          );
+      data?.forEach((wo) => {
+        if (wo?.products?.length) {
+          productIds = productIds.concat(wo.products.map((p) => p.productId));
         }
       });
-
-      // Remove duplicates
-      productIds = [...new Set(productIds)];
+      productIds = [...new Set(productIds)].filter(Boolean);
 
       if (productIds.length > 0) {
         const products = await getProductByID(productIds);
-        // Map product ID => product name
         const productMap = {};
-        products.forEach(p => {
-          productMap[p.id] = p.name; // Adjust based on your API response keys
+        (products || []).forEach((p) => {
+          // adjust keys if your API differs
+          productMap[p.id] = p.name;
         });
         setProductDetailsMap(productMap);
       } else {
@@ -157,13 +138,134 @@ const loadConstructionData = async () => {
     }
   };
 
-  const handleAddOperation = () => {
+  // ---------- Helpers to resolve IDs safely ----------
+  const resolveInternalWOId = (rowInternalWoid) => {
+    // rowInternalWoid might be an internal WO "id" or a "woid" (human code).
+    if (!rowInternalWoid) return "";
+    // 1) exact id match
+    const byId = internalWorkOrders.find((w) => String(w.id) === String(rowInternalWoid));
+    if (byId) return byId.id;
+    // 2) woid match (if row stores woid instead of id)
+    const byWoid = internalWorkOrders.find((w) => String(w.woid) === String(rowInternalWoid));
+    if (byWoid) return byWoid.id;
+    return "";
+  };
+
+  const resolveOperationId = (rowOperationId, rowOperationName) => {
+    if (rowOperationId) return rowOperationId;
+    if (rowOperationName) {
+      const found = operations.find(
+        (o) => String(o.operationName).toLowerCase() === String(rowOperationName).toLowerCase()
+      );
+      return found ? found.operationId : "";
+    }
+    return "";
+  };
+
+  // ---------- Top table actions ----------
+  const handleViewCDS = (row) => {
+    setSelectedCDS(row);
+    setViewOpen(true);
+  };
+
+  const handleEditCDS = (row) => {
+    setSelectedCDS(row);
+    setIsEdit(true);
+
+    // Prefill dialog fields
+    const internalId = resolveInternalWOId(row.internalWoid);
+    setSelectedInternalWO(internalId || "");
+    const opId = resolveOperationId(row.operationId, row.operationName);
+    setSelectedOperation(opId || "");
+    setSpecification(row.specification || "");
+    setValue(row.value || "");
+
+    // (optional) pre-load workorders/products area
+    setWorkOrders([]);
+    const internalWO = internalWorkOrders.find((w) => String(w.id) === String(internalId));
+    setSelectedWO(internalWO ? internalWO.woid : "");
+    setProductDetailsMap({});
+    loadWorkOrders(officeId);
+
+    setOpenDialog(true);
+  };
+
+  const handleDeleteCDS = async (row) => {
+    if (window.confirm("Are you sure you want to delete this record?")) {
+      try {
+        await deleteConstructionDesignSheet(Number(row.id));
+        alert("Record deleted successfully");
+        await loadConstructionData();
+      } catch (e) {
+        console.error(e);
+        alert("Failed to delete record");
+      }
+    }
+  };
+  // ---------- Create / Update submit ----------
+  const handleSubmit = async () => {
+    try {
+      // Coerce ids to number when possible (helps many APIs)
+      const internalWoidId = selectedInternalWO ? Number(selectedInternalWO) : null;
+      const operationIdNum = selectedOperation ? Number(selectedOperation) : null;
+
+      if (isEdit && selectedCDS) {
+        const payload = {
+          id: selectedCDS.id,
+          internalWoid: internalWoidId ?? selectedInternalWO ?? "",
+          operationId: operationIdNum ?? selectedOperation ?? "",
+          specification: specification,
+          value: value,
+          officeId: Number(officeId),
+          isActive: true,
+          updatedOn: new Date().toISOString(),
+          updatedBy: 0,
+        };
+        await updateConstructionDesignSheet(selectedCDS.id, payload);
+        alert("Construction data updated successfully!");
+      } else {
+        const payload = [
+          {
+            id: 0,
+            internalWoid: internalWoidId ?? selectedInternalWO ?? "",
+            operationId: operationIdNum ?? selectedOperation ?? "",
+            specification: specification,
+            value: value,
+            officeId: Number(officeId),
+            isActive: true,
+            createdOn: new Date().toISOString(),
+            createdBy: 0,
+            updatedBy: 0,
+            updatedOn: new Date().toISOString(),
+          },
+        ];
+        await createConstruction(payload);
+        alert("Construction data submitted successfully!");
+      }
+
+      // reset + refresh
+      setOpenDialog(false);
+      setIsEdit(false);
+      setSelectedCDS(null);
+      setSelectedInternalWO("");
+      setSelectedOperation("");
+      setSpecification("");
+      setValue("");
+      await loadConstructionData();
+    } catch (error) {
+      console.error("Error saving construction data:", error);
+      alert("Failed to save construction data");
+    }
+  };
+
+  // ---------- Inner table (local-only) ----------
+  const handleInnerAddOperation = () => {
     if (selectedOperation && specification && value) {
-      setOperationData([
-        ...operationData,
+      setOperationData((prev) => [
+        ...prev,
         {
           id: Date.now(),
-          operationName: selectedOperation,
+          operationName: selectedOperation, // storing id as "operationName" like your original code
           specification,
           value,
         },
@@ -171,178 +273,164 @@ const loadConstructionData = async () => {
     }
   };
 
-  const handleDelete = (id) => {
-    setOperationData(operationData.filter((op) => op.id !== id));
+  const handleInnerDelete = (id) => {
+    setOperationData((prev) => prev.filter((op) => op.id !== id));
   };
 
-  const handleEdit = (id) => {
+  const handleInnerEdit = (id) => {
     const item = operationData.find((op) => op.id === id);
     if (item) {
       setSelectedOperation(item.operationName);
       setSpecification(item.specification);
       setValue(item.value);
-      setOperationData(operationData.filter((op) => op.id !== id));
+      setOperationData((prev) => prev.filter((op) => op.id !== id));
     }
   };
 
-  const filteredWorkOrders = selectedWO
-  ? workOrders.filter(wo => wo.woid === selectedWO)
-  : [];
-
+  const filteredWorkOrders =
+    selectedWO && Array.isArray(workOrders)
+      ? workOrders.filter((wo) => String(wo.woid) === String(selectedWO))
+      : [];
 
   return (
-                 <div className="col-12">
-            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                    <Typography variant="h4">Construction Design Sheet</Typography>     
-                     <Box display="flex" alignItems="center" gap={2}>
-                    <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => setOpenDialog(true)}
-                    >
-                    Create
-                    </Button>
-                    </Box>
-                </Box>
+    <div className="col-12">
+      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+        <Typography variant="h4">Construction Design Sheet</Typography>
+        <Box display="flex" alignItems="center" gap={2}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              // Fresh create flow
+              setIsEdit(false);
+              setSelectedCDS(null);
+              setSelectedInternalWO("");
+              setSelectedOperation("");
+              setSpecification("");
+              setValue("");
+              setOpenDialog(true);
+            }}
+          >
+            Create
+          </Button>
+        </Box>
+      </Box>
 
-                {loading && <Typography>Loading data...</Typography>}
-                
-                            {!loading && (
-                                <TableContainer component={Paper}>
-                                    <Table>
-                                        <TableHead>
-                                            <TableRow>
-                                                <TableCell>#</TableCell>
-                                                <TableCell>Internal Work Order</TableCell>
-                                                <TableCell>Operation Name</TableCell>
-                                                <TableCell>Specification</TableCell>
-                                                <TableCell>Value</TableCell>
-                                                <TableCell align="center">Actions</TableCell>
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                           {constructionData.length > 0 ? (
-  constructionData.map((row, index) => (
-    <TableRow key={row.id}>
-      <TableCell>{index + 1}</TableCell>
-      <TableCell>{internalWorkOrders.find(w => w.id === row.internalWoid)?.woNumber || "-"}</TableCell>
-      <TableCell>{operations.find(op => op.operationId === row.operationId)?.operationName || "-"}</TableCell>
-      <TableCell>{row.specification}</TableCell>
-      <TableCell>{row.value}</TableCell>
-   
-                                                        
-                                                        <TableCell align="center">
-                                                            {/* <Tooltip title="Edit">
-                                                                <IconButton color="primary" onClick={() => handleEdit(wo)}>
-                                                                    <EditIcon />
-                                                                </IconButton>
-                                                            </Tooltip> */}
-                                                            <Tooltip title="View">
-                                                                <IconButton color="primary" onClick={() => handleView(wo)}>
-                                                                    <ViewIcon />
-                                                                </IconButton>
-                                                            </Tooltip>
-                                                            <Tooltip title="Delete">
-                                                                <IconButton color="error" onClick={() => handleDelete(wo)}>
-                                                                    <DeleteIcon />
-                                                                </IconButton>
-                                                            </Tooltip>
-                                                            
-                                                            <Tooltip title="View Details">
-                                                <IconButton color="info" onClick={() => handleDetail(wo)}>
-                                                    <InfoIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                                                                    </TableCell>
-                                                    </TableRow>
-                                                ))
-                                            ) : (
-                                                <TableRow>
-                                                    <TableCell colSpan={9} align="center">
-                                                        No construction design sheet found.
-                                                    </TableCell>
-                                                </TableRow>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
-                                 )}
+      {loading && <Typography>Loading data...</Typography>}
 
-                {/* Dialog */}
-                <Dialog
-                    open={openDialog}
-                    onClose={() => setOpenDialog(false)}
-                    maxWidth="md"
-                    fullWidth
-                >
-                    <DialogTitle>Create Construction Design Sheet</DialogTitle>
-                    <DialogContent>
-                    {/* Internal Work Order dropdown */}
-                    <Stack spacing={2} mt={1}>
-                        <TextField
-                        select
-                        label="Internal Work Order"
-                        name="internalWorkOrderId"
-                        value={selectedInternalWO}
-                        onChange={(e) => {
-                            const val = e.target.value;
-                            setSelectedInternalWO(val);
-                            setWorkOrders([]); // reset
-                            const internalWO = internalWorkOrders.find(w => w.id === val);
-            setSelectedWO(internalWO ? internalWO.woid : "");
-                            setProductDetailsMap({}); // reset products map
-                            loadWorkOrders(officeId);
-                        }}
-                        fullWidth
-                        sx={{ mt: 2 }}
-                        SelectProps={{ native: true }}
-                        >
-                        <option value=""></option>
-                        {internalWorkOrders.map((wo) => (
-                            <option key={wo.id} value={wo.id}>
-                            {`WO-${wo.woid} | Qty: ${wo.quantity} | Dispatch: ${wo.dispatchDate?.substring(0, 10)}`}
-                            </option>
-                        ))}
-                        </TextField>
+      {!loading && (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>#</TableCell>
+                <TableCell>Internal Work Order</TableCell>
+                <TableCell>Operation Name</TableCell>
+                <TableCell align="center">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {constructionData?.length > 0 ? (
+                constructionData.map((row, index) => (
+                  <TableRow key={row.id}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{row.internalWoid}</TableCell>
+                    <TableCell>
+                      {operations.find((op) => String(op.operationId) === String(row.operationId))
+                        ?.operationName || "-"}
+                    </TableCell>
+                    <TableCell align="center">
+                      <Tooltip title="View">
+                        <IconButton color="primary" onClick={() => handleViewCDS(row)}>
+                          <ViewIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Edit">
+                        <IconButton color="primary" onClick={() => handleEditCDS(row)}>
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton color="error" onClick={() => handleDeleteCDS(row)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={9} align="center">
+                    No construction design sheet found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
-                        {/* Showing Products for Work Orders of selected Internal WO */}
-                        <Box mt={2}>
-                        <Typography variant="subtitle1" gutterBottom>
-                            Products in Work Orders:
-                        </Typography>
-                        {filteredWorkOrders.length === 0 && (
-            <Typography>No work orders found.</Typography>
-            )}
-
-            {filteredWorkOrders.map((wo) => (
-            <Box
-                key={wo.id}
-                sx={{ mb: 2, p: 1, border: "1px solid #ccc", borderRadius: 1 }}
+      {/* Create/Edit Dialog (TOP) */}
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>{isEdit ? "Edit Construction Design Sheet" : "Create Construction Design Sheet"}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} mt={1}>
+            <TextField
+              select
+              label="Internal Work Order"
+              name="internalWorkOrderId"
+              value={selectedInternalWO}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSelectedInternalWO(val);
+                setWorkOrders([]); // reset
+                const internalWO = internalWorkOrders.find((w) => String(w.id) === String(val));
+                setSelectedWO(internalWO ? internalWO.woid : "");
+                setProductDetailsMap({}); // reset products map
+                loadWorkOrders(officeId);
+              }}
+              fullWidth
+              sx={{ mt: 2 }}
             >
-                <Typography fontWeight="bold">
-                Work Order: {wo.name || wo.woid || wo.id}
-                </Typography>
+              <MenuItem value=""></MenuItem>
+              {internalWorkOrders.map((wo) => (
+                <MenuItem key={wo.id} value={wo.id}>
+                  {`WO-${wo.woid} | Qty: ${wo.quantity} | Dispatch: ${wo.dispatchDate?.substring(0, 10)}`}
+                </MenuItem>
+              ))}
+            </TextField>
 
-                {wo.products && wo.products.length > 0 ? (
-                <ul>
-                    {wo.products.map((product) => (
-                    <li key={product.productId || product.name}>
-                        {productDetailsMap[product.productId] ||
-                        product.name ||
-                        product.description ||
-                        "Unknown Product"}
-                    </li>
-                    ))}
-                </ul>
-                ) : (
-                <Typography>No products found for this Work Order.</Typography>
-                )}
-            </Box>
-            ))}
+            {/* Showing Products for Work Orders of selected Internal WO */}
+            <Box mt={2}>
+              <Typography variant="subtitle1" gutterBottom>
+                Products in Work Orders:
+              </Typography>
+              {filteredWorkOrders.length === 0 && <Typography>No work orders found.</Typography>}
+
+              {filteredWorkOrders.map((wo) => (
+                <Box key={wo.id} sx={{ mb: 2, p: 1, border: "1px solid #ccc", borderRadius: 1 }}>
+                  <Typography fontWeight="bold">Work Order: {wo.name || wo.woid || wo.id}</Typography>
+
+                  {wo.products && wo.products.length > 0 ? (
+                    <ul>
+                      {wo.products.map((product) => (
+                        <li key={product.productId || product.name}>
+                          {productDetailsMap[product.productId] ||
+                            product.name ||
+                            product.description ||
+                            "Unknown Product"}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <Typography>No products found for this Work Order.</Typography>
+                  )}
+                </Box>
+              ))}
             </Box>
           </Stack>
 
-          {/* Table */}
+          {/* INNER Table (local) */}
           <Box mt={3}>
             <Table size="small">
               <TableHead>
@@ -361,11 +449,11 @@ const loadConstructionData = async () => {
                       <TableCell>{row.specification}</TableCell>
                       <TableCell>{row.value}</TableCell>
                       <TableCell>
-                        <IconButton color="primary" onClick={() => handleEdit(row.id)}>
-                          <Edit />
+                        <IconButton color="primary" onClick={() => handleInnerEdit(row.id)}>
+                          <EditIcon />
                         </IconButton>
-                        <IconButton color="error" onClick={() => handleDelete(row.id)}>
-                          <Delete />
+                        <IconButton color="error" onClick={() => handleInnerDelete(row.id)}>
+                          <DeleteIcon />
                         </IconButton>
                       </TableCell>
                     </TableRow>
@@ -405,14 +493,9 @@ const loadConstructionData = async () => {
                 fullWidth
               />
 
-              <TextField
-                label="Value"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                fullWidth
-              />
+              <TextField label="Value" value={value} onChange={(e) => setValue(e.target.value)} fullWidth />
 
-              <Button variant="contained" color="primary" onClick={handleAddOperation}>
+              <Button variant="contained" color="primary" onClick={handleInnerAddOperation}>
                 Create
               </Button>
             </Stack>
@@ -421,15 +504,35 @@ const loadConstructionData = async () => {
 
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            color="success"
-            onClick={() =>
-              handleSubmit ( selectedInternalWO, selectedOperation )
-            }
-          >
-            Submit All
+          <Button variant="contained" color="success" onClick={handleSubmit}>
+            {isEdit ? "Update" : "Submit All"}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* VIEW Dialog (TOP) */}
+      <Dialog open={viewOpen} onClose={() => setViewOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>View Construction Design Sheet</DialogTitle>
+        <DialogContent>
+          {selectedCDS && (
+            <Stack spacing={2} mt={1}>
+              <TextField label="Internal Work Order" value={selectedCDS.internalWoid} fullWidth disabled />
+              <TextField
+                label="Operation Name"
+                value={
+                  operations.find((op) => String(op.operationId) === String(selectedCDS.operationId))
+                    ?.operationName || "-"
+                }
+                fullWidth
+                disabled
+              />
+              <TextField label="Specification" value={selectedCDS.specification || ""} fullWidth disabled />
+              <TextField label="Value" value={selectedCDS.value || ""} fullWidth disabled />
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setViewOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </div>
