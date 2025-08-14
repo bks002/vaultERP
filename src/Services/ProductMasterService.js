@@ -36,3 +36,13 @@ export const deleteProductMaster = async (productMasterId) => {
     throw error;
   }
 }
+
+export const getProductByID = async (productId) => {
+  try {
+    const response = await axios.get(`${API_BASE}/byid${productId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching product masters:", error);
+    throw error;
+  }
+}
