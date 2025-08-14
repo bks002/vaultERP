@@ -132,6 +132,13 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemText primary="Process Chart" />
                     </ListItemButton>
                 </ListItem>
+                 <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/ConstructionDesignSheet"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Construction Design Sheet" />
+                    </ListItemButton>
+                </ListItem>
+
             </List>
             <Divider />
             <List>
@@ -261,6 +268,8 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemText primary="Work Order" />
                     </ListItemButton>
                 </ListItem>
+
+                
 
             </List>
         </Drawer>

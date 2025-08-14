@@ -27,6 +27,8 @@ import Stock from "./Modules/Inventory/Stock.jsx";
 import WorkOrder from "./Modules/Work Order Management/WorkOrder.jsx";
 import ProductMaster from "./Modules/Work Order Management/ProductMaster.jsx"; 
 import ProcessChartMaster from "./Modules/Employee/ProcessChart.jsx";
+import ConstructionDesignSheet from "./Modules/Employee/ConstructionDesignSheet.jsx";
+
 import ServicePage from "./Modules/Asset Management/AssetServiceRecord.jsx";
 import AssetCheckinout from './Modules/Asset Management/AssetCheckinout.jsx';
 
@@ -57,8 +59,11 @@ function AppRoutes() {
       <Route path="/processchart" element={<AuthWrapper><ProcessChartMaster /></AuthWrapper>} />
       <Route path="/Attendance/Attendance" element={<AuthWrapper><Attendance /></AuthWrapper>} />
       <Route path="/Attendance/Leave" element={<AuthWrapper><Leave /></AuthWrapper>} />
+      <Route path="/ConstructionDesignSheet" element={<AuthWrapper><ConstructionDesignSheet /></AuthWrapper>} />
+
       <Route path="/Asset/AssetServiceRecord" element={<AuthWrapper><ServicePage /></AuthWrapper>} />
       <Route path="/Asset/AssetCheckinout" element={<AuthWrapper><AssetCheckinout /></AuthWrapper>} />
+
 
       {/* Redirect to dashboard if no match */}
     </Routes>
