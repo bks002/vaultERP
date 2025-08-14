@@ -239,7 +239,7 @@ const handleUpdateValueOnly = async () => {
     console.log(row)
     if (window.confirm("Are you sure you want to delete this record?")) {
       try {
-        await deleteConstructionDesignSheet(Number(row.id));
+        await deleteConstructionDesignSheet(Number(row.internalWoid));
         alert("Record deleted successfully");
         await loadConstructionData();
       } catch (e) {

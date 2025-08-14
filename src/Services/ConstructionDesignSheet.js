@@ -36,14 +36,18 @@ export const updateConstructionDesignSheet = async (id, constructionData) => {
 };
 
 // Delete a Construction Design Sheet
-export const deleteConstructionDesignSheet = async (id) => {
+export const deleteConstructionDesignSheet = async (internalWoid) => {
   try {
-    const response = await axios.delete(`${API_BASE}/${id}`);
+    const response = await axios.delete(`${API_BASE}`, {
+      params: { internalWoid }, // send as query param
+    });
     return response.data;
   } catch (error) {
     console.error("Error deleting construction design sheet:", error);
     throw error;
   }
 };
+
+
 
 
