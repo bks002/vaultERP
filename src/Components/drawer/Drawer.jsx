@@ -138,6 +138,7 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemText primary="Construction Design Sheet" />
                     </ListItemButton>
                 </ListItem>
+
             </List>
             <Divider />
             <List>
@@ -200,6 +201,18 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                     <ListItemButton component={Link} to="/Asset/AssetOperation"  >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
                         <ListItemText primary="Asset Operation Master" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Asset/AssetServiceRecord"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Asset Service Record" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Asset/AssetCheckinout"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Asset Check-in/Check-out" />
                     </ListItemButton>
                 </ListItem>
             </List>

@@ -765,8 +765,6 @@ const [editingDetailId, setEditingDetailId] = useState(null);
                 </DialogActions>
             </Dialog>
 
-
-
             <Dialog open={detailDialogOpen} onClose={() => setDetailDialogOpen(false)} fullWidth maxWidth="sm">
                                     <DialogTitle>Work Order Details</DialogTitle>
                                     <DialogContent>
@@ -888,7 +886,6 @@ const [editingDetailId, setEditingDetailId] = useState(null);
                     <Button onClick={() => setDetailDialogOpen(false)}>Close</Button>
                 </DialogActions>
             </Dialog>
-
 
         </div>
     );
