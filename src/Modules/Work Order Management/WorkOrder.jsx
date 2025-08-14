@@ -765,8 +765,8 @@ const [editingDetailId, setEditingDetailId] = useState(null);
                 </DialogActions>
             </Dialog>
 
-            <Dialog open={detailDialogOpen} onClose={() => setDetailDialogOpen(false)} fullWidth maxWidth="sm">
-                                    <DialogTitle>Work Order Details</DialogTitle>
+            <Dialog open={detailDialogOpen} onClose={() => setDetailDialogOpen(false)} fullWidth maxWidth="md">
+                                    <DialogTitle>Internal Work Order Details</DialogTitle>
                                     <DialogContent>
                                         <Stack spacing={2} mt={1}>
                                             <TextField

@@ -256,20 +256,20 @@ const handleUpdateValueOnly = async () => {
       const operationIdNum = selectedOperation ? Number(selectedOperation) : null;
 
       if (selectedCDS) {
-      //   const payload = {
-      //     id: selectedCDS.id,
-      //     internalWoid: internalWoidId ?? selectedInternalWO ?? "",
-      //     operationId: operationIdNum ?? selectedOperation ?? "",
-      //     specification: specification,
-      //     value: value,
-      //     officeId: Number(officeId),
-      //     isActive: true,
-      //     updatedOn: new Date().toISOString(),
-      //     updatedBy: 0,
-      //   };
-      //   await updateConstructionDesignSheet(selectedCDS.id, payload);
-      //   alert("Construction data updated successfully!");
-      // } else {
+        const payload = {
+          id: selectedCDS.id,
+          internalWoid: internalWoidId ?? selectedInternalWO ?? "",
+          operationId: operationIdNum ?? selectedOperation ?? "",
+          specification: specification,
+          value: value,
+          officeId: Number(officeId),
+          isActive: true,
+          updatedOn: new Date().toISOString(),
+          updatedBy: 0,
+        };
+        await updateConstructionDesignSheet(selectedCDS.id, payload);
+        alert("Construction data updated successfully!");
+      } else {
         const payload = [
           {
             id: 0,
@@ -443,7 +443,7 @@ const handleUpdateValueOnly = async () => {
             </TextField>
 
             {/* Showing Products for Work Orders of selected Internal WO */}
-            <Box mt={2}>
+            {/* <Box mt={2}>
               <Typography variant="subtitle1" gutterBottom>
                 Products in Work Orders:
               </Typography>
@@ -469,7 +469,7 @@ const handleUpdateValueOnly = async () => {
                   )}
                 </Box>
               ))}
-            </Box>
+            </Box> */}
           </Stack>
 
           {/* INNER Table (local) */}
