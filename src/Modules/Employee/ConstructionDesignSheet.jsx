@@ -68,6 +68,11 @@ const ConstructionDesignSheet = () => {
   // Inner table (local-only) rows & handlers
   const [operationData, setOperationData] = useState([]);
 
+  const [isViewEditMode, setIsViewEditMode] = useState(false);
+const [viewValue, setViewValue] = useState("");
+const [viewOperationData, setViewOperationData] = useState([]);
+
+
   useEffect(() => {
     if (Number(officeId) > 0) {
       (async () => {
@@ -163,10 +168,50 @@ const ConstructionDesignSheet = () => {
   };
 
   // ---------- Top table actions ----------
-  const handleViewCDS = (row) => {
-    setSelectedCDS(row);
-    setViewOpen(true);
-  };
+ const handleViewCDS = (row) => {
+  setSelectedCDS(row);
+  setViewOperationData(
+    row.operations?.map((op, index) => ({
+      ...op,
+      id: index, // local unique id
+    })) || [{ id: Date.now(), specification: row.specification, value: row.value }]
+  );
+  setIsViewEditMode(false);
+  setViewOpen(true);
+};
+
+
+// New function for update from view dialog
+const handleUpdateValueOnly = async () => {
+  console.log(selectedCDS)
+  try {
+    if (!selectedCDS) return;
+
+    const payload = {
+      id: selectedCDS.id,
+      internalWoid: selectedCDS.internalWoid,  // Keep existing
+      operationId: selectedCDS.operationId,    // Keep existing
+      specification: selectedCDS.specification || "",
+      value: viewValue,                        // Only field we change
+      officeId: Number(officeId),
+      isActive: true,
+      updatedOn: new Date().toISOString(),
+      updatedBy: 0,
+    };
+
+    console.log("Updating with payload:", payload);
+    await updateConstructionDesignSheet(selectedCDS.id, payload);
+
+    alert("Value updated successfully!");
+    setIsViewEditMode(false);
+    setViewOpen(false);
+    await loadConstructionData();
+  } catch (err) {
+    console.error("Error updating value:", err.response?.data || err.message);
+    alert("Failed to update value");
+  }
+};
+
 
   const handleEditCDS = (row) => {
     setSelectedCDS(row);
@@ -191,6 +236,7 @@ const ConstructionDesignSheet = () => {
   };
 
   const handleDeleteCDS = async (row) => {
+    console.log(row)
     if (window.confirm("Are you sure you want to delete this record?")) {
       try {
         await deleteConstructionDesignSheet(Number(row.id));
@@ -209,21 +255,21 @@ const ConstructionDesignSheet = () => {
       const internalWoidId = selectedInternalWO ? Number(selectedInternalWO) : null;
       const operationIdNum = selectedOperation ? Number(selectedOperation) : null;
 
-      if (isEdit && selectedCDS) {
-        const payload = {
-          id: selectedCDS.id,
-          internalWoid: internalWoidId ?? selectedInternalWO ?? "",
-          operationId: operationIdNum ?? selectedOperation ?? "",
-          specification: specification,
-          value: value,
-          officeId: Number(officeId),
-          isActive: true,
-          updatedOn: new Date().toISOString(),
-          updatedBy: 0,
-        };
-        await updateConstructionDesignSheet(selectedCDS.id, payload);
-        alert("Construction data updated successfully!");
-      } else {
+      if (selectedCDS) {
+      //   const payload = {
+      //     id: selectedCDS.id,
+      //     internalWoid: internalWoidId ?? selectedInternalWO ?? "",
+      //     operationId: operationIdNum ?? selectedOperation ?? "",
+      //     specification: specification,
+      //     value: value,
+      //     officeId: Number(officeId),
+      //     isActive: true,
+      //     updatedOn: new Date().toISOString(),
+      //     updatedBy: 0,
+      //   };
+      //   await updateConstructionDesignSheet(selectedCDS.id, payload);
+      //   alert("Construction data updated successfully!");
+      // } else {
         const payload = [
           {
             id: 0,
@@ -345,11 +391,7 @@ const ConstructionDesignSheet = () => {
                           <ViewIcon />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Edit">
-                        <IconButton color="primary" onClick={() => handleEditCDS(row)}>
-                          <EditIcon />
-                        </IconButton>
-                      </Tooltip>
+                     
                       <Tooltip title="Delete">
                         <IconButton color="error" onClick={() => handleDeleteCDS(row)}>
                           <DeleteIcon />
@@ -511,30 +553,142 @@ const ConstructionDesignSheet = () => {
       </Dialog>
 
       {/* VIEW Dialog (TOP) */}
-      <Dialog open={viewOpen} onClose={() => setViewOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>View Construction Design Sheet</DialogTitle>
-        <DialogContent>
-          {selectedCDS && (
-            <Stack spacing={2} mt={1}>
-              <TextField label="Internal Work Order" value={selectedCDS.internalWoid} fullWidth disabled />
-              <TextField
-                label="Operation Name"
-                value={
-                  operations.find((op) => String(op.operationId) === String(selectedCDS.operationId))
-                    ?.operationName || "-"
-                }
-                fullWidth
-                disabled
-              />
-              <TextField label="Specification" value={selectedCDS.specification || ""} fullWidth disabled />
-              <TextField label="Value" value={selectedCDS.value || ""} fullWidth disabled />
-            </Stack>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setViewOpen(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
+      {/* VIEW Dialog (TOP) */}
+{/* VIEW Dialog */}
+<Dialog open={viewOpen} onClose={() => setViewOpen(false)} fullWidth maxWidth="md">
+  <DialogTitle>View Construction Design Sheet</DialogTitle>
+  <DialogContent>
+    {selectedCDS && (
+      <Stack spacing={2} mt={1}>
+        <TextField
+          label="Internal Work Order"
+          value={selectedCDS.internalWoid}
+          fullWidth
+          disabled
+        />
+        <TextField
+          label="Operation Name"
+          value={
+            operations.find((op) => String(op.operationId) === String(selectedCDS.operationId))
+              ?.operationName || "-"
+          }
+          fullWidth
+          disabled
+        />
+
+        {/* TABLE FOR SPECIFICATION & VALUE */}
+        <Box mt={2}>
+          <Typography variant="subtitle1">Operations</Typography>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Specification</TableCell>
+                <TableCell>Value</TableCell>
+                <TableCell>Action</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {viewOperationData.length > 0 ? (
+                viewOperationData.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell>
+                      <TextField
+                        value={row.specification}
+                        disabled={!row.isEdit}
+                        onChange={(e) =>
+                          setViewOperationData((prev) =>
+                            prev.map((r) =>
+                              r.id === row.id ? { ...r, specification: e.target.value } : r
+                            )
+                          )
+                        }
+                        fullWidth
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <TextField
+                        value={row.value}
+                        disabled={!row.isEdit}
+                        onChange={(e) =>
+                          setViewOperationData((prev) =>
+                            prev.map((r) =>
+                              r.id === row.id ? { ...r, value: e.target.value } : r
+                            )
+                          )
+                        }
+                        fullWidth
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {!row.isEdit ? (
+                        <Button
+                          size="small"
+                          variant="contained"
+                          onClick={() =>
+                            setViewOperationData((prev) =>
+                              prev.map((r) => (r.id === row.id ? { ...r, isEdit: true } : r))
+                            )
+                          }
+                        >
+                          Edit
+                        </Button>
+                      ) : (
+                        <Button
+                          size="small"
+                          variant="contained"
+                          color="success"
+                          onClick={async () => {
+                            try {
+                              const payload = {
+                                id: selectedCDS.id,
+                                internalWoid: selectedCDS.internalWoid,
+                                operationId: selectedCDS.operationId,
+                                specification: row.specification,
+                                value: row.value,
+                                officeId: Number(officeId),
+                                isActive: true,
+                                updatedOn: new Date().toISOString(),
+                                updatedBy: 0,
+                              };
+                              await updateConstructionDesignSheet(selectedCDS.id, payload);
+                              alert("Row updated successfully!");
+                              setViewOperationData((prev) =>
+                                prev.map((r) =>
+                                  r.id === row.id ? { ...r, isEdit: false } : r
+                                )
+                              );
+                              await loadConstructionData();
+                            } catch (err) {
+                              console.error(err);
+                              alert("Failed to update row");
+                            }
+                          }}
+                        >
+                          Save
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={3} align="center">
+                    No operations found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </Box>
+      </Stack>
+    )}
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setViewOpen(false)}>Close</Button>
+  </DialogActions>
+</Dialog>
+
+
     </div>
   );
 };
