@@ -27,6 +27,8 @@ import Stock from "./Modules/Inventory/Stock.jsx";
 import WorkOrder from "./Modules/Work Order Management/WorkOrder.jsx";
 import ProductMaster from "./Modules/Work Order Management/ProductMaster.jsx"; 
 import ProcessChartMaster from "./Modules/Employee/ProcessChart.jsx";
+import ConstructionDesignSheet from "./Modules/Employee/ConstructionDesignSheet.jsx";
+import ExpenseTypeMaster from "./Modules/Employee/ExpenseTypeMaster.jsx";
 
 
 function AppRoutes() {
@@ -37,7 +39,7 @@ function AppRoutes() {
       <Route path="/office" element={<AuthWrapper><OfficeMaster /></AuthWrapper>} />
       <Route path="/employee" element={<AuthWrapper><EmployeeMaster /></AuthWrapper>} />
       <Route path="/inventory/item" element={<AuthWrapper><ItemMaster /></AuthWrapper>} />
-      <Route path="/inventory/Category" element={<AuthWrapper><Category /></AuthWrapper>} />
+      <Route path="/inventory/Category" element={<AuthWrapper><Category /></AuthWrapper>} />  
       <Route path="/inventory/Vendor" element={<AuthWrapper><Vendor /></AuthWrapper>} />
       <Route path="/inventory/RateCard" element={<AuthWrapper><RateCard /></AuthWrapper>} />
       <Route path="/inventory/PO" element={<AuthWrapper><PurchaseOrder /></AuthWrapper>} />
@@ -56,6 +58,8 @@ function AppRoutes() {
       <Route path="/processchart" element={<AuthWrapper><ProcessChartMaster /></AuthWrapper>} />
       <Route path="/Attendance/Attendance" element={<AuthWrapper><Attendance /></AuthWrapper>} />
       <Route path="/Attendance/Leave" element={<AuthWrapper><Leave /></AuthWrapper>} />
+      <Route path="/ConstructionDesignSheet" element={<AuthWrapper><ConstructionDesignSheet /></AuthWrapper>} />
+      <Route path="/ExpenseTypeMaster" element={<AuthWrapper><ExpenseTypeMaster /></AuthWrapper>} />
 
       
       {/* Redirect to dashboard if no match */}

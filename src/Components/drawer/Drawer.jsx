@@ -114,12 +114,12 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemText primary="Planning Sheet" />
                     </ListItemButton>
                 </ListItem>
-                {/* <ListItem disablePadding>
-                    <ListItemButton component={Link} to="/processchart"  >
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/ConstructionDesignSheet"  >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
-                        <ListItemText primary="Process Chart" />
+                        <ListItemText primary="Construction Design Sheet" />
                     </ListItemButton>
-                </ListItem> */}
+                </ListItem> 
                 <ListItem disablePadding>
                     <ListItemButton component={Link} to="/JobCard" >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
@@ -132,6 +132,12 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemText primary="Process Chart" />
                     </ListItemButton>
                 </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/ExpenseTypeMaster"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Expense Type Master" />
+                    </ListItemButton>
+                </ListItem>
             </List>
             <Divider />
             <List>
@@ -140,11 +146,11 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         Inventory Management
                     </ListSubheader>
                 )}
-                <ListItem disablePadding>
+                <ListItem disablePadding>  
                     <ListItemButton component={Link} to="/Inventory/Category"  >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
                         <ListItemText primary="Category Master" />
-                    </ListItemButton>
+                    </ListItemButton> 
                 </ListItem>
                 <ListItem disablePadding>
                     <ListItemButton component={Link} to="/Inventory/Item"  >
