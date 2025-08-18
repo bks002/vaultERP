@@ -183,7 +183,7 @@ const ExpenseTypeMaster = () => {
     <Container maxWidth={false}>
       {/* Heading + Search + Button in Same Row */}
       <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2, gap: 2 }}>
-        <Typography variant="h4">Expense Master</Typography>
+        <Typography variant="h4">Expense Type Master</Typography>
 
         <Box display="flex" alignItems="center" gap={2}>
           <TextField
