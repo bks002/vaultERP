@@ -26,7 +26,12 @@ import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
 import { CSVLink } from "react-csv";
-import { getCategories, createCategory } from "../../Services/InventoryService";
+import {
+  getExpenseTypesByOffice,
+  createExpenseType,
+  updateExpenseType,
+  deleteExpenseType,
+} from "../../Services/ExpenseMaster";
 import { useSelector } from "react-redux";
 
 const ExpenseTypeMaster = () => {
@@ -39,15 +44,14 @@ const ExpenseTypeMaster = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState("view");
   const [selectedRecord, setSelectedRecord] = useState({
-    id: "",
-    name: "",      // Expense Type
-    subTypes: [],  // Expense Sub Types
+    type: "",
+    subTypes: [],
   });
 
   // Create Expense Dialog state
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newExpense, setNewExpense] = useState({
-    name: "",
+    type: "",
   });
 
   // List of added expense sub types before submit
@@ -63,8 +67,12 @@ const ExpenseTypeMaster = () => {
   }, [officeId]);
 
   const fetchExpenses = async () => {
-    const data = await getCategories(officeId);
-    setRecords(data);
+    try {
+      const data = await getExpenseTypesByOffice(officeId);
+      setRecords(data);
+    } catch (err) {
+      showAlert("error", "Failed to fetch expense types");
+    }
   };
 
   const showAlert = (type, message) => {
@@ -83,10 +91,15 @@ const ExpenseTypeMaster = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = (record) => {
-    if (window.confirm(`Are you sure you want to delete "${record.name}"?`)) {
-      setRecords(records.filter((r) => r.id !== record.id));
-      showAlert("success", "Expense deleted successfully");
+  const handleDelete = async (record) => {
+    if (window.confirm(`Are you sure you want to delete "${record.type}"?`)) {
+      try {
+        await deleteExpenseType(record.type);
+        setRecords(records.filter((r) => r.type !== record.type));
+        showAlert("success", "Expense deleted successfully");
+      } catch (err) {
+        showAlert("error", "Failed to delete expense type");
+      }
     }
   };
 
@@ -95,10 +108,22 @@ const ExpenseTypeMaster = () => {
     setSelectedRecord({ ...selectedRecord, [name]: value });
   };
 
-  const handleSave = () => {
-    setRecords(records.map((r) => (r.id === selectedRecord.id ? selectedRecord : r)));
-    showAlert("success", "Expense updated successfully");
-    setDialogOpen(false);
+  const handleSave = async () => {
+    try {
+      const updatedData = {
+        ...selectedRecord,
+        officeId,
+        isActive: true,
+        createdOn: new Date().toISOString(),
+        createdBy: userId,
+      };
+      await updateExpenseType(selectedRecord.type, updatedData);
+      setRecords(records.map((r) => (r.type === selectedRecord.type ? updatedData : r)));
+      showAlert("success", "Expense updated successfully");
+      setDialogOpen(false);
+    } catch (err) {
+      showAlert("error", "Failed to update expense type");
+    }
   };
 
   // Open dialog for creating new expense
@@ -115,45 +140,42 @@ const ExpenseTypeMaster = () => {
 
   // Handle creating new expense with sub types
   const handleCreateExpense = async () => {
-    if (!newExpense.name?.trim()) {
+    if (!newExpense.type?.trim()) {
       showAlert("error", "Expense Type is required");
       return;
     }
 
-    const newId = records.length ? records[records.length - 1].id + 1 : 1;
-
     const expenseToAdd = {
-      id: newId,
-      name: newExpense.name,
+      type: newExpense.type,
       subTypes: subTypesList,
-      officeId: officeId,
+      officeId,
       isActive: true,
-      isApproved: true,
-      createdOn: new Date(),
+      createdOn: new Date().toISOString(),
       createdBy: userId,
-      approvedBy: userId,
     };
 
-    setRecords([...records, expenseToAdd]);
-    console.log("Expense created:", expenseToAdd);
-    await createCategory(expenseToAdd);
-    showAlert("success", "Expense created successfully");
-    setCreateDialogOpen(false);
-    setNewExpense({ name: "" });
-    setSubTypesList([]); // reset sub types list
+    try {
+      await createExpenseType(expenseToAdd);
+      setRecords([...records, expenseToAdd]);
+      showAlert("success", "Expense created successfully");
+      setCreateDialogOpen(false);
+      setNewExpense({ type: "" });
+      setSubTypesList([]); // reset sub types list
+    } catch (err) {
+      showAlert("error", "Failed to create expense type");
+    }
   };
 
   // Filter records based on search query
   const filteredRecords = records.filter(
     (rec) =>
-      rec.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      rec.type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       rec.subTypes?.some((st) => st.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   // CSV Headers
   const csvHeaders = [
-    { label: "ID", key: "id" },
-    { label: "Expense Type", key: "name" },
+    { label: "Expense Type", key: "type" },
     { label: "Expense Sub Types", key: "subTypes" },
   ];
 
@@ -204,9 +226,9 @@ const ExpenseTypeMaster = () => {
         <TableBody>
           {filteredRecords.length > 0 ? (
             filteredRecords.map((rec, index) => (
-              <TableRow key={rec.id}>
+              <TableRow key={rec.type}>
                 <TableCell>{index + 1}</TableCell>
-                <TableCell>{rec.name}</TableCell>
+                <TableCell>{rec.type}</TableCell>
                 <TableCell>
                   {rec.subTypes && rec.subTypes.length > 0 ? rec.subTypes.join(", ") : "-"}
                 </TableCell>
@@ -244,8 +266,8 @@ const ExpenseTypeMaster = () => {
           <Stack spacing={2} mt={1}>
             <TextField
               label="Expense Type"
-              name="name"
-              value={selectedRecord.name}
+              name="type"
+              value={selectedRecord.type}
               onChange={handleChange}
               disabled={dialogMode === "view"}
               fullWidth
@@ -276,9 +298,9 @@ const ExpenseTypeMaster = () => {
           <Stack spacing={2} mt={1}>
             <TextField
               label="Expense Type"
-              name="name"
-              value={newExpense.name}
-              onChange={(e) => setNewExpense({ ...newExpense, name: e.target.value })}
+              name="type"
+              value={newExpense.type}
+              onChange={(e) => setNewExpense({ ...newExpense, type: e.target.value })}
               fullWidth
             />
 
