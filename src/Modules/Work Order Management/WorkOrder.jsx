@@ -889,7 +889,6 @@ const [editingDetailId, setEditingDetailId] = useState(null);
                 </DialogActions>
             </Dialog>
 
-
         </div>
     );
 };

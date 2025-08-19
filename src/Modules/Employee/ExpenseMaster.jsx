@@ -354,21 +354,35 @@ const handleDelete = async (id) => {
               rows={2}
             />
 
-            <Button variant="outlined" component="label" disabled={viewMode}>
-              Upload Image
-              <input
-                type="file"
-                hidden
-                name="image"
-                accept="image/*"
-                onChange={handleChange}
-              />
-            </Button>
-            {formData.image && (
-              <Typography variant="body2">
-                {formData.image.name || formData.image}
-              </Typography>
-            )}
+            {/* Image Upload / View */}
+{!viewMode && (
+  <Button variant="outlined" component="label">
+    Upload Image
+    <input
+      type="file"
+      hidden
+      name="image"
+      accept="image/*"
+      onChange={handleChange}
+    />
+  </Button>
+)}
+
+{(formData.image || formData.billImage) && (
+  <Box mt={1}>
+    <Typography variant="body2">Uploaded Image:</Typography>
+    <img
+      src={
+        formData.image
+          ? URL.createObjectURL(formData.image) // newly uploaded file
+          : formData.billImage // existing image from API (base64)
+      }
+      alt="Bill"
+      style={{ maxWidth: "100%", maxHeight: 200 }}
+    />
+  </Box>
+)}
+
           </Stack>
         </DialogContent>
         <DialogActions>

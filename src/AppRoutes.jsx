@@ -31,7 +31,8 @@ import ConstructionDesignSheet from "./Modules/Employee/ConstructionDesignSheet.
 import ExpenseMaster from "./Modules/Employee/ExpenseMaster";
 
 
-
+import ServicePage from "./Modules/Asset Management/AssetServiceRecord.jsx";
+import AssetCheckinout from './Modules/Asset Management/AssetCheckinout.jsx';
 
 function AppRoutes() {
   return (
@@ -65,8 +66,10 @@ function AppRoutes() {
 
 
 
+      <Route path="/Asset/AssetServiceRecord" element={<AuthWrapper><ServicePage /></AuthWrapper>} />
+      <Route path="/Asset/AssetCheckinout" element={<AuthWrapper><AssetCheckinout /></AuthWrapper>} />
 
-      
+
       {/* Redirect to dashboard if no match */}
     </Routes>
   );
