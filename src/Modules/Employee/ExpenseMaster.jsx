@@ -72,8 +72,6 @@ const ExpenseMaster = () => {
     fetchExpenses();
   }, [officeId]);
 
-  
-
   // ✅ Load Expense Types from API
   useEffect(() => {
     const fetchTypes = async () => {
@@ -104,46 +102,80 @@ const ExpenseMaster = () => {
     fetchSubTypes();
   }, [formData.expenseType]);
 
-  const handleOpen = (mode = "create", data = null) => {
-    if (mode === "edit" && data) {
-      setFormData(data);
-      setViewMode(false);
-    } else if (mode === "view" && data) {
-      setFormData(data);
-      setViewMode(true);
-    } else {
-      setFormData({
-        id: 0,
-        expenseType: "",
-        expenseSubType: "",
-        dateFrom: "",
-        dateTo: "",
-        amount: "",
-        description: "",
-        billImage: "",
-        officeId: 0,
-        isActive: true,
-        createdBy: 0,
-        createdOn: 0,
-        updatedBy: 0,
-        updatedOn: 0,
-      });
-      setViewMode(false);
-    }
-    setOpen(true);
-  };
+ const handleOpen = (mode = "create", data = null) => {
+  if (mode === "edit" && data) {
+    // ✅ edit mode ke liye subTypes fetch karke set karo
+    const fetchSubTypesForEdit = async () => {
+      if (data.expenseType) {
+        try {
+          const subs = await getExpenseSubtypes(officeId, data.expenseType);
+          setSubTypes(subs); // dropdown ke liye set
+          setFormData({
+            ...data,
+            dateFrom: data.dateFrom ? data.dateFrom.split("T")[0] : "",
+            dateTo: data.dateTo ? data.dateTo.split("T")[0] : "",
+            expenseSubType: data.expenseSubType || (subs[0] || ""), // fallback
+          });
+        } catch (error) {
+          console.error("Failed to load subtypes for edit:", error);
+        }
+      } else {
+        setSubTypes([]);
+        setFormData({
+          ...data,
+          dateFrom: data.dateFrom ? data.dateFrom.split("T")[0] : "",
+          dateTo: data.dateTo ? data.dateTo.split("T")[0] : "",
+        });
+      }
+    };
+    fetchSubTypesForEdit();
+    setViewMode(false);
+  } else if (mode === "view" && data) {
+    const matchingSubType = subTypes.includes(data.expenseSubType)
+      ? data.expenseSubType
+      : data.expenseSubType || "";
+
+    setFormData({
+      ...data,
+      dateFrom: data.dateFrom ? data.dateFrom.split("T")[0] : "",
+      dateTo: data.dateTo ? data.dateTo.split("T")[0] : "",
+      expenseSubType: matchingSubType,
+    });
+    setViewMode(true);  
+  } else {
+    setFormData({
+      id: 0,
+      expenseType: "",
+      expenseSubType: "",
+      dateFrom: "",
+      dateTo: "",
+      amount: "",
+      description: "",
+      billImage: "",
+      officeId: 0,
+      isActive: true,
+      createdBy: 0,
+      createdOn: 0,
+      updatedBy: 0,
+      updatedOn: 0,
+    });
+    setViewMode(false);
+  }
+  setOpen(true);
+};
+
+
 
   const handleClose = () => setOpen(false);
 
   const handleChange = (e) => {
-  const { name, value, files } = e.target;
-  if (name === "image") {
-    setFormData((prev) => ({ ...prev, image: files[0] }));
-  } else {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  }
-};
-
+    const { name, value, files } = e.target;
+    if (name === "image") {
+      setFormData((prev) => ({ ...prev, image: files[0] }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
 
   const handleDateFromChange = (e) => {
     const value = e.target.value;
@@ -154,75 +186,61 @@ const ExpenseMaster = () => {
     }));
   };
 
-  // ✅ Submit Create / Update with API
-// ✅ Submit Create / Update with API
-const convertToBase64 = (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = (error) => reject(error);
-  });
-};
-
-const handleSubmit = async () => {
-  let billImageBase64 = formData.image ? await convertToBase64(formData.image) : "";
-
-  const payload = {
-    id: formData.id || 0,
-    expenseType: formData.expenseType,
-    expenseSubtype: formData.expenseSubType,
-    dateFrom: formData.dateFrom ? new Date(formData.dateFrom).toISOString() : null,
-    dateTo: formData.dateTo ? new Date(formData.dateTo).toISOString() : null,
-    amount: Number(formData.amount) || 0,
-    description: formData.description || "",
-    billImage: billImageBase64, // Base64 string
-    officeId: officeId,
-    isActive: true,
-    createdBy: 1,
-    createdOn: new Date().toISOString(),
-    updatedBy: 1,
-    updatedOn: new Date().toISOString(),
+  const convertToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
   };
 
-  await createExpenseType(payload);  // POST request
-  const updatedList = await getExpensesByOffice(officeId);
-  setExpenses(updatedList);
-  handleClose();
-};
+  const handleSubmit = async () => {
+    let billImageBase64 = formData.image ? await convertToBase64(formData.image) : "";
+
+    const payload = {
+      id: formData.id || 0,
+      expenseType: formData.expenseType,
+      expenseSubtype: formData.expenseSubType,
+      dateFrom: formData.dateFrom ? new Date(formData.dateFrom).toISOString() : null,
+      dateTo: formData.dateTo ? new Date(formData.dateTo).toISOString() : null,
+      amount: Number(formData.amount) || 0,
+      description: formData.description || "",
+      billImage: billImageBase64 || formData.billImage,
+      officeId: officeId,
+      isActive: true,
+      createdBy: 1,
+      createdOn: new Date().toISOString(),
+      updatedBy: 1,
+      updatedOn: new Date().toISOString(),
+    };
+if (formData.id) {
+  await updateExpenseType(payload); // PUT request with proper ID
+} else {
+  await createExpenseType(payload); // POST request
+}
 
 
-
-// ✅ Delete with API
-// ✅ Delete with API
-const handleDelete = async (id) => {
-  try {
-    await deleteExpense(id); // <-- ye aapki DELETE API hit karega
-    // Delete ke baad list refresh
     const updatedList = await getExpensesByOffice(officeId);
     setExpenses(updatedList);
-  } catch (error) {
-    console.error("Error deleting expense:", error);
-  }
-};
+    handleClose();
+  };
 
-
-
+  const handleDelete = async (id) => {
+    try {
+      await deleteExpense(id);
+      const updatedList = await getExpensesByOffice(officeId);
+      setExpenses(updatedList);
+    } catch (error) {
+      console.error("Error deleting expense:", error);
+    }
+  };
 
   return (
     <div className="col-12">
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 2 }}
-      >
+      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
         <Typography variant="h4">Expense Master</Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => handleOpen("create")}
-        >
+        <Button variant="contained" color="primary" onClick={() => handleOpen("create")}>
           Create
         </Button>
       </Box>
@@ -246,8 +264,8 @@ const handleDelete = async (id) => {
               <TableRow key={exp.id}>
                 <TableCell>{exp.expenseType}</TableCell>
                 <TableCell>{exp.expenseSubtype}</TableCell>
-                <TableCell>{exp.dateFrom}</TableCell>
-                <TableCell>{exp.dateTo}</TableCell>
+                <TableCell>{exp.dateFrom?.split("T")[0]}</TableCell>
+                <TableCell>{exp.dateTo?.split("T")[0]}</TableCell>
                 <TableCell>{exp.amount}</TableCell>
                 <TableCell>{exp.description}</TableCell>
                 <TableCell>
@@ -258,9 +276,8 @@ const handleDelete = async (id) => {
                     <EditIcon />
                   </IconButton>
                   <IconButton onClick={() => handleDelete(exp.id)}>
-  <DeleteIcon />
-</IconButton>
-
+                    <DeleteIcon />
+                  </IconButton>
                 </TableCell>
               </TableRow>
             ))}
@@ -271,46 +288,62 @@ const handleDelete = async (id) => {
       {/* Dialog */}
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {viewMode
-            ? "View Expense"
-            : formData.id
-            ? "Edit Expense"
-            : "Create Expense"}
+          {viewMode ? "View Expense" : formData.id ? "Edit Expense" : "Create Expense"}
         </DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2}>
-            <TextField
-              select
-              name="expenseType"
-              label="Expense Type"
-              value={formData.expenseType}
-              onChange={handleChange}
-              disabled={viewMode}
-              fullWidth
-            >
-              {expenseTypes.map((et, i) => (
-                <MenuItem key={i} value={et.type}>
-                  {et.type}
-                </MenuItem>
-              ))}
-            </TextField>
+            {/* Expense Type */}
+            {viewMode ? (
+              <TextField
+                label="Expense Type"
+                value={formData.expenseType}
+                fullWidth
+                disabled={true}
+              />
+            ) : (
+              <TextField
+                select
+                name="expenseType"
+                label="Expense Type"
+                value={formData.expenseType}
+                onChange={handleChange}
+                fullWidth
+              >
+                {expenseTypes.map((et, i) => (
+                  <MenuItem key={i} value={et.type}>
+                    {et.type}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
 
-            <TextField
-              select
-              name="expenseSubType"
-              label="Expense SubType"
-              value={formData.expenseSubType}
-              onChange={handleChange}
-              disabled={viewMode || !formData.expenseType}
-              fullWidth
-            >
-              {subTypes.map((st, i) => (
-                <MenuItem key={i} value={st}>
-                  {st}
-                </MenuItem>
-              ))}
-            </TextField>
+            {/* Expense SubType */}
+            {viewMode ? (
+             <TextField
+                label="Expense SubType"
+                value={formData.expenseSubType || formData.expenseSubtype || ""} // fallback for API
+                fullWidth
+                disabled={true} 
+              />
+            ) : (
+              <TextField
+                select
+                name="expenseSubType"
+                label="Expense SubType"
+                value={formData.expenseSubType}
+                onChange={handleChange}
+                fullWidth
+                disabled={!formData.expenseType}
+              >
+                {subTypes.map((st, i) => (
+                  <MenuItem key={i} value={st}>
+                    {st}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
 
+            {/* Dates */}
             <TextField
               type="date"
               name="dateFrom"
@@ -355,34 +388,35 @@ const handleDelete = async (id) => {
             />
 
             {/* Image Upload / View */}
-{!viewMode && (
-  <Button variant="outlined" component="label">
-    Upload Image
-    <input
-      type="file"
-      hidden
-      name="image"
-      accept="image/*"
-      onChange={handleChange}
-    />
-  </Button>
-)}
+            {!viewMode && (
+              <Button variant="outlined" component="label">
+                Upload Image
+                <input type="file" hidden name="image" accept="image/*" onChange={handleChange} />
+              </Button>
+            )}
 
-{(formData.image || formData.billImage) && (
-  <Box mt={1}>
-    <Typography variant="body2">Uploaded Image:</Typography>
-    <img
-      src={
-        formData.image
-          ? URL.createObjectURL(formData.image) // newly uploaded file
-          : formData.billImage // existing image from API (base64)
-      }
-      alt="Bill"
-      style={{ maxWidth: "100%", maxHeight: 200 }}
-    />
-  </Box>
-)}
-
+            {(formData.image || formData.billImage) && (
+              <Box mt={1}>
+                <Typography variant="body2">Uploaded Image:</Typography>
+                <img
+                  src={
+                    formData.image
+                      ? URL.createObjectURL(formData.image)
+                      : `data:image/jpeg;base64,${formData.billImage}`
+                  }
+                  alt="Bill"
+                  style={{ maxWidth: "100%", maxHeight: 200, cursor: viewMode ? "pointer" : "default" }}
+                  onClick={() => {
+                    if (viewMode && formData.billImage) {
+                      const newWindow = window.open();
+                      newWindow.document.write(
+                        `<img src="data:image/jpeg;base64,${formData.billImage}" style="width:100%">`
+                      );
+                    }
+                  }}
+                />
+              </Box>
+            )}
           </Stack>
         </DialogContent>
         <DialogActions>

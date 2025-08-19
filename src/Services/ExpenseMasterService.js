@@ -51,16 +51,14 @@ export const createExpenseType = async (data) => {
 };
 
 // ✅ Update Expense Type (by expenseType name)
-export const updateExpenseType = async (id, data) => {
-  try {
-        const response = await axios.put(`${API_BASE}/Expense/${id}`, data);
-
-    return response.data;
-  } catch (error) {
-    console.error("Error updating expense type:", error);
-    throw error;
-  }
+// ExpenseMasterService.js
+export const updateExpenseType = async (expense) => {
+  // Make sure expense.id exists
+  return await axios.put(`${API_BASE}/Expense/${expense.id}`, expense, {
+    headers: { "Content-Type": "application/json" },
+  });
 };
+
 
 // // ✅ Delete Expense Type (by expenseType name)
 // export const deleteExpenseType = async (id) => {
