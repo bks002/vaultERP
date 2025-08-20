@@ -1,5 +1,5 @@
 import axios from "axios";
-const API_BASE = "https://admin.urest.in:8089/api/JobCard/job_card";
+const API_BASE = "https://admin.urest.in:8089/api/planning/JobCard";
 export const getJobCards = async (officeId) => {
   try {
     const response = await axios.get(`${API_BASE}?officeId=${officeId}`);
@@ -20,7 +20,7 @@ export const createJobCard = async (jobCardData) => {
 }
 export const updateJobCard = async (jobCardId, jobCardData) => {
   try {
-    const response = await axios.put(`${API_BASE}/${jobCardId}`, jobCardData);
+    const response = await axios.put(`${API_BASE}/by-id/${jobCardId}`, jobCardData);
     return response.data;
   } catch (error) {
     console.error("Error updating job card:", error);
@@ -29,7 +29,7 @@ export const updateJobCard = async (jobCardId, jobCardData) => {
 }
 export const deleteJobCard = async (jobCardId) => {
   try {
-    const response = await axios.delete(`${API_BASE}/${jobCardId}`);
+    const response = await axios.delete(`${API_BASE}/by-id/${jobCardId}`);
     return response.data;
   } catch (error) {
     console.error("Error deleting job card:", error);
