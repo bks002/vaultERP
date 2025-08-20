@@ -1,358 +1,290 @@
 import React, { useEffect, useState } from "react";
 import {
-  Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Typography, Dialog, DialogTitle, DialogContent, DialogActions, TextField
+  Box,
+  Button,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from "@mui/material";
 import { getAllAssetCheckinout, checkoutAsset, checkinAsset } from "../../Services/AssetService";
 import { useSelector } from "react-redux";
 
 const AssetCheckinout = () => {
   const [assets, setAssets] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const officeId = useSelector((state) => state.user.officeId);
-
+  const [openCheckout, setOpenCheckout] = useState(false);
+  const [openCheckin, setOpenCheckin] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(null);
 
-  // Checkout modal states
-  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
-  const [spares, setSpares] = useState([{ name: "", returnDate: "" }]);
-  const [assigneeName, setAssignee] = useState("");
+  // Checkout form states
+  const [assigneeName, setAssigneeName] = useState("");
   const [purpose, setPurpose] = useState("");
   const [checkoutDateTime, setCheckoutDateTime] = useState("");
   const [outFrom, setOutFrom] = useState("");
   const [sentTo, setSentTo] = useState("");
   const [approvedBy, setApprovedBy] = useState("");
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [imageOut, setImageOut] = useState(null);
+  const [spares, setSpares] = useState([]);
 
-  // Check-in modal states
-  const [checkinModalOpen, setCheckinModalOpen] = useState(false);
-  const [checkinSpares, setCheckinSpares] = useState([{ name: "", returnDate: "" }]);
+  // Checkin form states
   const [returnedBy, setReturnedBy] = useState("");
-  const [returnedFrom, setReturnedFrom] = useState("");
   const [checkinDateTime, setCheckinDateTime] = useState("");
-  const [returnImageFile, setReturnImageFile] = useState(null);
-  const [returnImagePreview, setReturnImagePreview] = useState(null);
+  const [imageIn, setImageIn] = useState(null);
+  const [returnCondition, setReturnCondition] = useState("");
+  const [checkinSpares, setCheckinSpares] = useState([]);
 
-  // Fetch assets from API
-  const fetchAssets = async () => {
-    try {
-      const data = await getAllAssetCheckinout(officeId);
-      setAssets(data || []);
-    } catch (error) {
-      console.error("Error loading assets:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const officeId = useSelector((state) => state.user.officeId);
 
   useEffect(() => {
     fetchAssets();
   }, []);
 
-  // Handle image file change
-  const handleImageChange = (e, type) => {
-    const file = e.target.files[0];
-    if (type === "checkout") {
-      setImageFile(file);
-      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => setImagePreview(reader.result);
-        reader.readAsDataURL(file);
-      } else {
-        setImagePreview(null);
-      }
-    } else {
-      setReturnImageFile(file);
-      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => setReturnImagePreview(reader.result);
-        reader.readAsDataURL(file);
-      } else {
-        setReturnImagePreview(null);
-      }
-    }
+  const fetchAssets = async () => {
+    const res = await getAllAssetCheckinout(officeId);
+    setAssets(res || []);
   };
 
-  // Spare rows
-  const handleAddSpare = () => setSpares([...spares, { name: "", returnDate: "" }]);
+  // Open checkout dialog
+  const openCheckoutDialog = (asset) => {
+    setSelectedAsset(asset);
+    setAssigneeName("");
+    setPurpose("");
+    setCheckoutDateTime(new Date().toISOString().slice(0, 16)); // for form input
+    setOutFrom("");
+    setSentTo("");
+    setApprovedBy("");
+    setImageOut(null);
+    setSpares([{ spareName: "", tentativeReturnDate: "", spareAmount: 0 }]);
+    setOpenCheckout(true);
+  };
+
+  // Open checkin dialog
+  const openCheckinDialog = (asset) => {
+    setSelectedAsset(asset);
+    setReturnedBy("");
+    setCheckinDateTime(new Date().toISOString().slice(0, 16));
+    setImageIn(null);
+    setReturnCondition("");
+
+    const prefilledSpares =
+      asset.spareFields?.map((s) => ({
+        spareName: s.spareName || "",
+        tentativeReturnDate: s.tentativeReturnDate || "",
+        returnDateTime: new Date().toISOString().slice(0, 16),
+        spareAmount: s.spareAmount || 0,
+      })) || [{ spareName: "", tentativeReturnDate: "", returnDateTime: "", spareAmount: 0 }];
+
+    setCheckinSpares(prefilledSpares);
+    setOpenCheckin(true);
+  };
+
+  // Spare handlers
+  const handleAddSpare = () =>
+    setSpares([...spares, { spareName: "", tentativeReturnDate: "", spareAmount: 0 }]);
   const handleSpareChange = (index, field, value) => {
     const updated = [...spares];
     updated[index][field] = value;
     setSpares(updated);
   };
 
-  const handleAddCheckinSpare = () => setCheckinSpares([...checkinSpares, { name: "", returnDate: "" }]);
+  const handleAddCheckinSpare = () =>
+    setCheckinSpares([...checkinSpares, { spareName: "", tentativeReturnDate: "", returnDateTime: "", spareAmount: 0 }]);
   const handleCheckinSpareChange = (index, field, value) => {
     const updated = [...checkinSpares];
     updated[index][field] = value;
     setCheckinSpares(updated);
   };
 
-  // Open checkout modal
-  const handleCheckOutClick = (asset) => {
-    setSelectedAsset(asset);
-    setSpares([{ name: "", returnDate: "" }]);
-    setAssignee("");
-    setPurpose("");
-    setCheckoutDateTime("");
-    setOutFrom("");
-    setSentTo("");
-    setApprovedBy("");
-    setImageFile(null);
-    setCheckoutModalOpen(true);
-  };
-
-  // Checkout
-  const handleCheckout = async () => {
-    if (!selectedAsset) return;
-
-    const sendData = async (image) => {
-      await checkoutAsset({
-        officeId,
-        assetId: selectedAsset.id || selectedAsset.Id,
-        assetName: selectedAsset.name || selectedAsset.Name,
-        assigneeName,
-        purpose,
-        checkoutDateTime,
-        outFrom,
-        sentTo,
-        approvedBy,
-        imageOut: image,
-        spareFields: spares.map(s => ({
-          spareName: s.name,
-          tentativeReturnDate: s.returnDate
-        })),
-      });
-      alert("Spare checked out successfully!");
-      setCheckoutModalOpen(false);
-      fetchAssets();
-    };
-
-    if (imageFile) {
+  // File inputs
+  const handleFileToBase64 = (file, setter) => {
+    if (file) {
       const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Image = reader.result.split(",")[1];
-        await sendData(base64Image);
+      reader.onload = () => {
+        const result = reader.result;
+        const base64String = result.includes(",") ? result.split(",")[1] : result;
+        setter(base64String);
       };
-      reader.readAsDataURL(imageFile);
-    } else {
-      await sendData(null);
+      reader.readAsDataURL(file);
     }
   };
 
-  // Open checkin modal
-  const handleCheckInClick = (asset) => {
-    setSelectedAsset(asset);
-    setCheckinSpares([{ name: "", returnDate: "" }]);
-    setReturnedBy("");
-    setReturnedFrom("");
-    setCheckinDateTime("");
-    setReturnImageFile(null);
-    setCheckinModalOpen(true);
-  };
+  const handleCheckoutImageChange = (e) => handleFileToBase64(e.target.files[0], setImageOut);
+  const handleCheckinImageChange = (e) => handleFileToBase64(e.target.files[0], setImageIn);
 
-  // Checkin
-  const handleCheckin = async () => {
+  // Checkout submit
+  const handleCheckoutSubmit = async () => {
     if (!selectedAsset) return;
 
-    const sendData = async (image) => {
-      await checkinAsset({
-        officeId,
-        assetId: selectedAsset.id || selectedAsset.Id,
-        assetName: selectedAsset.name || selectedAsset.Name,
-        returnedBy,
-        returnedFrom,
-        returnDateTime: checkinDateTime || null,
-        imageIn: image,
-        spareFields: checkinSpares.map(s => ({
-          spareName: s.name,
-          actualReturnDate: s.returnDate || null
-        })),
-      });
-      alert("Spare checked in successfully!");
-      setCheckinModalOpen(false);
-      fetchAssets();
+    const payload = {
+      officeId,
+      assetId: selectedAsset.id,
+      assetName: selectedAsset.name,
+      assigneeName,
+      purpose,
+      checkOutDateTime: new Date(checkoutDateTime).toISOString(),
+      outFrom,
+      sentTo,
+      approvedBy,
+      imageOut,
+      spareFields: spares.map((s) => ({
+        spareName: s.spareName,
+        tentativeReturnDate: s.tentativeReturnDate ? new Date(s.tentativeReturnDate + "T00:00:00Z").toISOString() : null,
+        spareAmount: parseInt(s.spareAmount || 0, 10),
+      })),
     };
 
-    if (returnImageFile) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64ImageIn = reader.result.split(",")[1];
-        await sendData(base64ImageIn);
-      };
-      reader.readAsDataURL(returnImageFile);
-    } else {
-      await sendData(null);
-    }
+    await checkoutAsset(payload);
+    setOpenCheckout(false);
+    fetchAssets();
   };
 
- // Helper: check if date is default/empty
-const isDefaultDate = (dateStr) => {
-  return !dateStr || dateStr === "1900-01-01T00:00:00";
-};
+  // Checkin submit
+  const handleCheckinSubmit = async () => {
+    if (!selectedAsset) return;
 
-// Show Check Out button if:
-// 1) returnDate is default or <= today
-const shouldShowCheckOut = (asset) => {
-  if (isDefaultDate(asset.returnDate)) return true;
+    const payload = {
+      assetId: selectedAsset.id,
+      assetName: selectedAsset.name,
+      checkOutDateTime: selectedAsset.checkOutDateTime,
+      returnedBy,
+      returnDateTime: new Date(checkinDateTime).toISOString(),
+      imageIn,
+      returnCondition,
+      spareFields: checkinSpares.map((s) => ({
+        spareName: s.spareName,
+        tentativeReturnDate: selectedAsset.tentativeReturnDate,
+        returnDateTime: new Date(s.returnDateTime).toISOString(),
+        spareAmount: parseInt(s.spareAmount || 0, 10),
+      })),
+    };
 
-  const returnDateTime = new Date(asset.returnDate);
-  const now = new Date();
-
-  // Show Check Out if returnDateTime <= now
-  return returnDateTime <= now;
-};
-
-// Show Check In button if:
-// 1) checkOutDateTime exists and <= now
-const shouldShowCheckIn = (asset) => {
-  if (!asset.checkOutDateTime) return false;
-  
-  const checkOutDate = new Date(asset.checkOutDateTime);
-  const now = new Date();
-  
-  return checkOutDate <= now;
-};
-
-  if (loading) return <Typography>Loading...</Typography>;
+    await checkinAsset(payload);
+    setOpenCheckin(false);
+    fetchAssets();
+  };
 
   return (
-    <Box p={3}>
-      <Box display="flex" justifyContent="space-between" mb={2}>
-        <Typography variant="h5">Spare List</Typography>
-        <Button variant="contained" color="success">Download Report ⬇</Button>
-      </Box>
+    <Box p={2}>
+      <Typography variant="h5" gutterBottom>
+        Asset Spare Repair
+      </Typography>
 
+      {/* Assets Table */}
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell><b>Serial No.</b></TableCell>
-              <TableCell><b>Asset ID</b></TableCell>
-              <TableCell><b>Asset Name</b></TableCell>
-              <TableCell><b>Actions</b></TableCell>
+              <TableCell>Asset ID</TableCell>
+              <TableCell>Asset Name</TableCell>
+              <TableCell>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {assets.map((row, index) => (
-              <TableRow key={row.id}>
-                <TableCell>{index + 1}</TableCell>
-                <TableCell>{row.id || row.Id}</TableCell>
-                <TableCell>{row.name}</TableCell>
-                <TableCell>
-                  {shouldShowCheckIn(row) ? (
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      onClick={() => handleCheckInClick(row)}
-                    >
-                      Spare Check In
-                    </Button>
-                  ) : shouldShowCheckOut(row) ? (
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => handleCheckOutClick(row)}
-                    >
-                      Spare Check Out
-                    </Button>
-                  ) : null}
-                </TableCell>
-              </TableRow>
-            ))}
+            {assets.map((asset) => {
+              const now = new Date();
+              const checkoutTime = asset.checkOutDateTime ? new Date(asset.checkOutDateTime) : null;
+              const returnTime = asset.returnDate ? new Date(asset.returnDate) : null;
+
+              const showCheckinButton =
+                checkoutTime && checkoutTime <= now && (!returnTime || asset.returnDateNullable < now);
+
+              const showCheckoutButton =
+                !checkoutTime || (returnTime && returnTime <= now);
+
+              return (
+                <TableRow key={asset.id}>
+                  <TableCell>{asset.id}</TableCell>
+                  <TableCell>{asset.name}</TableCell>
+                  <TableCell>
+                    {showCheckinButton ? (
+                      <Button
+                        variant="outlined"
+                        onClick={() => openCheckinDialog(asset)}
+                      >
+                        Spare Check In
+                      </Button>
+                    ) : showCheckoutButton ? (
+                      <Button
+                        variant="contained"
+                        onClick={() => openCheckoutDialog(asset)}
+                        disabled={returnTime && returnTime > now} // disable until return time passes
+                      >
+                        Spare Check Out
+                      </Button>
+                    ) : null}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>
 
       {/* Checkout Dialog */}
-      <Dialog open={checkoutModalOpen} onClose={() => setCheckoutModalOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Check Out Spare</DialogTitle>
+      <Dialog open={openCheckout} onClose={() => setOpenCheckout(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Checkout Asset</DialogTitle>
         <DialogContent>
-          {selectedAsset && (
-            <>
-              <p><b>Asset ID:</b> {selectedAsset.id || selectedAsset.Id}</p>
-              <p><b>Asset Name:</b> {selectedAsset.name || selectedAsset.Name}</p>
+          <TextField fullWidth label="Assignee Name" margin="dense" value={assigneeName} onChange={(e) => setAssigneeName(e.target.value)} />
+          <TextField fullWidth label="Purpose" margin="dense" value={purpose} onChange={(e) => setPurpose(e.target.value)} />
+          <TextField fullWidth type="datetime-local" label="Checkout Date & Time" InputLabelProps={{ shrink: true }} margin="dense" value={checkoutDateTime} onChange={(e) => setCheckoutDateTime(e.target.value)} />
+          <TextField fullWidth label="Out From" margin="dense" value={outFrom} onChange={(e) => setOutFrom(e.target.value)} />
+          <TextField fullWidth label="Sent To" margin="dense" value={sentTo} onChange={(e) => setSentTo(e.target.value)} />
+          <TextField fullWidth label="Approved By" margin="dense" value={approvedBy} onChange={(e) => setApprovedBy(e.target.value)} />
 
-              {spares.map((spare, index) => (
-                <Box key={index} mb={1}>
-                  <TextField fullWidth label={`Spare Name ${index + 1}`} margin="dense"
-                    value={spare.name} onChange={(e) => handleSpareChange(index, "name", e.target.value)} />
-                  <TextField fullWidth label={`Tentative Date of Returning ${index + 1}`} type="date"
-                    margin="dense" InputLabelProps={{ shrink: true }}
-                    value={spare.returnDate} onChange={(e) => handleSpareChange(index, "returnDate", e.target.value)} />
-                </Box>
-              ))}
-              <Button variant="outlined" size="small" sx={{ mt: 1 }} onClick={handleAddSpare}>Add Spare</Button>
+          <Box mt={2}>
+            <input type="file" accept="image/*" onChange={handleCheckoutImageChange} />
+          </Box>
 
-              <TextField fullWidth label="Assignee Name" margin="dense" value={assigneeName} onChange={(e) => setAssignee(e.target.value)} />
-              <TextField fullWidth label="Purpose Of Check Out" margin="dense" value={purpose} onChange={(e) => setPurpose(e.target.value)} />
-              <TextField fullWidth label="Check Out Date and Time" type="datetime-local"
-                margin="dense" InputLabelProps={{ shrink: true }}
-                value={checkoutDateTime} onChange={(e) => setCheckoutDateTime(e.target.value)} />
-              <TextField fullWidth label="Out From" margin="dense" value={outFrom} onChange={(e) => setOutFrom(e.target.value)} />
-              <TextField fullWidth label="Sent To" margin="dense" value={sentTo} onChange={(e) => setSentTo(e.target.value)} />
-              <Box display="flex" alignItems="flex-start" mt={1} gap={2}>
-                <Button variant="outlined" component="label">
-                  Upload Image
-                  <input hidden type="file" accept="image/*" onChange={(e) => handleImageChange(e, "checkout")} />
-                </Button>
-                {imagePreview && (
-                  <Box component="img" src={imagePreview} alt="Preview"
-                    sx={{ width: 100, height: 100, objectFit: "cover", borderRadius: 1, border: "1px solid #ccc" }} />
-                )}
-              </Box>
-              <TextField fullWidth label="Approved By" margin="dense" value={approvedBy} onChange={(e) => setApprovedBy(e.target.value)} />
-            </>
-          )}
+          <Typography mt={2} variant="subtitle1">Spares</Typography>
+          {spares.map((spare, index) => (
+            <Box key={index} mb={1}>
+              <TextField fullWidth label={`Spare Name ${index + 1}`} margin="dense" value={spare.spareName} onChange={(e) => handleSpareChange(index, "spareName", e.target.value)} />
+              <TextField fullWidth type="date" label={`Tentative Return Date ${index + 1}`} InputLabelProps={{ shrink: true }} margin="dense" value={spare.tentativeReturnDate} onChange={(e) => handleSpareChange(index, "tentativeReturnDate", e.target.value)} />
+              <TextField fullWidth type="number" label={`Amount ${index + 1}`} margin="dense" value={spare.spareAmount} onChange={(e) => handleSpareChange(index, "spareAmount", e.target.value)} />
+            </Box>
+          ))}
+          <Button onClick={handleAddSpare}>+ Add Spare</Button>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" color="primary" onClick={handleCheckout}>Check Out</Button>
-          <Button onClick={() => setCheckoutModalOpen(false)} color="secondary">Close</Button>
+          <Button onClick={() => setOpenCheckout(false)}>Cancel</Button>
+          <Button onClick={handleCheckoutSubmit} variant="contained">Checkout</Button>
         </DialogActions>
       </Dialog>
 
       {/* Checkin Dialog */}
-      <Dialog open={checkinModalOpen} onClose={() => setCheckinModalOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Check In Spare</DialogTitle>
+      <Dialog open={openCheckin} onClose={() => setOpenCheckin(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Checkin Asset</DialogTitle>
         <DialogContent>
-          {selectedAsset && (
-            <>
-              <p><b>Asset ID:</b> {selectedAsset.id || selectedAsset.Id}</p>
-              <p><b>Asset Name:</b> {selectedAsset.name || selectedAsset.Name}</p>
+          <TextField fullWidth label="Returned By" margin="dense" value={returnedBy} onChange={(e) => setReturnedBy(e.target.value)} />
+          <TextField fullWidth type="datetime-local" label="Return Date & Time" InputLabelProps={{ shrink: true }} margin="dense" value={checkinDateTime} onChange={(e) => setCheckinDateTime(e.target.value)} />
+          <TextField fullWidth label="Return Condition" margin="dense" value={returnCondition} onChange={(e) => setReturnCondition(e.target.value)} />
 
-              {checkinSpares.map((spare, index) => (
-                <Box key={index} mb={1}>
-                  <TextField fullWidth label={`Spare Name ${index + 1}`} margin="dense"
-                    value={spare.name} onChange={(e) => handleCheckinSpareChange(index, "name", e.target.value)} />
-                  <TextField fullWidth label={`Actual Return Date ${index + 1}`} type="date"
-                    margin="dense" InputLabelProps={{ shrink: true }}
-                    value={spare.returnDate} onChange={(e) => handleCheckinSpareChange(index, "returnDate", e.target.value)} />
-                </Box>
-              ))}
-              <Button variant="outlined" size="small" sx={{ mt: 1 }} onClick={handleAddCheckinSpare}>Add Spare</Button>
+          <Box mt={2}>
+            <input type="file" accept="image/*" onChange={handleCheckinImageChange} />
+          </Box>
 
-              <TextField fullWidth label="Returned By" margin="dense" value={returnedBy} onChange={(e) => setReturnedBy(e.target.value)} />
-              <TextField fullWidth label="Returned From" margin="dense" value={returnedFrom} onChange={(e) => setReturnedFrom(e.target.value)} />
-              <TextField fullWidth label="Return Date and Time" type="datetime-local"
-                margin="dense" InputLabelProps={{ shrink: true }}
-                value={checkinDateTime} onChange={(e) => setCheckinDateTime(e.target.value)} />
-              <Box display="flex" alignItems="flex-start" mt={1} gap={2}>
-                <Button variant="outlined" component="label">
-                  Upload Image
-                  <input hidden type="file" accept="image/*" onChange={(e) => handleImageChange(e, "checkin")} />
-                </Button>
-                {returnImagePreview && (
-                  <Box component="img" src={returnImagePreview} alt="Preview"
-                    sx={{ width: 100, height: 100, objectFit: "cover", borderRadius: 1, border: "1px solid #ccc" }} />
-                )}
-              </Box>
-            </>
-          )}
+          <Typography mt={2} variant="subtitle1">Returned Spares</Typography>
+          {checkinSpares.map((spare, index) => (
+            <Box key={index} mb={1}>
+              <TextField fullWidth label={`Spare Name ${index + 1}`} margin="dense" value={spare.spareName} onChange={(e) => handleCheckinSpareChange(index, "spareName", e.target.value)} />
+              <TextField fullWidth type="datetime-local" label={`Actual Return Date ${index + 1}`} InputLabelProps={{ shrink: true }} margin="dense" value={spare.returnDateTime} onChange={(e) => handleCheckinSpareChange(index, "returnDateTime", e.target.value)} />
+              <TextField fullWidth type="number" label={`Amount ${index + 1}`} margin="dense" value={spare.spareAmount} onChange={(e) => handleCheckinSpareChange(index, "spareAmount", e.target.value)} />
+            </Box>
+          ))}
+          <Button onClick={handleAddCheckinSpare}>+ Add Spare</Button>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" color="primary" onClick={handleCheckin}>Check In</Button>
-          <Button onClick={() => setCheckinModalOpen(false)} color="secondary">Close</Button>
+          <Button onClick={() => setOpenCheckin(false)}>Cancel</Button>
+          <Button onClick={handleCheckinSubmit} variant="contained">Checkin</Button>
         </DialogActions>
       </Dialog>
     </Box>
