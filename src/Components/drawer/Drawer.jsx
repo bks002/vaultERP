@@ -241,6 +241,12 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                     </ListItemButton>
                 </ListItem>
                 <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Attendance/LeaveMaster"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Leave Master" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
                     <ListItemButton component={Link} to="/Attendance/Leave"  >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
                         <ListItemText primary="Leave" />

@@ -33,6 +33,7 @@ import ExpenseMaster from "./Modules/Employee/ExpenseMaster";
 
 import ServicePage from "./Modules/Asset Management/AssetServiceRecord.jsx";
 import AssetCheckinout from './Modules/Asset Management/AssetCheckinout.jsx';
+import LeaveMaster from './Modules/Attendance Management/LeaveMaster.jsx';
 
 function AppRoutes() {
   return (
@@ -63,6 +64,9 @@ function AppRoutes() {
       <Route path="/Attendance/Leave" element={<AuthWrapper><Leave /></AuthWrapper>} />
       <Route path="/ConstructionDesignSheet" element={<AuthWrapper><ConstructionDesignSheet /></AuthWrapper>} />
       <Route path="/ExpenseMaster" element={<AuthWrapper><ExpenseMaster /></AuthWrapper>} />
+       <Route path="/Attendance/LeaveMaster" element={<AuthWrapper><LeaveMaster /></AuthWrapper>} />
+
+      
 
 
 
