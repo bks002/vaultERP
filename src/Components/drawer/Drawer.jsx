@@ -132,6 +132,13 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemText primary="Process Chart" />
                     </ListItemButton>
                 </ListItem>
+
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/ExpenseTypeMaster"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Expense Type Master" />
+                          </ListItemButton>
+                </ListItem>
                  <ListItem disablePadding>
                     <ListItemButton component={Link} to="/ConstructionDesignSheet"  >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
@@ -146,11 +153,11 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         Inventory Management
                     </ListSubheader>
                 )}
-                <ListItem disablePadding>
+                <ListItem disablePadding>  
                     <ListItemButton component={Link} to="/Inventory/Category"  >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
                         <ListItemText primary="Category Master" />
-                    </ListItemButton>
+                    </ListItemButton> 
                 </ListItem>
                 <ListItem disablePadding>
                     <ListItemButton component={Link} to="/Inventory/Item"  >
