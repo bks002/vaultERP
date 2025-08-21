@@ -71,7 +71,7 @@ function AppRoutes() {
 
 
       <Route path="/Asset/AssetServiceRecord" element={<AuthWrapper><ServicePage /></AuthWrapper>} />
-      <Route path="/Asset/AssetCheckinout" element={<AuthWrapper><AssetCheckinout /></AuthWrapper>} />
+      <Route path="/Asset/AssetSpareRepair" element={<AuthWrapper><AssetCheckinout /></AuthWrapper>} />
 
 
       {/* Redirect to dashboard if no match */}
