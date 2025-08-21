@@ -109,17 +109,17 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                     </ListItemButton>
                 </ListItem>
                 <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/ExpenseMaster" >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Expense Master" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
                     <ListItemButton component={Link} to="/dailyPlanningSheet"  >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
                         <ListItemText primary="Planning Sheet" />
                     </ListItemButton>
                 </ListItem>
-                <ListItem disablePadding>
-                    <ListItemButton component={Link} to="/ConstructionDesignSheet"  >
-                        <ListItemIcon><InboxIcon /></ListItemIcon>
-                        <ListItemText primary="Construction Design Sheet" />
-                    </ListItemButton>
-                </ListItem> 
                 <ListItem disablePadding>
                     <ListItemButton component={Link} to="/JobCard" >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
@@ -132,10 +132,17 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemText primary="Process Chart" />
                     </ListItemButton>
                 </ListItem>
+
                 <ListItem disablePadding>
                     <ListItemButton component={Link} to="/ExpenseTypeMaster"  >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
                         <ListItemText primary="Expense Type Master" />
+                          </ListItemButton>
+                </ListItem>
+                 <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/ConstructionDesignSheet"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Technical Specification" />
                     </ListItemButton>
                 </ListItem>
             </List>
@@ -202,6 +209,18 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemText primary="Asset Operation Master" />
                     </ListItemButton>
                 </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Asset/AssetServiceRecord"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Asset Service Record" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Asset/AssetSpareRepair"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Asset Spare Repair" />
+                    </ListItemButton>
+                </ListItem>
             </List>
             <Divider />
             <List>
@@ -220,6 +239,12 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                     <ListItemButton component={Link} to="/Attendance/Attendance"  >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
                         <ListItemText primary="Attendance" />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Attendance/LeaveMaster"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Leave Master" />
                     </ListItemButton>
                 </ListItem>
                 <ListItem disablePadding>
@@ -255,6 +280,8 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemText primary="Work Order" />
                     </ListItemButton>
                 </ListItem>
+
+                
 
             </List>
         </Drawer>
