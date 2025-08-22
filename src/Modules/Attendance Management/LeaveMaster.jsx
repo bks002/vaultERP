@@ -25,21 +25,24 @@ import {
   updateLeaveType,
   deleteLeaveType,
 } from "../../Services/LeaveMasterService";
-import { useSelector } from 'react-redux';
+import { useSelector } from "react-redux";
 
 const LeaveMaster = () => {
   const officeId = useSelector((state) => state.user.officeId);
+  const userId = useSelector((state) => state.user.userId);
   const [leaveTypes, setLeaveTypes] = useState([]);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ leaveType: "", leaveCount: "" });
-
- // static for now, can make dynamic
+  const [formData, setFormData] = useState({
+    leaveType: "",
+    leaveDescription: "",
+  });
 
   // Fetch leave types on load
   useEffect(() => {
-    fetchLeaveTypes();
-  }, []);
+    if (officeId) fetchLeaveTypes();
+    else setLeaveTypes([]);
+  }, [officeId]);
 
   const fetchLeaveTypes = async () => {
     try {
@@ -53,14 +56,17 @@ const LeaveMaster = () => {
   // Open dialog for create
   const handleCreate = () => {
     setEditingId(null);
-    setFormData({ leaveType: "", leaveCount: "" });
+    setFormData({ leaveType: "", leaveDescription: "" });
     setOpen(true);
   };
 
   // Open dialog for edit
   const handleEdit = (row) => {
     setEditingId(row.id);
-    setFormData({ leaveType: row.leaveType, leaveCount: row.leaveCount });
+    setFormData({
+      leaveType: row.leaveType,
+      leaveDescription: row.leaveDescription,
+    });
     setOpen(true);
   };
 
@@ -68,16 +74,15 @@ const LeaveMaster = () => {
   const handleDelete = async (id) => {
     try {
       await deleteLeaveType(id);
-      fetchLeaveTypes();
+      fetchLeaveTypes(officeId);
     } catch (error) {
       alert("Failed to delete leave type!");
     }
   };
 
   // Save (Create or Update)
-   // Save (Create or Update)
   const handleSave = async () => {
-    if (!formData.leaveType || !formData.leaveCount) {
+    if (!formData.leaveType || !formData.leaveDescription) {
       alert("Please fill all fields!");
       return;
     }
@@ -88,11 +93,11 @@ const LeaveMaster = () => {
       id: editingId ? editingId : 0,
       officeId,
       leaveType: formData.leaveType,
-      leaveCount: Number(formData.leaveCount),
+      leaveDescription: formData.leaveDescription,
       createdOn: now,
-      createdBy: 1,   // TODO: replace with logged-in userId if available
+      createdBy: userId, // TODO: replace with logged-in userId
       updatedOn: now,
-      updatedBy: 1,   // TODO: replace with logged-in userId if available
+      updatedBy: userId, // TODO: replace with logged-in userId
       isActive: true,
     };
 
@@ -111,7 +116,12 @@ const LeaveMaster = () => {
 
   return (
     <div className="col-12">
-      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ mb: 2 }}
+      >
         <Typography variant="h4">Leave Master</Typography>
         <Button variant="contained" color="primary" onClick={handleCreate}>
           Create New Leave Type
@@ -124,9 +134,15 @@ const LeaveMaster = () => {
           <TableHead>
             <TableRow>
               <TableCell>#</TableCell>
-              <TableCell><b>Leave Type</b></TableCell>
-              <TableCell><b>Leave Count</b></TableCell>
-              <TableCell><b>Actions</b></TableCell>
+              <TableCell>
+                <b>Leave Type</b>
+              </TableCell>
+              <TableCell>
+                <b>Description</b>
+              </TableCell>
+              <TableCell>
+                <b>Actions</b>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -134,7 +150,7 @@ const LeaveMaster = () => {
               <TableRow key={row.id}>
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>{row.leaveType}</TableCell>
-                <TableCell>{row.leaveCount}</TableCell>
+                <TableCell>{row.leaveDescription}</TableCell>
                 <TableCell>
                   <IconButton color="primary" onClick={() => handleEdit(row)}>
                     <EditIcon />
@@ -172,13 +188,14 @@ const LeaveMaster = () => {
             }
           />
           <TextField
-            label="Leave Count"
-            type="number"
+            label="Description"
             fullWidth
             margin="dense"
-            value={formData.leaveCount}
+            multiline
+            minRows={2}
+            value={formData.leaveDescription}
             onChange={(e) =>
-              setFormData({ ...formData, leaveCount: e.target.value })
+              setFormData({ ...formData, leaveDescription: e.target.value })
             }
           />
         </DialogContent>

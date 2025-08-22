@@ -303,7 +303,7 @@ const JobCardMaster = () => {
             <TableRow>
               <TableCell>Internal WO</TableCell>
               <TableCell>Shift</TableCell>
-              <TableCell>Asset</TableCell>
+              <TableCell>Machine</TableCell>
               <TableCell>Compound</TableCell>
               <TableCell>Operation</TableCell>
               <TableCell>Date</TableCell>

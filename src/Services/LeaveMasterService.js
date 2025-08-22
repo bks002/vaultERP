@@ -1,11 +1,11 @@
 import axios from "axios";
 
-const BASE_URL = "https://admin.urest.in:8089/api/attendance/LeaveMaster";
+const BASE_URL = "https://admin.urest.in:8089/api/LeaveMaster";
 
 // ✅ Get all leave types
-export const getAllLeaveTypes = async () => {
+export const getAllLeaveTypes = async (officeId) => {
   try {
-    const response = await axios.get(BASE_URL, {
+    const response = await axios.get(`${BASE_URL}/?officeId=${officeId}`, {
       headers: { accept: "application/json" },
     });
     return response.data;
