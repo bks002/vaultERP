@@ -1,6 +1,7 @@
 import axios from "axios";
 
 const API_BASE = "https://admin.urest.in:8089/api/planning/Contruction";
+//const API_BASE = "https://localhost:7093/api/planning/Contruction";
 
 // Get all Construction Design Sheets for office
 export const getConstructionDesignSheets = async (officeId) => {
@@ -44,6 +45,16 @@ export const deleteConstructionDesignSheet = async (internalWoid) => {
     return response.data;
   } catch (error) {
     console.error("Error deleting construction design sheet:", error);
+    throw error;
+  }
+};
+
+export const getContructionByitemoperationinwo = async (internalWoId, itemId, operationId) => {
+  try {
+    const response = await axios.get(`${API_BASE}/by-item?itemId=${itemId}&internalWoId=${internalWoId}&operationId=${operationId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching construction by item, operation and internal WO:", error);
     throw error;
   }
 };

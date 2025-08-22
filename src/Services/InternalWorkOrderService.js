@@ -2,6 +2,7 @@
 import axios from 'axios';
 
 const API_BASE = 'https://admin.urest.in:8089/api/work_order/InternalWorkOrder';
+//const API_BASE = 'https://localhost:7093/api/work_order/InternalWorkOrder';
 
 // Get all details for a Work Order
 export const getDetails = async (woid) => {
@@ -39,5 +40,10 @@ export const getInternalWorkOrdersByOffice = async (officeId) => {
       'accept': '*/*'
     }
   });
+  return response.data;
+};
+
+export const getInternalWorkOrderProduct = async (inwoid) => {
+  const response = await axios.get(`${API_BASE}/products/${inwoid}`);
   return response.data;
 };
