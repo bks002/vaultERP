@@ -31,3 +31,31 @@ export const rejectLeave = async (leaveId, rejectionRemark) => {
     }
 };
 
+// ✅ Get leave balance by email
+export const fetchLeaveBalance = async (email) => {
+    try {
+        const response = await axios.get(`${API_BASE}/leave-balance/email/${email}`);
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Failed to fetch leave balance');
+    }
+};
+
+export const applyLeave = async (leaveData) => {
+    try {
+        const response = await axios.post(
+            `${API_BASE}/apply-leave`,
+            leaveData,
+            {
+                headers: { "Content-Type": "application/json" },
+            }
+        );
+        return response.data;
+    } catch (error) {
+        throw new Error(
+            error.response?.data?.message || "Failed to apply leave"
+        );
+    }
+};
+
+

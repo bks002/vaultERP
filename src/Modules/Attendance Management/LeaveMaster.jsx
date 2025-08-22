@@ -56,11 +56,7 @@ const LeaveMaster = () => {
   // Open dialog for create
   const handleCreate = () => {
     setEditingId(null);
-<<<<<<< HEAD
-    setFormData({ leaveType: "", leaveCount: "" });
-=======
     setFormData({ leaveType: "", leaveDescription: "" });
->>>>>>> 5058cb740d86dca4665d6e66eb9a58b4e28ba6e3
     setOpen(true);
   };
 
