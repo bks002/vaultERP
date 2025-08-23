@@ -74,7 +74,6 @@ const PurchaseOrder = () => {
                     {/* ✅ Search Bar */}
                     <TextField
                         placeholder="Search PO Number or Vendor..."
-
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         InputProps={{

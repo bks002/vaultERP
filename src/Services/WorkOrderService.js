@@ -9,6 +9,17 @@ export const getWorkOrders = async (officeId) => {
     throw error;
   }
 }
+
+export const getProductsByWorkOrderNo = async (workOrderNo) => {
+  try {
+    const response = await axios.get(`${API_BASE}/${workOrderNo}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching products by work order no:", error);
+    throw error;
+  }
+};
+
 export const createWorkOrder = async (WorkOrderData) => {
   try {
     const response = await axios.post(API_BASE, WorkOrderData);
