@@ -231,16 +231,6 @@ const DailyPlanningSheet = () => {
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Typography variant="h4">Daily Planning Sheet</Typography>
                 <Box display="flex" alignItems="center" gap={2}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                        <DatePicker
-                            label="Select Date"
-                            value={selectedDate}
-                            onChange={(date) => setSelectedDate(date)}
-                            slotProps={{
-                                textField: { size: 'small', fullWidth: false },
-                            }}
-                        />
-                    </LocalizationProvider>
                     <TextField
                         label="Select Date"
                         type="date"
