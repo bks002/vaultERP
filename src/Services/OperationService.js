@@ -6,6 +6,7 @@ const api = axios.create({
     'Content-Type': 'application/json'
   }
 });
+const API_BASE = "https://admin.urest.in:8089/api";
 
 // 1. Get all operations by office
 export const getAllOperation = async (officeId) => {
@@ -54,5 +55,27 @@ export const createOperation = async (operationData) => {
   } catch (error) {
     const message = error.response?.data?.message || 'Failed to create operation';
     throw new Error(message);
+  }
+};
+
+export const getEmployeesByOperation = async (operationId) => {
+  try {
+    const response = await axios.get(`${API_BASE}/EmpOps/employees-by-operation`, {
+      params: { operationId },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch employees by operation:", error);
+    return [];
+  }
+};
+
+export const getEmployeeById = async (employeeId) => {
+  try {
+    const response = await axios.get(`${API_BASE}/Employee/${employeeId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch employee by ID:", error);
+    return null;
   }
 };

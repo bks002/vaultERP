@@ -58,3 +58,19 @@ export const getContructionByitemoperationinwo = async (internalWoId, itemId, op
     throw error;
   }
 };
+
+export const getItemIdsByInternalWoid = async (internalWoid) => {
+  try {
+    const response = await axios.get(`${API_BASE}/items-by-woid`, {
+      params: { internalWoid }
+    });
+    // Defensive: check response.data.itemIds is array
+    if (response.data && Array.isArray(response.data.itemIds)) {
+      return response.data.itemIds;
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching item IDs by internal WO ID:", error);
+    return [];
+  }
+};
