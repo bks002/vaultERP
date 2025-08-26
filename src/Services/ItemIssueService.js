@@ -9,7 +9,7 @@ export const fetchInternalWorkOrders = async (officeId) => {
     }
     return await response.json();
   } catch (error) {
-    console.error("Error fetching internal work orders:", error);
+    console.error("Error fetching internal work orders:", error); 
     return [];
   }
 };
@@ -31,7 +31,9 @@ export const fetchJobCardsByInternalWo = async (internalWoId) => {
 // ✅ 3. Operations by Job Card
 export const fetchOperationsByJobCard = async (jobCardId) => {
   try {
-    const response = await fetch(`${BASE_URL}/planning/JobCard/operations/by-jobcard/${jobCardId}`);
+    const response = await fetch(
+      `${BASE_URL}/planning/JobCard/operations/by-jobcard/${jobCardId}`
+    );
     if (!response.ok) {
       throw new Error("Failed to fetch operations");
     }
@@ -41,15 +43,18 @@ export const fetchOperationsByJobCard = async (jobCardId) => {
     return [];
   }
 };
-
 // ✅ 4. Items by Internal Work Order Id
+
+
 export const fetchItemsByInternalWoid = async (internalWoid) => {
   try {
-    const response = await fetch(`${BASE_URL}/planning/Contruction/items-by-woid?internalWoid=${internalWoid}`);
+    const response = await fetch(
+      `${BASE_URL}/planning/Contruction/items-by-woid?internalWoid=${internalWoid}`
+    );
     if (!response.ok) {
       throw new Error("Failed to fetch items by internal work order");
     }
-    return await response.json();
+    return await response.json(); // { internalWoid, itemIds: [] }
   } catch (error) {
     console.error("Error fetching items:", error);
     return { internalWoid, itemIds: [] };

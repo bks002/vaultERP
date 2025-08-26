@@ -56,3 +56,17 @@ export const createOperation = async (operationData) => {
     throw new Error(message);
   }
 };
+
+export const getEmployeesByOperation = async (operationId) => {
+  try {
+    const response = await api.get(`/EmpOps/employees-by-operation`, {
+      params: { operationId }   // ✅ query param correctly pass ho raha hai
+    });
+    return response.data;       // ✅ API ka response body directly return
+  } catch (error) {
+    const message =
+      error.response?.data?.message ||
+      'Failed to fetch employees by operation';
+    throw new Error(message);
+  }
+};

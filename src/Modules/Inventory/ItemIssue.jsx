@@ -21,13 +21,11 @@ import {
   Select,
   InputLabel,
   FormControl,
-  OutlinedInput,
-  Checkbox,
-  ListItemText,
 } from "@mui/material"
 import EditIcon from "@mui/icons-material/Edit"
 import DeleteIcon from "@mui/icons-material/Delete"
 
+import { getAllOperation, getEmployeesByOperation } from "../../Services/OperationService"
 import {
   fetchItemIssues,
   createItemIssue,
@@ -37,48 +35,141 @@ import {
   fetchOperationsByJobCard,
   fetchItemsByInternalWoid,
 } from "../../Services/ItemIssueService"
-
-const ITEM_HEIGHT = 48
-const ITEM_PADDING_TOP = 8
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
-    },
-  },
-}
+import { getItemById } from "../../Services/InventoryService"  
+import { useSelector } from 'react-redux';
 
 const ItemPage = () => {
-  const officeId = 1 // ✅ static for now (later dynamic from dashboard)
+  const officeId = useSelector((state) => state.user.officeId);
   const [rows, setRows] = useState([])
   const [openDialog, setOpenDialog] = useState(false)
   const [formData, setFormData] = useState({
+    id: 0,
     inwo: "",
     jobcardId: "",
     operation: "",
-    employees: [],
+    employeeId: "",
     itemId: "",
     quantityIssued: "",
   })
+  const [isEditMode, setIsEditMode] = useState(false)
 
   // Dropdown data
   const [inwoList, setInwoList] = useState([])
   const [jobCardList, setJobCardList] = useState([])
   const [operationList, setOperationList] = useState([])
+  const [employeeList, setEmployeeList] = useState([])   
   const [itemList, setItemList] = useState([])
 
-  // ✅ Load all Item Issues initially
+  // Master Data for Dashboard mapping
+  const [allItems, setAllItems] = useState([])
+  const [allEmployees, setAllEmployees] = useState([])
+  const [allOperations, setAllOperations] = useState([])
+  const [allInwos, setAllInwos] = useState([])
+  const [allJobCards, setAllJobCards] = useState([])
+
+  // Load all Item Issues initially + preload masters
   useEffect(() => {
     const loadData = async () => {
-      const data = await fetchItemIssues(officeId)
-      setRows(data || [])
+      try {
+        const data = await fetchItemIssues(officeId)
+        setRows(data || [])
+
+        const inwos = await fetchInternalWorkOrders(officeId)
+        setAllInwos(inwos || [])
+
+        const ops = await getAllOperation(officeId)
+        setAllOperations(ops || [])
+
+        let itemMaster = []
+        for (const inwo of inwos || []) {
+          const items = await fetchItemsByInternalWoid(inwo.id)
+          if (items?.itemIds?.length) {
+            const itemDetails = await Promise.all(
+              items.itemIds.map(async (id) => {
+                const data = await getItemById(id)
+                return { id, name: data?.name || `Item-${id}` }
+              })
+            )
+            itemMaster = [...itemMaster, ...itemDetails]
+          }
+        }
+        setAllItems(itemMaster)
+
+        let jobCardMaster = []
+        for (const inwo of inwos || []) {
+          const jobcards = await fetchJobCardsByInternalWo(inwo.id)
+          jobCardMaster = [...jobCardMaster, ...(jobcards || [])]
+        }
+        setAllJobCards(jobCardMaster)
+
+        let empMaster = []
+        for (const op of ops || []) {
+          const employees = await getEmployeesByOperation(op.id || op.operationId)
+          empMaster = [...empMaster, ...(employees || [])]
+        }
+        setAllEmployees(empMaster)
+
+      } catch (error) {
+        console.error("Error loading dashboard data:", error)
+      }
     }
     loadData()
-  }, [])
+  }, [officeId])
 
-  const handleEdit = (id) => {
-    alert(`Edit row with ID: ${id}`)
+  // Edit handler with prefetch and prefill
+  const handleEdit = async (id) => {
+    const row = rows.find(r => r.id === id)
+    if (!row) return
+
+    setIsEditMode(true)
+    setOpenDialog(true)
+
+    try {
+      // Load INWO list
+      const inwos = await fetchInternalWorkOrders(officeId)
+      setInwoList(inwos || [])
+
+      // Load JobCards for selected INWO
+      const jobCards = await fetchJobCardsByInternalWo(row.inwo)
+      setJobCardList(jobCards || [])
+      setAllJobCards((prev) => [...prev, ...(jobCards || [])])
+
+      // Load Operations for selected JobCard
+      const operations = await fetchOperationsByJobCard(row.jobcardId)
+      setOperationList(operations || [])
+      setAllOperations((prev) => [...prev, ...(operations || [])])
+
+      // Load Employees for selected Operation
+      const employees = await getEmployeesByOperation(row.operation)
+      setEmployeeList(employees || [])
+      setAllEmployees((prev) => [...prev, ...(employees || [])])
+
+      // Load Items for selected INWO
+      const items = await fetchItemsByInternalWoid(row.inwo)
+      if (items?.itemIds?.length) {
+        const itemDetails = await Promise.all(
+          items.itemIds.map(async (id) => {
+            const data = await getItemById(id)
+            return { id, name: data?.name || `Item-${id}` }
+          })
+        )
+        setItemList(itemDetails)
+        setAllItems((prev) => [...prev, ...itemDetails])
+      }
+
+      // Set form data
+      setFormData({
+        id: row.id,
+        inwo: row.inwo,
+        jobcardId: row.jobcardId,
+        operation: row.operation,
+        employeeId: row.employeeId,
+        itemId: row.itemId,
+        quantityIssued: row.quantityIssued,
+      })
+    } catch (error) {
+      console.error("Error preparing edit form:", error)
+    }
   }
 
   const handleDelete = async (id) => {
@@ -90,8 +181,17 @@ const ItemPage = () => {
     }
   }
 
-  // ✅ When "Create" is clicked → Load INWO list
+  const reloadRows = async () => {
+    try {
+      const data = await fetchItemIssues(officeId)
+      setRows(data || [])
+    } catch (error) {
+      console.error("Error reloading rows:", error)
+    }
+  }
+
   const handleCreate = async () => {
+    setIsEditMode(false)
     setOpenDialog(true)
     try {
       const data = await fetchInternalWorkOrders(officeId)
@@ -104,22 +204,41 @@ const ItemPage = () => {
   const handleClose = () => {
     setOpenDialog(false)
     setFormData({
+      id: 0,
       inwo: "",
       jobcardId: "",
       operation: "",
-      employees: [],
+      employeeId: "",
       itemId: "",
       quantityIssued: "",
     })
     setJobCardList([])
     setOperationList([])
+    setEmployeeList([])   
     setItemList([])
+    setIsEditMode(false)
   }
 
   const handleSave = async () => {
     try {
-      const newRow = await createItemIssue(formData)
-      setRows([...rows, newRow])
+      const operationName = operationList.find(op => (op.id || op.operationId) === formData.operation)?.name || formData.operation
+
+      const payload = {
+        id: formData.id,
+        inwo: Number(formData.inwo),
+        jobcardId: Number(formData.jobcardId),
+        operation: operationName,
+        employeeId: Number(formData.employeeId),
+        itemId: Number(formData.itemId),
+        quantityIssued: Number(formData.quantityIssued),
+        createdBy: 1, 
+        createdOn: new Date().toISOString(),
+        isActive: true,
+        officeId: officeId,
+      }
+
+      await createItemIssue(payload)
+      await reloadRows()
       handleClose()
     } catch (error) {
       console.error("Save failed:", error)
@@ -130,45 +249,87 @@ const ItemPage = () => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  // ✅ When INWO changes → fetch Items + JobCards
   const handleInwoChange = async (inwoId) => {
     handleChange("inwo", inwoId)
 
-    // Items
-    const items = await fetchItemsByInternalWoid(inwoId)
-    setItemList(items.itemIds || [])
+    try {
+      const items = await fetchItemsByInternalWoid(inwoId)
+      if (items?.itemIds?.length) {
+        const itemDetails = await Promise.all(
+          items.itemIds.map(async (id) => {
+            const data = await getItemById(id)
+            return { id, name: data?.name || `Item-${id}` }
+          })
+        )
+        setItemList(itemDetails)
+        setAllItems((prev) => [...prev, ...itemDetails])
+      } else {
+        setItemList([])
+      }
+    } catch (error) {
+      console.error("Error fetching items:", error)
+      setItemList([])
+    }
 
-    // JobCards
     const jobCards = await fetchJobCardsByInternalWo(inwoId)
     setJobCardList(jobCards || [])
+    setAllJobCards((prev) => [...prev, ...(jobCards || [])])
 
-    // reset dependent dropdowns
     setOperationList([])
+    setEmployeeList([])   
     handleChange("jobcardId", "")
     handleChange("operation", "")
+    handleChange("employeeId", "")
+
+    const allOperations = await getAllOperation(officeId)
+    setOperationList(allOperations || [])
+    setAllOperations(allOperations || [])
   }
 
-  // ✅ When JobCard changes → fetch Operations
   const handleJobCardChange = async (jobCardId) => {
-  handleChange("jobcardId", jobCardId)
+    handleChange("jobcardId", jobCardId)
 
-  try {
-    if (jobCardId) {
-      // ✅ Case 1: Job Card selected → fetch operations by JobCard
-      const operations = await fetchOperationsByJobCard(jobCardId)
-      setOperationList(operations || [])
-    } else {
-      // ✅ Case 2: No Job Card selected → fetch all operations by office
-      const allOperations = await getAllOperation(selectedOfficeId) // <-- yahan aap apna officeId pass karo
-      setOperationList(allOperations || [])
+    try {
+      if (jobCardId) {
+        const operations = await fetchOperationsByJobCard(jobCardId)
+        setOperationList(operations || [])
+        setAllOperations((prev) => [...prev, ...(operations || [])])
+      } else {
+        const allOperations = await getAllOperation(officeId)
+        setOperationList(allOperations || [])
+      }
+      setEmployeeList([])
+      handleChange("operation", "")
+      handleChange("employeeId", "")
+    } catch (error) {
+      console.error("Error fetching operations:", error)
+      setOperationList([])
     }
-  } catch (error) {
-    console.error("Error fetching operations:", error)
-    setOperationList([])
   }
-}
 
+  const handleOperationChange = async (operationId) => {
+    handleChange("operation", operationId)
+    handleChange("employeeId", "")
 
+    try {
+      if (operationId) {
+        const employees = await getEmployeesByOperation(operationId)
+        setEmployeeList(employees || [])
+        setAllEmployees((prev) => [...prev, ...(employees || [])])
+      } else {
+        setEmployeeList([])
+      }
+    } catch (error) {
+      console.error("Error fetching employees:", error)
+      setEmployeeList([])
+    }
+  }
+
+  const getItemName = (id) => allItems.find((i) => i.id === id)?.name || id
+  const getEmployeeName = (id) => allEmployees.find((e) => e.employeeId === id)?.employeeName || id
+  const getJobCardName = (id) => allJobCards.find((j) => j.id === id)?.name || id
+  const getInwoName = (id) => allInwos.find((w) => w.id === id)?.name || id
+  const getOperationName = (id) => allOperations.find((o) => (o.id || o.operationId) === id)?.name || id
 
   return (
     <div className="col-12">
@@ -179,27 +340,28 @@ const ItemPage = () => {
         </Button>
       </Box>
 
+      {/* Table */}
       <TableContainer component={Paper}>
         <Table>
           <TableRow>
-            <TableCell><b>Item Id</b></TableCell>
+            <TableCell><b>Item</b></TableCell>
             <TableCell><b>Quantity Issued</b></TableCell>
             <TableCell><b>INWO</b></TableCell>
-            <TableCell><b>Jobcard ID</b></TableCell>
+            <TableCell><b>Jobcard</b></TableCell>
             <TableCell><b>Operation</b></TableCell>
-            <TableCell><b>Employees</b></TableCell>
+            <TableCell><b>Employee</b></TableCell>
             <TableCell><b>Action</b></TableCell>
           </TableRow>
 
           <TableBody>
             {rows.map((row) => (
               <TableRow key={row.id}>
-                <TableCell>{row.itemId}</TableCell>
+                <TableCell>{getItemName(row.itemId)}</TableCell>
                 <TableCell>{row.quantityIssued}</TableCell>
-                <TableCell>{row.inwo}</TableCell>
-                <TableCell>{row.jobcardId}</TableCell>
-                <TableCell>{row.operation}</TableCell>
-                <TableCell>{Array.isArray(row.employees) ? row.employees.join(", ") : row.employeeId}</TableCell>
+                <TableCell>{getInwoName(row.inwo)}</TableCell>
+                <TableCell>{getJobCardName(row.jobcardId)}</TableCell>
+                <TableCell>{getOperationName(row.operation)}</TableCell>
+                <TableCell>{getEmployeeName(row.employeeId)}</TableCell>
                 <TableCell>
                   <IconButton color="primary" onClick={() => handleEdit(row.id)}>
                     <EditIcon />
@@ -214,12 +376,11 @@ const ItemPage = () => {
         </Table>
       </TableContainer>
 
-      {/* Create Form Dialog */}
+      {/* Create/Edit Form Dialog */}
       <Dialog open={openDialog} onClose={handleClose} fullWidth maxWidth="sm">
-        <DialogTitle>Create Item Issue</DialogTitle>
+        <DialogTitle>{isEditMode ? "Edit Item Issue" : "Create Item Issue"}</DialogTitle>
         <DialogContent dividers>
           <Box display="flex" flexDirection="column" gap={2}>
-            {/* INWO Dropdown */}
             <FormControl fullWidth>
               <InputLabel>Internal Work Order</InputLabel>
               <Select
@@ -228,13 +389,12 @@ const ItemPage = () => {
               >
                 {inwoList.map((inwo) => (
                   <MenuItem key={inwo.id} value={inwo.id}>
-                    {`INWO-${inwo.id} (WOID: ${inwo.woid})`}
+                    {inwo.id}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
 
-            {/* Job Card Dropdown */}
             <FormControl fullWidth>
               <InputLabel>Job Card</InputLabel>
               <Select
@@ -243,64 +403,55 @@ const ItemPage = () => {
               >
                 {jobCardList.map((jcId) => (
                   <MenuItem key={jcId} value={jcId}>
-                    JobCard-{jcId}
+                    {jcId}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
 
-            {/* Operation Dropdown */}
             <FormControl fullWidth>
-  <InputLabel>Operation</InputLabel>
-  <Select
-    value={formData.operation}
-    onChange={(e) => handleChange("operation", e.target.value)}
-  >
-    {operationList.map((op) => (
-      <MenuItem key={op.id} value={op.name}>
-        {op.name}
-      </MenuItem>
-    ))}
-  </Select>
-</FormControl>
+              <InputLabel>Operation</InputLabel>
+              <Select
+                value={formData.operation}
+                onChange={(e) => handleOperationChange(e.target.value)}   
+              >
+                {operationList.map((op) => (
+                  <MenuItem key={op.id || op.operationId} value={op.id || op.operationId}>
+                    {op.name || op.operationName}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
+            <FormControl fullWidth>
+              <InputLabel>Employee</InputLabel>
+              <Select
+                value={formData.employeeId}
+                onChange={(e) => handleChange("employeeId", e.target.value)}
+              >
+                <MenuItem value=""><em>Select Employee</em></MenuItem>
+                {employeeList.map((emp) => (
+                  <MenuItem key={emp.employeeId} value={emp.employeeId}>
+                    {emp.employeeName}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-
-            <FormControl fullWidth margin="normal">
-  <InputLabel id="employee-label">Employee Name</InputLabel>
-  <Select
-    labelId="employee-label"
-    value={formData.employeeId || ""}
-    onChange={(e) =>
-      setFormData({ ...formData, employeeId: e.target.value })
-    }
-  >
-    <MenuItem value="">
-      <em>Select Employee</em>
-    </MenuItem>
-    <MenuItem value={1}>John Doe</MenuItem>
-    <MenuItem value={2}>Jane Smith</MenuItem>
-    <MenuItem value={3}>Rahul Kumar</MenuItem>
-  </Select>
-</FormControl>
-
-
-            {/* Item Dropdown */}
             <FormControl fullWidth>
               <InputLabel>Item</InputLabel>
               <Select
                 value={formData.itemId}
                 onChange={(e) => handleChange("itemId", e.target.value)}
               >
-                {itemList.map((id) => (
-                  <MenuItem key={id} value={id}>
-                    Item-{id}
+                {itemList.map((item) => (
+                  <MenuItem key={item.id} value={item.id}>
+                    {item.name}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
 
-            {/* Quantity */}
             <TextField
               label="Quantity"
               type="number"
