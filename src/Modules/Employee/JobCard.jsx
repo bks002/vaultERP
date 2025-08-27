@@ -39,6 +39,8 @@ import { getAllAssets } from "../../Services/AssetService";
 import { getAllItems } from "../../Services/InventoryService";
 import { getAllOperation } from "../../Services/OperationService";
 import { getContructionByitemoperationinwo } from "../../Services/ConstructionDesignSheet";
+import { getEmployeesByOperation } from "../../Services/OperationService"; // New API
+import { getAllEmployees } from "../../Services/EmployeeService";
 
 const JobCardMaster = () => {
   const officeId = useSelector((state) => state.user.officeId);
@@ -49,7 +51,9 @@ const JobCardMaster = () => {
   const [internalWos, setInternalWos] = useState([]);
   const [compounds, setCompounds] = useState([]);
   const [operations, setOperations] = useState([]);
-  const [constructionData, setConstructionData] = useState([]); // ✅ store construction data
+  const [allEmployees, setAllEmployees] = useState([]); // All employees fetched initially
+  const [filteredEmployees, setFilteredEmployees] = useState([]); // Employees filtered by operation
+  const [constructionData, setConstructionData] = useState([]);
 
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({});
@@ -57,15 +61,74 @@ const JobCardMaster = () => {
   const [viewOpen, setViewOpen] = useState(false);
   const [viewData, setViewData] = useState({});
 
+  // Helper for current date string YYYY-MM-DD
+  const getCurrentDateString = () => {
+    const d = new Date();
+    return d.toISOString().substring(0, 10);
+  };
+
+  // Load initial data including employees
+  useEffect(() => {
+    if (officeId) loadData();
+  }, [officeId]);
+
+  const loadData = async () => {
+    try {
+      const [
+        shiftData,
+        assetData,
+        inwoData,
+        compoundData,
+        operationData,
+        employeeData,
+      ] = await Promise.all([
+        getAllShift(officeId),
+        getAllAssets(officeId),
+        getInternalWorkOrdersByOffice(officeId),
+        getAllItems(officeId),
+        getAllOperation(officeId),
+        getAllEmployees(officeId),
+      ]);
+
+      setShifts(shiftData);
+      setAssets(assetData);
+      setInternalWos(inwoData);
+      setCompounds(compoundData);
+      setOperations(operationData);
+      setAllEmployees(employeeData);
+
+      const jcData = await getJobCards(officeId);
+      setJobCards(jcData);
+    } catch (err) {
+      console.error("Failed to load data:", err);
+    }
+  };
+
+  // Fetch employees by operation and set filteredEmployees
+  const fetchEmployeesForOperation = async (operationId) => {
+    if (!operationId) {
+      // If no operation selected, show all employees or empty list
+      setFilteredEmployees([]);
+      return;
+    }
+    try {
+      const data = await getEmployeesByOperation(operationId);
+      setFilteredEmployees(data);
+    } catch (err) {
+      console.error("Failed to fetch employees by operation:", err);
+      setFilteredEmployees([]);
+    }
+  };
+
   const handleView = async (jobCard) => {
-    // Map API data to viewData
     const updatedData = {
       ...jobCard,
       internalWoId: jobCard.internalWo,
       shiftId: jobCard.shiftId,
       assetId: jobCard.assetId,
-      compoundId: jobCard.itemId, // Map itemId to compoundId
+      compoundId: jobCard.itemId,
       operationId: jobCard.operationId,
+      operatorId: jobCard.operatorId,
       date: jobCard.date?.substring(0, 10) || "",
       isCode: jobCard.isCode,
       compacted: jobCard.compected === 1 ? "Yes" : "No",
@@ -78,8 +141,14 @@ const JobCardMaster = () => {
 
     setViewData(updatedData);
 
-    // Fetch construction data dynamically
-    if (updatedData.internalWoId && updatedData.compoundId && updatedData.operationId) {
+    // For view, also fetch employees by operation to limit operator dropdown
+    await fetchEmployeesForOperation(updatedData.operationId);
+
+    if (
+      updatedData.internalWoId &&
+      updatedData.compoundId &&
+      updatedData.operationId
+    ) {
       try {
         const data = await getContructionByitemoperationinwo(
           updatedData.internalWoId,
@@ -101,35 +170,8 @@ const JobCardMaster = () => {
   const handleViewClose = () => {
     setViewOpen(false);
     setViewData({});
+    setFilteredEmployees([]);
     setConstructionData([]);
-  };
-
-
-  useEffect(() => {
-    if (officeId) loadData();
-  }, [officeId]);
-
-  const loadData = async () => {
-    try {
-      const [shiftData, assetData, inwoData, compoundData, operationData] =
-        await Promise.all([
-          getAllShift(officeId),
-          getAllAssets(officeId),
-          getInternalWorkOrdersByOffice(officeId),
-          getAllItems(officeId),
-          getAllOperation(officeId),
-        ]);
-      setShifts(shiftData);
-      setAssets(assetData);
-      setInternalWos(inwoData);
-      setCompounds(compoundData);
-      setOperations(operationData);
-
-      const jcData = await getJobCards(officeId);
-      setJobCards(jcData);
-    } catch (err) {
-      console.error("Failed to load data:", err);
-    }
   };
 
   const handleOpen = async (jobCard = null) => {
@@ -139,8 +181,9 @@ const JobCardMaster = () => {
         internalWoId: jobCard.internalWo,
         shiftId: jobCard.shiftId,
         assetId: jobCard.assetId,
-        compoundId: jobCard.itemId, // important
+        compoundId: jobCard.itemId,
         operationId: jobCard.operationId,
+        operatorId: jobCard.operatorId,
         date: jobCard.date?.substring(0, 10) || "",
         isCode: jobCard.isCode || "",
         compacted: jobCard.compected === 1 ? "Yes" : "No",
@@ -154,8 +197,14 @@ const JobCardMaster = () => {
       setFormData(mappedData);
       setEditId(jobCard.id);
 
-      // ✅ Fetch construction data immediately
-      if (mappedData.internalWoId && mappedData.compoundId && mappedData.operationId) {
+      // Fetch filtered employees matching operation (for edit)
+      await fetchEmployeesForOperation(mappedData.operationId);
+
+      if (
+        mappedData.internalWoId &&
+        mappedData.compoundId &&
+        mappedData.operationId
+      ) {
         try {
           const data = await getContructionByitemoperationinwo(
             mappedData.internalWoId,
@@ -171,8 +220,10 @@ const JobCardMaster = () => {
         setConstructionData([]);
       }
     } else {
-      setFormData({});
+      // Add new job card: reset form
+      setFormData({ date: getCurrentDateString() }); // Set date to current by default
       setEditId(null);
+      setFilteredEmployees([]); // No filtered employees yet
       setConstructionData([]);
     }
 
@@ -183,6 +234,7 @@ const JobCardMaster = () => {
     setOpen(false);
     setFormData({});
     setEditId(null);
+    setFilteredEmployees([]);
     setConstructionData([]);
   };
 
@@ -191,7 +243,13 @@ const JobCardMaster = () => {
     const updatedForm = { ...formData, [name]: value };
     setFormData(updatedForm);
 
-    // ✅ Check if all required fields are selected, then call API
+    // If operation changes, fetch operator options dynamically
+    if (name === "operationId") {
+      await fetchEmployeesForOperation(value);
+      // Reset operatorId when operation changes
+      setFormData((prev) => ({ ...prev, operatorId: "" }));
+    }
+
     if (
       updatedForm.internalWoId &&
       updatedForm.compoundId &&
@@ -229,6 +287,7 @@ const JobCardMaster = () => {
         takeUpDrumSize: formData.takeUpDrumSize || "",
         embrossing: formData.embossing || "",
         remark: formData.remark || "",
+        operatorId: formData.operatorId || 0,
         isActive: true,
         officeId: officeId || 0,
         createdBy: formData.createdBy || 0,
@@ -261,36 +320,27 @@ const JobCardMaster = () => {
       }
     }
   };
+  
+ const getDateInputProps = () => {
+  // No restrictions on date input (user can pick any date)
+  return {};
+};
 
   return (
     <Container>
-      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ mb: 2 }}
+      >
         <Typography variant="h4">Job Card Master</Typography>
         <Box display="flex" alignItems="center" gap={2}>
-          {/* <TextField
-            variant="outlined"
-            sx={{ width: 300 }}
-            placeholder="Search by Asset name, Manufacturer"
-
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-            size="small"
-          /> */}
-
-          {/* <ExportCSVButton
-            data={filteredAssets}
-            filename="Assets.csv"
-            headers={csvHeaders}
-          /> */}
-
-          <Button variant="contained" color="primary" onClick={() => handleOpen()}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => handleOpen()}
+          >
             Add Job Card
           </Button>
         </Box>
@@ -306,6 +356,7 @@ const JobCardMaster = () => {
               <TableCell>Machine</TableCell>
               <TableCell>Compound</TableCell>
               <TableCell>Operation</TableCell>
+              <TableCell>Operator Name</TableCell>
               <TableCell>Date</TableCell>
               <TableCell align="center">Actions</TableCell>
             </TableRow>
@@ -329,11 +380,15 @@ const JobCardMaster = () => {
                     jc.assetId}
                 </TableCell>
                 <TableCell>
-                  {compounds.find(c => c.id === jc.itemId)?.name || jc.itemId}
+                  {compounds.find((c) => c.id === jc.itemId)?.name || jc.itemId}
                 </TableCell>
                 <TableCell>
                   {operations.find((o) => o.operationId === jc.operationId)
                     ?.operationName || jc.operationId}
+                </TableCell>
+                <TableCell>
+                  {allEmployees.find((e) => e.employeeId === jc.operatorId)
+                    ?.employeeName || jc.operatorId}
                 </TableCell>
                 <TableCell>{jc.date?.substring(0, 10)}</TableCell>
                 <TableCell align="center">
@@ -360,7 +415,7 @@ const JobCardMaster = () => {
             ))}
             {jobCards.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} align="center">
+                <TableCell colSpan={8} align="center">
                   No records found
                 </TableCell>
               </TableRow>
@@ -406,6 +461,7 @@ const JobCardMaster = () => {
               InputLabelProps={{ shrink: true }}
               value={formData.date || ""}
               onChange={handleChange}
+              {...getDateInputProps()}
             />
 
             {/* Operation */}
@@ -424,6 +480,25 @@ const JobCardMaster = () => {
               ))}
             </TextField>
 
+            {/* Operator Name */}
+            <TextField
+              select
+              fullWidth
+              label="Operator Name"
+              name="operatorId"
+              value={formData.operatorId || ""}
+              onChange={handleChange}
+            >
+              {/* Show filtered employees by selected operation */}
+              {(filteredEmployees.length > 0 ? filteredEmployees : []).map(
+                (e) => (
+                  <MenuItem key={e.employeeId} value={e.employeeId}>
+                    {e.employeeName}
+                  </MenuItem>
+                )
+              )}
+            </TextField>
+
             {/* Compound */}
             <TextField
               select
@@ -440,7 +515,7 @@ const JobCardMaster = () => {
               ))}
             </TextField>
 
-            {/* ✅ Construction Data Table */}
+            {/* Construction Data Table */}
             {constructionData.length > 0 && (
               <TableContainer component={Paper} sx={{ mt: 3 }}>
                 <Typography variant="subtitle1" sx={{ p: 1 }}>
@@ -498,6 +573,7 @@ const JobCardMaster = () => {
                 </MenuItem>
               ))}
             </TextField>
+
             {/* Compacted */}
             <TextField
               select
@@ -511,7 +587,6 @@ const JobCardMaster = () => {
               <MenuItem value="No">No</MenuItem>
             </TextField>
 
-            {/* Dia of AM Wire/Strip */}
             <TextField
               fullWidth
               label="Dia of AM Wire/Strip"
@@ -519,8 +594,6 @@ const JobCardMaster = () => {
               value={formData.diaOfAMWire || ""}
               onChange={handleChange}
             />
-
-            {/* Pay Off D.No */}
             <TextField
               fullWidth
               label="Pay Off D.No"
@@ -528,8 +601,6 @@ const JobCardMaster = () => {
               value={formData.payOffDNo || ""}
               onChange={handleChange}
             />
-
-            {/* Take Up Drum Size */}
             <TextField
               fullWidth
               label="Take Up Drum Size"
@@ -537,8 +608,6 @@ const JobCardMaster = () => {
               value={formData.takeUpDrumSize || ""}
               onChange={handleChange}
             />
-
-            {/* Embossing */}
             <TextField
               fullWidth
               label="Embossing"
@@ -546,8 +615,6 @@ const JobCardMaster = () => {
               value={formData.embossing || ""}
               onChange={handleChange}
             />
-
-            {/* Remark */}
             <TextField
               fullWidth
               label="Remark"
@@ -555,7 +622,6 @@ const JobCardMaster = () => {
               value={formData.remark || ""}
               onChange={handleChange}
             />
-
           </Stack>
         </DialogContent>
         <DialogActions>
@@ -567,6 +633,8 @@ const JobCardMaster = () => {
           </Stack>
         </DialogActions>
       </Dialog>
+
+      {/* View Dialog */}
       <Dialog open={viewOpen} onClose={handleViewClose} fullWidth maxWidth="sm">
         <DialogTitle>View Job Card</DialogTitle>
         <DialogContent>
@@ -587,10 +655,14 @@ const JobCardMaster = () => {
               ))}
             </TextField>
 
-            {/* Is Code */}
-            <TextField fullWidth label="Is Code" name="isCode" value={viewData.isCode || ""} disabled />
+            <TextField
+              fullWidth
+              label="Is Code"
+              name="isCode"
+              value={viewData.isCode || ""}
+              disabled
+            />
 
-            {/* Date */}
             <TextField
               fullWidth
               type="date"
@@ -601,8 +673,14 @@ const JobCardMaster = () => {
               disabled
             />
 
-            {/* Operation */}
-            <TextField select fullWidth label="Operation" name="operationId" value={viewData.operationId || ""} disabled>
+            <TextField
+              select
+              fullWidth
+              label="Operation"
+              name="operationId"
+              value={viewData.operationId || ""}
+              disabled
+            >
               {operations.map((o) => (
                 <MenuItem key={o.operationId} value={o.operationId}>
                   {o.operationName}
@@ -610,8 +688,33 @@ const JobCardMaster = () => {
               ))}
             </TextField>
 
-            {/* Compound */}
-            <TextField select fullWidth label="Compound" name="compoundId" value={viewData.compoundId || ""} disabled>
+            {/* Operator Name disabled */}
+            <TextField
+              select
+              fullWidth
+              label="Operator Name"
+              name="operatorId"
+              value={viewData.operatorId || ""}
+              disabled
+            >
+              {/* Show filtered employees by operation */}
+              {(filteredEmployees.length > 0 ? filteredEmployees : []).map(
+                (e) => (
+                  <MenuItem key={e.employeeId} value={e.employeeId}>
+                    {e.employeeName}
+                  </MenuItem>
+                )
+              )}
+            </TextField>
+
+            <TextField
+              select
+              fullWidth
+              label="Compound"
+              name="compoundId"
+              value={viewData.compoundId || ""}
+              disabled
+            >
               {compounds.map((c) => (
                 <MenuItem key={c.id} value={c.id}>
                   {c.name}
@@ -619,7 +722,7 @@ const JobCardMaster = () => {
               ))}
             </TextField>
 
-            {/* Construction Data */}
+            {/* Construction Data Table */}
             {constructionData.length > 0 && (
               <TableContainer component={Paper} sx={{ mt: 3 }}>
                 <Typography variant="subtitle1" sx={{ p: 1 }}>
@@ -646,8 +749,14 @@ const JobCardMaster = () => {
               </TableContainer>
             )}
 
-            {/* Machine */}
-            <TextField select fullWidth label="Machine" name="assetId" value={viewData.assetId || ""} disabled>
+            <TextField
+              select
+              fullWidth
+              label="Machine"
+              name="assetId"
+              value={viewData.assetId || ""}
+              disabled
+            >
               {assets.map((a) => (
                 <MenuItem key={a.assetId} value={a.assetId}>
                   {a.assetName}
@@ -655,8 +764,14 @@ const JobCardMaster = () => {
               ))}
             </TextField>
 
-            {/* Shift */}
-            <TextField select fullWidth label="Shift" name="shiftId" value={viewData.shiftId || ""} disabled>
+            <TextField
+              select
+              fullWidth
+              label="Shift"
+              name="shiftId"
+              value={viewData.shiftId || ""}
+              disabled
+            >
               {shifts.map((s) => (
                 <MenuItem key={s.shiftId} value={s.shiftId}>
                   {s.shiftName}
@@ -664,18 +779,53 @@ const JobCardMaster = () => {
               ))}
             </TextField>
 
-            {/* Compacted */}
-            <TextField select fullWidth label="Compacted" name="compacted" value={viewData.compacted || ""} disabled>
+            <TextField
+              select
+              fullWidth
+              label="Compacted"
+              name="compacted"
+              value={viewData.compacted || ""}
+              disabled
+            >
               <MenuItem value="Yes">Yes</MenuItem>
               <MenuItem value="No">No</MenuItem>
             </TextField>
 
-            {/* Other fields */}
-            <TextField fullWidth label="Dia of AM Wire/Strip" name="diaOfAMWire" value={viewData.diaOfAMWire || ""} disabled />
-            <TextField fullWidth label="Pay Off D.No" name="payOffDNo" value={viewData.payOffDNo || ""} disabled />
-            <TextField fullWidth label="Take Up Drum Size" name="takeUpDrumSize" value={viewData.takeUpDrumSize || ""} disabled />
-            <TextField fullWidth label="Embossing" name="embossing" value={viewData.embossing || ""} disabled />
-            <TextField fullWidth label="Remark" name="remark" value={viewData.remark || ""} disabled />
+            <TextField
+              fullWidth
+              label="Dia of AM Wire/Strip"
+              name="diaOfAMWire"
+              value={viewData.diaOfAMWire || ""}
+              disabled
+            />
+            <TextField
+              fullWidth
+              label="Pay Off D.No"
+              name="payOffDNo"
+              value={viewData.payOffDNo || ""}
+              disabled
+            />
+            <TextField
+              fullWidth
+              label="Take Up Drum Size"
+              name="takeUpDrumSize"
+              value={viewData.takeUpDrumSize || ""}
+              disabled
+            />
+            <TextField
+              fullWidth
+              label="Embossing"
+              name="embossing"
+              value={viewData.embossing || ""}
+              disabled
+            />
+            <TextField
+              fullWidth
+              label="Remark"
+              name="remark"
+              value={viewData.remark || ""}
+              disabled
+            />
           </Stack>
         </DialogContent>
         <DialogActions>
