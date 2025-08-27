@@ -34,6 +34,9 @@ import ServicePage from "./Modules/Asset Management/AssetServiceRecord.jsx";
 import AssetCheckinout from './Modules/Asset Management/AssetCheckinout.jsx';
 import LeaveMaster from './Modules/Attendance Management/LeaveMaster.jsx';
 import EmployeeLeave from './Modules/Attendance Management/EmployeeLeave.jsx';
+
+import ItemIssue from "./Modules/Inventory/ItemIssue.jsx";
+
 import StockRegister from "./Modules/Inventory/StockRegister.jsx";
 import ExpenseReport from "./Modules/Employee/ExpensePage.jsx";
 
@@ -71,8 +74,12 @@ function AppRoutes() {
       <Route path="/Asset/AssetServiceRecord" element={<AuthWrapper><ServicePage /></AuthWrapper>} />
       <Route path="/Asset/AssetSpareRepair" element={<AuthWrapper><AssetCheckinout /></AuthWrapper>} />
       <Route path="/Attendance/EmployeeLeave" element={<AuthWrapper><EmployeeLeave /></AuthWrapper>} />
+
+      <Route path="/inventory/itemIssue" element={<AuthWrapper><ItemIssue /></AuthWrapper>} />
+
       <Route path="/inventory/StockRegister" element={<AuthWrapper><StockRegister /></AuthWrapper>} />
       <Route path="/Employee/ExpenseReport" element={<AuthWrapper><ExpenseReport /></AuthWrapper>} />
+
 
 
       {/* Redirect to dashboard if no match */}

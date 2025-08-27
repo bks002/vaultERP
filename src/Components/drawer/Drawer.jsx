@@ -195,9 +195,17 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                     </ListItemButton>
                 </ListItem>
                 <ListItem disablePadding>
+
+                    <ListItemButton component={Link} to="/Inventory/ItemIssue"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Item Issue" />
+</ListItemButton>
+                </ListItem>
+ <ListItem disablePadding>
                     <ListItemButton component={Link} to="/inventory/StockRegister"  >
                         <ListItemIcon><InboxIcon /></ListItemIcon>
                         <ListItemText primary="Stock Register" />
+
                     </ListItemButton>
                 </ListItem>
             </List>
