@@ -10,6 +10,12 @@ export const getExpenseTypesByOffice = async (officeId) => {
   return await response.json();
 };
 
+export const getExpenseMasterByOffice = async (officeId) => {
+  const response = await fetch(`${API_BASE}/${officeId}`);
+  if (!response.ok) throw new Error("Failed to fetch expense master");
+  return await response.json();
+};
+
 // ✅ Get Sub Types of a particular Expense Type
 export const getExpenseSubTypes = async (officeId, expenseType) => {
   const response = await fetch(`${API_BASE}/subtypes/${officeId}/${expenseType}`);

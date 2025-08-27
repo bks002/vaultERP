@@ -40,7 +40,6 @@ const LeaveBalancePage = () => {
     const [open, setOpen] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null);
     const officeId = useSelector((state) => state.user.officeId);
-    const userId = useSelector((state) => state.user.userId);
 
     const [formData, setFormData] = useState({
         id: 0,
@@ -48,7 +47,6 @@ const LeaveBalancePage = () => {
         employeeId: "",
         leaveTypeId: "",
         balance: "",
-        leaveCount: "",
         financialYear: "",
         isActive: true,
     });
@@ -97,7 +95,6 @@ const LeaveBalancePage = () => {
                 employeeId: "",
                 leaveTypeId: "",
                 balance: "",
-                leaveCount: "",
                 financialYear: "",
                 isActive: true,
             });
@@ -171,7 +168,6 @@ const LeaveBalancePage = () => {
                             <TableCell>Employee</TableCell>
                             <TableCell>Leave Type</TableCell>
                             <TableCell>Balance</TableCell>
-                            <TableCell>Leave Count</TableCell>
                             <TableCell>Financial Year</TableCell>
                             <TableCell>Actions</TableCell>
                         </TableRow>
@@ -186,7 +182,6 @@ const LeaveBalancePage = () => {
                                     {leaveTypes.find((t) => t.id === row.leaveTypeId)?.leaveType || row.leaveTypeId}
                                 </TableCell>
                                 <TableCell>{row.balance}</TableCell>
-                                <TableCell>{row.leaveCount}</TableCell>
                                 <TableCell>{row.financialYear}</TableCell>
                                 <TableCell>
                                     <IconButton color="primary" onClick={() => handleOpen(row)}>
@@ -250,12 +245,6 @@ const LeaveBalancePage = () => {
                         label="Balance"
                         name="balance"
                         value={formData.balance}
-                        onChange={handleChange}
-                    />
-                    <TextField
-                        label="Leave Count"
-                        name="leaveCount"
-                        value={formData.leaveCount}
                         onChange={handleChange}
                     />
                     <TextField
