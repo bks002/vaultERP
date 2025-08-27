@@ -22,6 +22,7 @@ import { getAllAssetCheckinout, checkoutAsset, checkinAsset, getAssetDetails } f
 import { getAllEmployees } from "../../Services/EmployeeService";
 import { getAllOffices } from "../../Services/OfficeService";
 import { useSelector } from "react-redux";
+import { getAssetSpares } from "../../Services/AssetSpare";
 
 const AssetCheckinout = () => {
   const [assets, setAssets] = useState([]);
@@ -31,8 +32,9 @@ const AssetCheckinout = () => {
   const [offices, setOffices] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [openView, setOpenView] = useState(false);
-const [viewAsset, setViewAsset] = useState(null);
-const [loadingView, setLoadingView] = useState(false);
+  const [viewAsset, setViewAsset] = useState(null);
+  const [loadingView, setLoadingView] = useState(false);
+  const [spareOptions, setSpareOptions] = useState([])
   const purposes = [
     "Purchase",
     "Maintenance",
@@ -70,12 +72,21 @@ const [loadingView, setLoadingView] = useState(false);
   };
 
   const openViewDialog = async (assetId) => {
-  setOpenView(true);
-  setLoadingView(true);
-  const data = await getAssetDetails(assetId);
-  setViewAsset(data);
-  setLoadingView(false);
-};
+    setOpenView(true);
+    setLoadingView(true);
+    const data = await getAssetDetails(assetId);
+    setViewAsset(data);
+    setLoadingView(false);
+  };
+
+  const handleSpareKeyPress = (event, index) => {
+    if (event.key === "Enter") {
+      // Only add if current spareName is not empty
+      if (spares[index].spareName.trim() !== "") {
+        handleAddSpare();
+      }
+    }
+  };
 
   const fetchOffice = async () => {
     const res = await getAllOffices();
@@ -88,27 +99,33 @@ const [loadingView, setLoadingView] = useState(false);
   };
 
   // Open checkout dialog
-  const openCheckoutDialog = (asset) => {
+  const openCheckoutDialog = async (asset) => {
     setSelectedAsset(asset);
     setAssigneeName("");
     setPurpose("");
-    setCheckoutDateTime(new Date().toISOString().slice(0, 16)); // for form input
+    setCheckoutDateTime(new Date().toISOString().slice(0, 16));
     setOutFrom("");
     setSentTo("");
     setApprovedBy("");
     setImageOut(null);
     setSpares([{ spareName: "", tentativeReturnDate: "", spareAmount: 0 }]);
+
+    // Fetch spares for this asset
+    const sparesData = await getAssetSpares(asset.id);
+    setSpareOptions(sparesData.map(s => s.spareName));
+
     setOpenCheckout(true);
   };
 
   // Open checkin dialog
-  const openCheckinDialog = (asset) => {
+  const openCheckinDialog = async (asset) => {
     setSelectedAsset(asset);
     setReturnedBy("");
     setCheckinDateTime(new Date().toISOString().slice(0, 16));
     setImageIn(null);
     setReturnCondition("");
 
+    // Prefill spares for checkin
     const prefilledSpares =
       asset.spareFields?.map((s) => ({
         spareName: s.spareName || "",
@@ -118,25 +135,21 @@ const [loadingView, setLoadingView] = useState(false);
       })) || [{ spareName: "", tentativeReturnDate: "", returnDateTime: "", spareAmount: 0 }];
 
     setCheckinSpares(prefilledSpares);
+
+    // Fetch spares for this asset (optional for checkin dropdown)
+    const sparesData = await getAssetSpares(asset.id);
+    setSpareOptions(sparesData.map(s => s.spareName));
+
     setOpenCheckin(true);
   };
 
   // Spare handlers
   const handleAddSpare = () =>
     setSpares([...spares, { spareName: "", tentativeReturnDate: "", spareAmount: 0 }]);
-  const handleSpareChange = (index, field, value) => {
-    const updated = [...spares];
-    updated[index][field] = value;
-    setSpares(updated);
-  };
 
   const handleAddCheckinSpare = () =>
     setCheckinSpares([...checkinSpares, { spareName: "", tentativeReturnDate: "", returnDateTime: "", spareAmount: 0 }]);
-  const handleCheckinSpareChange = (index, field, value) => {
-    const updated = [...checkinSpares];
-    updated[index][field] = value;
-    setCheckinSpares(updated);
-  };
+
 
   // File inputs
   const handleFileToBase64 = (file, setter) => {
@@ -206,6 +219,26 @@ const [loadingView, setLoadingView] = useState(false);
     fetchAssets();
   };
 
+  const handleSpareChange = (index, field, value) => {
+    const updated = [...spares];
+    updated[index][field] = value;
+    setSpares(updated);
+
+    if (field === "spareName" && value && !spareOptions.includes(value)) {
+      setSpareOptions([...spareOptions, value]);
+    }
+  };
+
+  const handleCheckinSpareChange = (index, field, value) => {
+    const updated = [...checkinSpares];
+    updated[index][field] = value;
+    setCheckinSpares(updated);
+
+    if (field === "spareName" && value && !spareOptions.includes(value)) {
+      setSpareOptions([...spareOptions, value]);
+    }
+  };
+
   return (
     <Box p={2}>
       <Typography variant="h5" gutterBottom>
@@ -267,83 +300,82 @@ const [loadingView, setLoadingView] = useState(false);
       </TableContainer>
 
       <Dialog open={openView} onClose={() => setOpenView(false)} maxWidth="lg" fullWidth>
-  <DialogTitle>Asset Details</DialogTitle>
-  <DialogContent dividers>
-    {loadingView ? (
-      <Typography>Loading...</Typography>
-    ) : viewAsset && viewAsset.length > 0 ? (
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell><b>Asset ID</b></TableCell>
-              <TableCell><b>Asset Name</b></TableCell>
-              <TableCell><b>Checkout Date</b></TableCell>
-              <TableCell><b>Tentative Return</b></TableCell>
-              <TableCell><b>Returned Date</b></TableCell>
-              <TableCell><b>Assignee Name</b></TableCell>
-              <TableCell><b>Purpose</b></TableCell>
-              <TableCell><b>Out From</b></TableCell>
-              <TableCell><b>Sent To</b></TableCell>
-              <TableCell><b>Approved By</b></TableCell>
-              <TableCell><b>Checkout Image</b></TableCell>
-              <TableCell><b>Checkin Image</b></TableCell>
-              <TableCell><b>Spare Details</b></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {viewAsset.map((asset, idx) => (
-              <TableRow key={idx}>
-                <TableCell>{asset.assetId}</TableCell>
-                <TableCell>{asset.name || "-"}</TableCell>
-                <TableCell>{asset.checkOutDateTime ? new Date(asset.checkOutDateTime).toLocaleString() : "-"}</TableCell>
-                <TableCell>{asset.tentativeReturnDate ? new Date(asset.tentativeReturnDate).toLocaleDateString() : "-"}</TableCell>
-                <TableCell>{asset.returnDateNullable ? new Date(asset.returnDateNullable).toLocaleString() : "-"}</TableCell>
-                <TableCell>{asset.assigneeName || "-"}</TableCell>
-                <TableCell>{asset.purpose || "-"}</TableCell>
-                <TableCell>{asset.outFrom || "-"}</TableCell>
-                <TableCell>{asset.sentTo || "-"}</TableCell>
-                <TableCell>{asset.approvedBy || "-"}</TableCell>
-                <TableCell>
-                  {asset.imageOut ? (
-                    <img
-                      src={`data:image/jpeg;base64,${asset.imageOut}`}
-                      alt="checkout"
-                      style={{ width: 100, maxHeight: 100 }}
-                    />
-                  ) : "-"}
-                </TableCell>
-                <TableCell>
-                  {asset.imageIn ? (
-                    <img
-                      src={`data:image/jpeg;base64,${asset.imageIn}`}
-                      alt="checkin"
-                      style={{ width: 100, maxHeight: 100 }}
-                    />
-                  ) : "-"}
-                </TableCell>
-                <TableCell>
-                  {asset.spareName || asset.spareAmount ? (
-                    <Box>
-                      <Typography><b>Name:</b> {asset.spareName || "-"}</Typography>
-                      <Typography><b>Amount:</b> {asset.spareAmount || "-"}</Typography>
-                    </Box>
-                  ) : "-"}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    ) : (
-      <Typography>No data available</Typography>
-    )}
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={() => setOpenView(false)}>Close</Button>
-  </DialogActions>
-</Dialog>
-
+        <DialogTitle>Asset Details</DialogTitle>
+        <DialogContent dividers>
+          {loadingView ? (
+            <Typography>Loading...</Typography>
+          ) : viewAsset && viewAsset.length > 0 ? (
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell><b>Asset ID</b></TableCell>
+                    <TableCell><b>Asset Name</b></TableCell>
+                    <TableCell><b>Checkout Date</b></TableCell>
+                    <TableCell><b>Tentative Return</b></TableCell>
+                    <TableCell><b>Returned Date</b></TableCell>
+                    <TableCell><b>Assignee Name</b></TableCell>
+                    <TableCell><b>Purpose</b></TableCell>
+                    <TableCell><b>Out From</b></TableCell>
+                    <TableCell><b>Sent To</b></TableCell>
+                    <TableCell><b>Approved By</b></TableCell>
+                    <TableCell><b>Checkout Image</b></TableCell>
+                    <TableCell><b>Checkin Image</b></TableCell>
+                    <TableCell><b>Spare Details</b></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {viewAsset.map((asset, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>{asset.assetId}</TableCell>
+                      <TableCell>{asset.name || "-"}</TableCell>
+                      <TableCell>{asset.checkOutDateTime ? new Date(asset.checkOutDateTime).toLocaleString() : "-"}</TableCell>
+                      <TableCell>{asset.tentativeReturnDate ? new Date(asset.tentativeReturnDate).toLocaleDateString() : "-"}</TableCell>
+                      <TableCell>{asset.returnDateNullable ? new Date(asset.returnDateNullable).toLocaleString() : "-"}</TableCell>
+                      <TableCell>{asset.assigneeName || "-"}</TableCell>
+                      <TableCell>{asset.purpose || "-"}</TableCell>
+                      <TableCell>{asset.outFrom || "-"}</TableCell>
+                      <TableCell>{asset.sentTo || "-"}</TableCell>
+                      <TableCell>{asset.approvedBy || "-"}</TableCell>
+                      <TableCell>
+                        {asset.imageOut ? (
+                          <img
+                            src={`data:image/jpeg;base64,${asset.imageOut}`}
+                            alt="checkout"
+                            style={{ width: 100, maxHeight: 100 }}
+                          />
+                        ) : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {asset.imageIn ? (
+                          <img
+                            src={`data:image/jpeg;base64,${asset.imageIn}`}
+                            alt="checkin"
+                            style={{ width: 100, maxHeight: 100 }}
+                          />
+                        ) : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {asset.spareName || asset.spareAmount ? (
+                          <Box>
+                            <Typography><b>Name:</b> {asset.spareName || "-"}</Typography>
+                            <Typography><b>Amount:</b> {asset.spareAmount || "-"}</Typography>
+                          </Box>
+                        ) : "-"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Typography>No data available</Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenView(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Checkout Dialog */}
       <Dialog open={openCheckout} onClose={() => setOpenCheckout(false)} maxWidth="sm" fullWidth>
@@ -389,7 +421,22 @@ const [loadingView, setLoadingView] = useState(false);
           <Typography mt={2} variant="subtitle1">Spares</Typography>
           {spares.map((spare, index) => (
             <Box key={index} mb={1}>
-              <TextField fullWidth label={`Spare Name ${index + 1}`} margin="dense" value={spare.spareName} onChange={(e) => handleSpareChange(index, "spareName", e.target.value)} />
+              <Autocomplete
+                freeSolo
+                options={spareOptions}
+                value={spare.spareName}
+                onChange={(event, newValue) => handleSpareChange(index, "spareName", newValue || "")}
+                onInputChange={(event, newInputValue) => handleSpareChange(index, "spareName", newInputValue)}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label={`Spare Name ${index + 1}`}
+                    margin="dense"
+                    fullWidth
+                    onKeyDown={(e) => handleSpareKeyPress(e, index)}
+                  />
+                )}
+              />
               <TextField fullWidth type="date" label={`Tentative Return Date ${index + 1}`} InputLabelProps={{ shrink: true }} margin="dense" value={spare.tentativeReturnDate} onChange={(e) => handleSpareChange(index, "tentativeReturnDate", e.target.value)} />
               <TextField fullWidth type="number" label={`Amount ${index + 1}`} margin="dense" value={spare.spareAmount} onChange={(e) => handleSpareChange(index, "spareAmount", e.target.value)} />
             </Box>
@@ -417,7 +464,22 @@ const [loadingView, setLoadingView] = useState(false);
           <Typography mt={2} variant="subtitle1">Returned Spares</Typography>
           {checkinSpares.map((spare, index) => (
             <Box key={index} mb={1}>
-              <TextField fullWidth label={`Spare Name ${index + 1}`} margin="dense" value={spare.spareName} onChange={(e) => handleCheckinSpareChange(index, "spareName", e.target.value)} />
+              <Autocomplete
+                freeSolo
+                options={spareOptions}
+                value={spare.spareName}
+                onChange={(event, newValue) => handleSpareChange(index, "spareName", newValue || "")}
+                onInputChange={(event, newInputValue) => handleSpareChange(index, "spareName", newInputValue)}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label={`Spare Name ${index + 1}`}
+                    margin="dense"
+                    fullWidth
+                    onKeyDown={(e) => handleSpareKeyPress(e, index)}
+                  />
+                )}
+              />
               <TextField fullWidth type="datetime-local" label={`Actual Return Date ${index + 1}`} InputLabelProps={{ shrink: true }} margin="dense" value={spare.returnDateTime} onChange={(e) => handleCheckinSpareChange(index, "returnDateTime", e.target.value)} />
               <TextField fullWidth type="number" label={`Amount ${index + 1}`} margin="dense" value={spare.spareAmount} onChange={(e) => handleCheckinSpareChange(index, "spareAmount", e.target.value)} />
             </Box>
