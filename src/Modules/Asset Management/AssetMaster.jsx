@@ -16,6 +16,8 @@ import { getAllOperation } from "../../Services/OperationService";
 import { getAssetOperation, OperationMapping } from "../../Services/AssetOperation";
 import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
 import ExportCSVButton from "../../Components/Export to CSV/ExportCSVButton";
+import BuildIcon from '@mui/icons-material/Build';
+import { getAssetSpares, deleteAssetSpare, addAssetSpare } from "../../Services/AssetSpare";
 
 const AssetMaster = () => {
   const officeId = useSelector((state) => state.user.officeId);
@@ -30,6 +32,10 @@ const AssetMaster = () => {
   const [isEdit, setIsEdit] = useState(false);
   const [alert, setAlert] = useState({ open: false, type: 'success', message: '' });
   const [viewOpen, setViewOpen] = useState(false);
+  const [spareDialogOpen, setSpareDialogOpen] = useState(false);
+  const [spares, setSpares] = useState([]);
+  const [selectedAsset, setSelectedAsset] = useState(null);
+  const [newSpareName, setNewSpareName] = useState('');
 
   const defaultFormData = {
     assetId: 0,
@@ -59,6 +65,17 @@ const AssetMaster = () => {
       loadAllOperations();
     }
   }, [officeId]);
+
+  const handleSpareParts = async (asset) => {
+    setSelectedAsset(asset);
+    try {
+      const data = await getAssetSpares(asset.assetId);
+      setSpares(data);
+      setSpareDialogOpen(true);
+    } catch {
+      showAlert("error", "Failed to load spare parts");
+    }
+  };
 
   const loadAllassets = async () => {
     try {
@@ -166,7 +183,7 @@ const AssetMaster = () => {
     } catch (err) {
       showAlert("error", "Failed to load mapped operations");
     }
-  };  
+  };
 
   const handleEdit = (asset) => {
     setIsEdit(true)
@@ -268,6 +285,11 @@ const AssetMaster = () => {
                       <Tooltip title="Edit"><IconButton onClick={() => handleEdit(asset)} color="primary"><EditIcon /></IconButton></Tooltip>
                       <Tooltip title="Delete"><IconButton onClick={() => handleDelete(asset)} color="error"><DeleteIcon /></IconButton></Tooltip>
                       <Tooltip title="Operations"><IconButton onClick={() => handleSettings(asset)}><SettingsIcon /></IconButton></Tooltip>
+                      <Tooltip title="Spare Parts">
+                        <IconButton onClick={() => handleSpareParts(asset)}>
+                          <BuildIcon />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 ))
@@ -383,6 +405,100 @@ const AssetMaster = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setViewOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={spareDialogOpen} onClose={() => setSpareDialogOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Asset Spare Parts - {selectedAsset?.assetName}</DialogTitle>
+        <DialogContent>
+          {/* Add new spare */}
+          <Box display="flex" gap={2} mt={1} mb={2}>
+            <TextField
+              fullWidth
+              label="Spare Name"
+              value={newSpareName}
+              onChange={(e) => setNewSpareName(e.target.value)}
+            />
+            <Button
+              variant="contained"
+              onClick={async () => {
+                if (!newSpareName.trim()) return;
+
+                // Create payload matching your API
+                const payload = {
+                  id: 0,                  // For new spare
+                  assetId: selectedAsset.assetId,
+                  spareName: newSpareName,
+                  createdBy: parseInt(userId), // from your Redux state
+                  createdOn: new Date().toISOString(),
+                  updatedOn: new Date().toISOString(),
+                  updatedBy: parseInt(userId)
+                };
+
+                try {
+                  await addAssetSpare(payload); // API call to create spare
+                  const updatedSpares = await getAssetSpares(selectedAsset.assetId); // refresh list
+                  setSpares(updatedSpares);
+                  setNewSpareName('');
+                  showAlert('success', 'Spare added successfully');
+                } catch {
+                  showAlert('error', 'Failed to add spare');
+                }
+              }}
+            >
+              Add
+            </Button>
+          </Box>
+
+          {/* Show spare parts */}
+          <TableContainer component={Paper}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>#</TableCell>
+                  <TableCell>Spare Name</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {spares.length > 0 ? (
+                  spares.map((spare, index) => (
+                    <TableRow key={spare.id}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{spare.spareName}</TableCell>
+                      <TableCell>
+                        <Tooltip title="Delete">
+                          <IconButton
+                            color="error"
+                            onClick={async () => {
+                              if (window.confirm(`Delete "${spare.spareName}"?`)) {
+                                try {
+                                  await deleteAssetSpare(spare.id); // API call
+                                  const updatedSpares = await getAssetSpares(selectedAsset.assetId);
+                                  setSpares(updatedSpares);
+                                  showAlert('success', 'Spare deleted successfully');
+                                } catch {
+                                  showAlert('error', 'Failed to delete spare');
+                                }
+                              }
+                            }}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={3} align="center">No spares found.</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSpareDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
 
