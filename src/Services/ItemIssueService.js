@@ -1,128 +1,60 @@
-const BASE_URL = "https://admin.urest.in:8089/api";
+import axios from "axios";
 
-// ✅ 1. Internal Work Orders by officeId
-export const fetchInternalWorkOrders = async (officeId) => {
+const API_BASE = "https://admin.urest.in:8089/api/planning/ItemIssue";
+
+// Get all item issues by office ID
+export const getAllItemIssues = async (officeId) => {
   try {
-    const response = await fetch(`${BASE_URL}/work_order/InternalWorkOrder/office/${officeId}`);
-    if (!response.ok) {
-      throw new Error("Failed to fetch internal work orders");
-    }
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching internal work orders:", error); 
-    return [];
-  }
-};
-
-// ✅ 2. Job Cards by Internal Work Order
-export const fetchJobCardsByInternalWo = async (internalWoId) => {
-  try {
-    const response = await fetch(`${BASE_URL}/planning/JobCard/by-internal-wo/${internalWoId}`);
-    if (!response.ok) {
-      throw new Error("Failed to fetch job cards");
-    }
-    return await response.json(); // returns array of jobCardIds
-  } catch (error) {
-    console.error("Error fetching job cards:", error);
-    return [];
-  }
-};
-
-// ✅ 3. Operations by Job Card
-export const fetchOperationsByJobCard = async (jobCardId) => {
-  try {
-    const response = await fetch(
-      `${BASE_URL}/planning/JobCard/operations/by-jobcard/${jobCardId}`
-    );
-    if (!response.ok) {
-      throw new Error("Failed to fetch operations");
-    }
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching operations:", error);
-    return [];
-  }
-};
-// ✅ 4. Items by Internal Work Order Id
-
-
-export const fetchItemsByInternalWoid = async (internalWoid) => {
-  try {
-    const response = await fetch(
-      `${BASE_URL}/planning/Contruction/items-by-woid?internalWoid=${internalWoid}`
-    );
-    if (!response.ok) {
-      throw new Error("Failed to fetch items by internal work order");
-    }
-    return await response.json(); // { internalWoid, itemIds: [] }
-  } catch (error) {
-    console.error("Error fetching items:", error);
-    return { internalWoid, itemIds: [] };
-  }
-};
-
-// ✅ 5. Fetch all Item Issues by officeId
-export const fetchItemIssues = async (officeId) => {
-  try {
-    const response = await fetch(`${BASE_URL}/planning/ItemIssue?officeId=${officeId}`);
-    if (!response.ok) {
-      throw new Error("Failed to fetch item issues");
-    }
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching item issues:", error);
-    return [];
-  }
-};
-
-// ✅ 6. Create new Item Issue
-export const createItemIssue = async (itemIssueData) => {
-  try {
-    const response = await fetch(`${BASE_URL}/planning/ItemIssue`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(itemIssueData),
+    const response = await axios.get(`${API_BASE}?officeId=${officeId}`, {
+      headers: { accept: "*/*" },
     });
-    if (!response.ok) {
-      throw new Error("Failed to create item issue");
-    }
-    return await response.json();
+    return response.data;
   } catch (error) {
-    console.error("Error creating item issue:", error);
+    console.error("Failed to fetch item issues:", error.message);
+    return [];
+  }
+};
+
+// Get operations by Job Card ID
+export const getOperationsByJobCardId = async (jobCardId) => {
+  try {
+    const response = await axios.get(
+      `https://admin.urest.in:8089/api/planning/JobCard/operations/by-jobcard/${jobCardId}`
+    );
+    return response.data || [];
+  } catch {
+    return [];
+  }
+};
+
+// POST to add a new item issue
+export const addItemIssue = async (itemIssueData) => {
+  try {
+    const response = await axios.post(`${API_BASE}`, itemIssueData);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to add item issue:", error.message);
     throw error;
   }
 };
 
-// ✅ 7. Update Item Issue
+// PUT to update an existing item issue
 export const updateItemIssue = async (id, itemIssueData) => {
   try {
-    const response = await fetch(`${BASE_URL}/planning/ItemIssue/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(itemIssueData),
-    });
-    if (!response.ok) {
-      throw new Error("Failed to update item issue");
-    }
-    return await response.json();
+    const response = await axios.put(`${API_BASE}/${id}`, itemIssueData);
+    return response.data;
   } catch (error) {
-    console.error("Error updating item issue:", error);
+    console.error("Failed to update item issue:", error.message);
     throw error;
   }
 };
 
-// ✅ 8. Delete Item Issue
+// DELETE item issue by id
 export const deleteItemIssue = async (id) => {
   try {
-    const response = await fetch(`${BASE_URL}/planning/ItemIssue/${id}`, {
-      method: "DELETE",
-    });
-    if (!response.ok) {
-      throw new Error("Failed to delete item issue");
-    }
-    return true;
+    await axios.delete(`${API_BASE}/${id}`);
   } catch (error) {
-    console.error("Error deleting item issue:", error);
+    console.error("Failed to delete item issue:", error.message);
     throw error;
   }
 };

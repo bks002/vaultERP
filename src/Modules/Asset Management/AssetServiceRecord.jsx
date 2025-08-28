@@ -15,12 +15,13 @@ import {
     DialogContent,
     DialogActions,
     Button,
-    TextField
+    TextField, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel,MenuItem
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import AddIcon from "@mui/icons-material/Add";
 import { getAllAssets, getServiceDates } from "../../Services/AssetService";
 import { saveServiceRecord, getServiceHistory } from "../../Services/AssetServiceRecord";
+import { getAllEmployees } from "../../Services/EmployeeService";
 import { useSelector } from "react-redux";
 
 export default function ServicePage() {
@@ -30,10 +31,18 @@ export default function ServicePage() {
     const [addDialogOpen, setAddDialogOpen] = useState(false);
     const [serviceHistory, setServiceHistory] = useState([]);
     const [selectedAsset, setSelectedAsset] = useState(null);
+    const [serviceType, setServiceType] = useState("Paid"); // default Paid
+    const getTodayDate = () => {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, "0");
+        const dd = String(today.getDate()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd}`;
+    };
 
     const [newRecord, setNewRecord] = useState({
         assetId: 0,
-        serviceDate: "",
+        serviceDate: getTodayDate(),
         nextServiceDate: "",
         remark: "",
         serviceCost: "",
@@ -45,6 +54,20 @@ export default function ServicePage() {
 
     const officeId = useSelector((state) => state.user.officeId);
     const userId = useSelector((state) => state.user.userId);
+    const [employees, setEmployees] = useState([]);
+
+useEffect(() => {
+    const fetchEmployees = async () => {
+        try {
+            const res = await getAllEmployees(officeId); // you should have a service for this
+            setEmployees(res || []);
+        } catch (err) {
+            console.error("Failed to fetch employees", err);
+        }
+    };
+    fetchEmployees();
+}, []);
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -73,7 +96,7 @@ export default function ServicePage() {
     const handleOpenAddDialog = (assetId) => {
         setNewRecord({
             assetId,
-            serviceDate: "",
+            serviceDate: getTodayDate(),
             nextServiceDate: "",
             remark: "",
             serviceCost: "",
@@ -108,35 +131,50 @@ export default function ServicePage() {
 
             await saveServiceRecord(formData);
             setAddDialogOpen(false);
-            await getServiceDates(officeId);
+            const res = await getServiceDates(officeId);
+        setPassedServices(res.passedServiceDates || []);
+        setUpcomingServices(res.upcomingServiceDates || []);
+
+        // Reset newRecord if needed
+        setNewRecord({
+            assetId: 0,
+            serviceDate: getTodayDate(),
+            nextServiceDate: "",
+            remark: "",
+            serviceCost: "",
+            servicedBy: "",
+            approvedBy: "",
+            imageFile: null,
+            receiptFile: null
+        });
         } catch (error) {
             console.error("Failed to save service record", error);
         }
     };
 
     const openDocument = (base64Data) => {
-  if (!base64Data) return;
+        if (!base64Data) return;
 
-  // Decode base64 string, create byte array
-  const byteCharacters = atob(base64Data);
-  const byteNumbers = new Array(byteCharacters.length);
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i);
-  }
-  const byteArray = new Uint8Array(byteNumbers);
+        // Decode base64 string, create byte array
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
 
-  // Create blob from byte array
-  const blob = new Blob([byteArray], { type: 'application/pdf' });
+        // Create blob from byte array
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
 
-  // Create URL for blob
-  const blobUrl = URL.createObjectURL(blob);
+        // Create URL for blob
+        const blobUrl = URL.createObjectURL(blob);
 
-  // Open URL in new tab
-  window.open(blobUrl, '_blank');
+        // Open URL in new tab
+        window.open(blobUrl, '_blank');
 
-  // Optionally revoke the URL after some time to free memory
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-};
+        // Optionally revoke the URL after some time to free memory
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+    };
 
 
     const renderTable = (title, rows, bgColor) => (
@@ -255,6 +293,23 @@ export default function ServicePage() {
             <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="sm" fullWidth>
                 <DialogTitle>Add Service Record - Asset {selectedAsset}</DialogTitle>
                 <DialogContent dividers>
+                    <FormControl component="fieldset" sx={{ mb: 2 }}>
+                        <FormLabel component="legend">Service Type</FormLabel>
+                        <RadioGroup
+                            row
+                            value={serviceType}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                setServiceType(value);
+                                if (value === "Free") {
+                                    setNewRecord({ ...newRecord, serviceCost: 0 });
+                                }
+                            }}
+                        >
+                            <FormControlLabel value="Free" control={<Radio />} label="Free" />
+                            <FormControlLabel value="Paid" control={<Radio />} label="Paid" />
+                        </RadioGroup>
+                    </FormControl>
                     <TextField
                         label="Service Date"
                         type="date"
@@ -287,6 +342,7 @@ export default function ServicePage() {
                         value={newRecord.serviceCost}
                         onChange={(e) => setNewRecord({ ...newRecord, serviceCost: e.target.value })}
                         sx={{ mb: 2 }}
+                        disabled={serviceType === "Free"}
                     />
                     <TextField
                         label="Serviced By"
@@ -296,12 +352,22 @@ export default function ServicePage() {
                         sx={{ mb: 2 }}
                     />
                     <TextField
+                    select 
                         label="Approved By"
                         fullWidth
                         value={newRecord.approvedBy}
                         onChange={(e) => setNewRecord({ ...newRecord, approvedBy: e.target.value })}
                         sx={{ mb: 2 }}
-                    />
+                    >
+                        <MenuItem value="">
+                            <em>None</em>
+                        </MenuItem>
+                        {employees.map((employee) => (
+                            <MenuItem key={employee.employeeId} value={employee.employeeName}>
+                                {employee.employeeName}
+                            </MenuItem>
+                        ))}
+                    </TextField>
                     <Typography variant="subtitle2" sx={{ mb: 1 }}>
                         Upload Image
                     </Typography>

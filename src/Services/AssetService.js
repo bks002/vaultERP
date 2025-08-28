@@ -3,6 +3,24 @@ import axios from 'axios';
 const API_BASE = "https://admin.urest.in:8089/api/asset/Asset";
 //const API_BASE= "https://localhost:7093/api/asset/Asset";
 
+export const getAssetDetails = async (assetId) => {
+  try {
+    const response = await axios.get(`${API_BASE}/GetCheckOutRecordsByAsset?assetId=${assetId}`);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch asset details');
+  }
+};
+
+export const getAssetsByIds = async (assetIds) => {
+  try {
+    const response = await axios.get(`${API_BASE}/${assetIds}`);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch assets');
+  }
+}
+
 export const getAllAssets = async (officeId) => {
     try {
         const response = await axios.get(`${API_BASE}?officeId=${officeId}`);
