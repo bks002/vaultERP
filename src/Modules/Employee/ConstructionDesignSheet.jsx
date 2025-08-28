@@ -21,9 +21,11 @@ import {
   Paper,
   InputAdornment,
 } from "@mui/material";
+import Autocomplete from "@mui/material/Autocomplete";
+
 import ViewIcon from "@mui/icons-material/Visibility";
 import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit"; // <-- Add this import
+import EditIcon from "@mui/icons-material/Edit";
 import { useSelector } from "react-redux";
 import { getAllOperation } from "../../Services/OperationService.js";
 import { getInternalWorkOrdersByOffice, getInternalWorkOrderProduct } from "../../Services/InternalWorkOrderService.js";
@@ -34,6 +36,7 @@ import {
   createConstruction,
   updateConstructionDesignSheet,
   deleteConstructionDesignSheet,
+  getAllSpecifications, createSpecification
 } from "../../Services/ConstructionDesignSheet.js";
 import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton';
 import SearchIcon from '@mui/icons-material/Search';
@@ -47,13 +50,13 @@ const ConstructionDesignSheet = () => {
 
   const [constructionData, setConstructionData] = useState([]);
 
-  // Dropdown states
+
   const [internalWorkOrders, setInternalWorkOrders] = useState([]);
   const [operations, setOperations] = useState([]);
   const [products, setProducts] = useState([]);
   const [items, setItems] = useState([]);
 
-  // Form fields
+
   const [selectedItem, setSelectedItem] = useState("");
   const [selectedInternalWO, setSelectedInternalWO] = useState("");
   const [selectedOperation, setSelectedOperation] = useState("");
@@ -61,34 +64,70 @@ const ConstructionDesignSheet = () => {
   const [specification, setSpecification] = useState("");
   const [value, setValue] = useState("");
 
-  // Misc
+
   const [productDetailsMap, setProductDetailsMap] = useState({});
   const [isEdit, setIsEdit] = useState(false);
   const [selectedCDS, setSelectedCDS] = useState(null);
 
-  // View mode
+const [specificationOptions, setSpecificationOptions] = useState([]);
   const [viewOperationData, setViewOperationData] = useState([]);
-  // State for multiple spec-values
+
   const [specValues, setSpecValues] = useState([]);
   const [tempSpec, setTempSpec] = useState("");
   const [tempValue, setTempValue] = useState("");
 
-  // Add spec-value row
-  const handleAddSpecValue = () => {
-    if (tempSpec.trim() && tempValue.trim()) {
+const handleAddSpecValue = async () => {
+  if (tempSpec.trim() && tempValue.trim()) {
+    const finalSpec = tempSpec.trim();
+
+    try {
+      // ✅ Save in master only if not exists
+      const exists = specificationOptions.some(
+        (s) => s.toLowerCase() === finalSpec.toLowerCase()
+      );
+
+      if (!exists) {
+        await createSpecification(finalSpec);
+        // ✅ Fresh reload from API so deleted items bhi reflect ho
+        const updatedSpecs = await getAllSpecifications();
+        setSpecificationOptions(updatedSpecs.map(s => s.specificationName));
+      }
+
+      // ✅ Add in local CDS spec-values list
       setSpecValues((prev) => [
         ...prev,
-        { id: Date.now(), specification: tempSpec, value: tempValue }
+        { id: Date.now(), specification: finalSpec, value: tempValue.trim() },
       ]);
+
       setTempSpec("");
       setTempValue("");
+    } catch (err) {
+      console.error("Error saving specification:", err);
     }
-  };
+  }
+};
+
+useEffect(() => {
+  (async () => {
+    const specs = await getAllSpecifications();
+    setSpecificationOptions(specs.map(s => s.specificationName));
+  })();
+}, []);
+
+
 
   // Remove a row
   const handleRemoveSpecValue = (id) => {
     setSpecValues((prev) => prev.filter((row) => row.id !== id));
   };
+
+// Load all specifications on mount
+useEffect(() => {
+  (async () => {
+    const specs = await getAllSpecifications();
+    setSpecificationOptions(specs.map(s => s.specificationName));
+  })();
+}, []);
 
   useEffect(() => {
     if (Number(officeId) > 0) {
@@ -483,6 +522,7 @@ const ConstructionDesignSheet = () => {
                           <DeleteIcon />
                         </IconButton>
                       </Tooltip>
+
                     </TableCell>
                   </TableRow>
                 ))
@@ -579,17 +619,21 @@ const ConstructionDesignSheet = () => {
           {/* Specification & Value Add Section */}
           <Box mt={3}>
             <Stack direction="row" spacing={2}>
-              <TextField
-                label="Specification"
-                value={tempSpec}
-                onChange={(e) => setTempSpec(e.target.value)}
-                fullWidth
-              />
+              <Autocomplete
+  options={const [specificationOptions, setSpecificationOptions] = useState([]);
+}
+  getOptionLabel={(option) => option?.specificationName || ""}  // ✅ FIX
+  renderInput={(params) => (
+    <TextField {...params} label="Select Specification" />
+  )}
+/>
+
               <TextField
                 label="Value"
                 value={tempValue}
                 onChange={(e) => setTempValue(e.target.value)}
                 fullWidth
+                 sx={{ flex: 1 }}   // ✅ Equal width
               />
               <Button variant="contained" onClick={handleAddSpecValue}>
                 Add

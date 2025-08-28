@@ -74,3 +74,31 @@ export const getItemIdsByInternalWoid = async (internalWoid) => {
     return [];
   }
 };
+
+// 🔹 Get all specifications
+export const getAllSpecifications = async () => {
+  try {
+    const res = await axios.get(API_BASE);
+    return res.data || [];
+  } catch (err) {
+    console.error("Failed to fetch specifications:", err);
+    return [];
+  }
+};
+
+// 🔹 Create new specification
+export const createSpecification = async (specificationName) => {
+  try {
+    const payload = {
+      id: 0,
+      specificationName,
+      createdBy: 0,
+      createdOn: new Date().toISOString(),
+    };
+    const res = await axios.post(API_BASE, payload);
+    return res.data;
+  } catch (err) {
+    console.error("Failed to create specification:", err);
+    throw err;
+  }
+};

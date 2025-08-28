@@ -36,8 +36,6 @@ import LeaveMaster from './Modules/Attendance Management/LeaveMaster.jsx';
 import EmployeeLeave from './Modules/Attendance Management/EmployeeLeave.jsx';
 import ItemIssue from "./Modules/Inventory/ItemIssue.jsx";
 
-import ItemIssue from "./Modules/Inventory/ItemIssue.jsx";
-
 import StockRegister from "./Modules/Inventory/StockRegister.jsx";
 import ExpenseReport from "./Modules/Employee/ExpensePage.jsx";
 
