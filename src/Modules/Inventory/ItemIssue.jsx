@@ -104,7 +104,7 @@ const ItemPage = () => {
 
         let empMaster = []
         for (const op of ops || []) {
-          const employees = await getEmployeesByOperation(op.id || op.operationId)
+          const employees = await getEmployeesByOperation(op.id) // use numeric ID
           empMaster = [...empMaster, ...(employees || [])]
         }
         setAllEmployees(empMaster)
@@ -116,7 +116,7 @@ const ItemPage = () => {
     loadData()
   }, [officeId])
 
-  // Edit handler with prefetch and prefill
+  // ✅ Edit handler with correct prefetch
   const handleEdit = async (id) => {
     const row = rows.find(r => r.id === id)
     if (!row) return
@@ -125,26 +125,22 @@ const ItemPage = () => {
     setOpenDialog(true)
 
     try {
-      // Load INWO list
       const inwos = await fetchInternalWorkOrders(officeId)
       setInwoList(inwos || [])
 
-      // Load JobCards for selected INWO
       const jobCards = await fetchJobCardsByInternalWo(row.inwo)
       setJobCardList(jobCards || [])
       setAllJobCards((prev) => [...prev, ...(jobCards || [])])
 
-      // Load Operations for selected JobCard
       const operations = await fetchOperationsByJobCard(row.jobcardId)
       setOperationList(operations || [])
       setAllOperations((prev) => [...prev, ...(operations || [])])
 
-      // Load Employees for selected Operation
+      // ✅ Fetch employees using operation ID
       const employees = await getEmployeesByOperation(row.operation)
       setEmployeeList(employees || [])
       setAllEmployees((prev) => [...prev, ...(employees || [])])
 
-      // Load Items for selected INWO
       const items = await fetchItemsByInternalWoid(row.inwo)
       if (items?.itemIds?.length) {
         const itemDetails = await Promise.all(
@@ -157,7 +153,6 @@ const ItemPage = () => {
         setAllItems((prev) => [...prev, ...itemDetails])
       }
 
-      // Set form data
       setFormData({
         id: row.id,
         inwo: row.inwo,
@@ -313,7 +308,7 @@ const ItemPage = () => {
 
     try {
       if (operationId) {
-        const employees = await getEmployeesByOperation(operationId)
+        const employees = await getEmployeesByOperation(operationId) // ✅ send ID
         setEmployeeList(employees || [])
         setAllEmployees((prev) => [...prev, ...(employees || [])])
       } else {
