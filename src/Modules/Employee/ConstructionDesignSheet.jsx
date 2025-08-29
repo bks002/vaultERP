@@ -41,6 +41,14 @@ import {
 import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton';
 import SearchIcon from '@mui/icons-material/Search';
 
+// 🔹 Permanent row definition (always in table)
+const FIXED_ROW = {
+  id: "fixed-min-thickness",
+  specification: "Min. Thickness",
+  value: "",
+  isFixed: true,
+};
+
 const ConstructionDesignSheet = () => {
   const officeId = useSelector((state) => state.user.officeId);
 
@@ -75,51 +83,126 @@ const [specificationOptions, setSpecificationOptions] = useState([]);
   const [specValues, setSpecValues] = useState([]);
   const [tempSpec, setTempSpec] = useState("");
   const [tempValue, setTempValue] = useState("");
+  const [specifications, setSpecifications] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [newSpecName, setNewSpecName] = useState("");
+  const [gradeCodes, setGradeCodes] = useState([]);
+const [selectedGradeCode, setSelectedGradeCode] = useState("");
+
+
+
+// Load unique grade codes from Constructions API
+useEffect(() => {
+  const fetchGradeCodes = async () => {
+    try {
+      const data = await getConstructionDesignSheets(officeId); // existing API
+      const uniqueCodes = [...new Set(data.map(item => item.gradecode))];
+      setGradeCodes(uniqueCodes);
+    } catch (err) {
+      console.error("Failed to load grade codes:", err);
+    }
+  };
+  fetchGradeCodes();
+}, [officeId]);
+  // 🔹 Load specifications from API
+  useEffect(() => {
+    loadSpecifications();
+  }, []);
+
+  const loadSpecifications = async () => {
+    try {
+      const specs = await getAllSpecifications();
+
+      // Map API data to table rows
+      const mapped = specs.map((s) => ({
+        ...s,
+        value: "",
+        isFixed: false,
+      }));
+
+      // Always include FIXED_ROW at top
+      setSpecifications([FIXED_ROW, ...mapped]);
+    } catch (err) {
+      console.error("Failed to load specifications:", err);
+    }
+  };
+
+  
+
+  const generateGradeCode = () => {
+  const prefix = "AUTO"; // prefix अपनी requirement के हिसाब से बदलें
+  const random = Math.floor(100 + Math.random() * 900); // 3 digit random number
+  return `${prefix}${random}`;
+};
+
 
 const handleAddSpecValue = async () => {
   if (tempSpec.trim() && tempValue.trim()) {
     const finalSpec = tempSpec.trim();
 
     try {
-      // ✅ Save in master only if not exists
-      const exists = specificationOptions.some(
-        (s) => s.toLowerCase() === finalSpec.toLowerCase()
+      // ✅ Check if spec already exists in dropdown (case-insensitive)
+      const existing = specificationOptions.find(
+        (s) =>
+          (typeof s === "string"
+            ? s.toLowerCase()
+            : s?.specificationName?.toLowerCase()) === finalSpec.toLowerCase()
       );
 
-      if (!exists) {
+      if (!existing) {
+        // ✅ Save to backend if completely new
         await createSpecification(finalSpec);
-        // ✅ Fresh reload from API so deleted items bhi reflect ho
+
+        // ✅ Reload master list from API (fresh copy)
         const updatedSpecs = await getAllSpecifications();
-        setSpecificationOptions(updatedSpecs.map(s => s.specificationName));
+        setSpecificationOptions(updatedSpecs.map((s) => s.specificationName));
+      } else {
+        // ⚠️ If exists, always use the original casing (like "Fruit")
+        const properCase =
+          typeof existing === "string"
+            ? existing
+            : existing?.specificationName || finalSpec;
+
+        // ✅ Avoid saving duplicate in master, but allow adding to local CDS table with correct case
+        setSpecValues((prev) => [
+          ...prev,
+          { id: Date.now(), specification: properCase, value: tempValue.trim() },
+        ]);
+
+        setTempSpec("");
+        setTempValue("");
+        return;
       }
 
-      // ✅ Add in local CDS spec-values list
+      // ✅ Add to local CDS list with finalSpec
       setSpecValues((prev) => [
         ...prev,
         { id: Date.now(), specification: finalSpec, value: tempValue.trim() },
       ]);
 
+      // Reset input fields
       setTempSpec("");
       setTempValue("");
     } catch (err) {
-      console.error("Error saving specification:", err);
+      console.error(
+        "Error saving specification:",
+        err.response?.data || err.message
+      );
+      alert("Failed to save specification. Check API payload.");
     }
   }
 };
 
-useEffect(() => {
-  (async () => {
-    const specs = await getAllSpecifications();
-    setSpecificationOptions(specs.map(s => s.specificationName));
-  })();
-}, []);
 
 
 
-  // Remove a row
+
+
   const handleRemoveSpecValue = (id) => {
-    setSpecValues((prev) => prev.filter((row) => row.id !== id));
-  };
+  if (id === "fixed-min-thickness") return; // 🚫 don't remove fixed row
+  setSpecValues((prev) => prev.filter((row) => row.id !== id));
+};
+
 
 // Load all specifications on mount
 useEffect(() => {
@@ -128,6 +211,7 @@ useEffect(() => {
     setSpecificationOptions(specs.map(s => s.specificationName));
   })();
 }, []);
+
 
   useEffect(() => {
     if (Number(officeId) > 0) {
@@ -325,27 +409,32 @@ useEffect(() => {
     }
 
     // For multiple specs
-    if (row.items && row.items.length > 0) {
-      setSpecValues(
-        row.items.map((it) => ({
-          id: it.id,
-          specification: it.specification,
-          value: it.value,
-        }))
-      );
-    } else {
-      setSpecValues([
-        {
-          id: row.id,
-          specification: row.specification,
-          value: row.value,
-        },
-      ]);
-    }
+if (row.items && row.items.length > 0) {
+  setSpecValues([
+    FIXED_ROW, // ✅ always include fixed row
+    ...row.items.map((it) => ({
+      id: it.id,
+      specification: it.specification,
+      value: it.value,
+    })),
+  ]);
+} else {
+  setSpecValues([
+    FIXED_ROW,
+    {
+      id: row.id,
+      specification: row.specification,
+      value: row.value,
+    },
+  ]);
+}
+
 
     setOpenDialog(true);
   };
 
+
+  
   // ---------- Create / Update submit ----------
   const handleSubmit = async () => {
     try {
@@ -363,6 +452,7 @@ useEffect(() => {
         itemId: itemIdNum,
         specification: sv.specification,
         value: sv.value,
+        gradecode: selectedGradeCode || generateGradeCode(),
         officeId: Number(officeId),
         isActive: true,
         createdOn: new Date().toISOString(),
@@ -466,6 +556,7 @@ useEffect(() => {
               setSelectedProduct("");
               setSpecification("");
               setValue("");
+              setSpecValues([FIXED_ROW]); 
               setOpenDialog(true);
             }}
           >
@@ -486,6 +577,7 @@ useEffect(() => {
                 <TableCell>Product</TableCell>
                 <TableCell>Operation</TableCell>
                 <TableCell>Item</TableCell>
+                <TableCell>Grade Code</TableCell>
                 <TableCell align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -506,6 +598,9 @@ useEffect(() => {
                       {items.find((item) => String(item.id) === String(row.itemId))
                         ?.name || "-"}
                     </TableCell>
+                     <TableCell>
+                        {row.gradecode || "-"}
+                      </TableCell>
                     <TableCell align="center">
                       <Tooltip title="View">
                         <IconButton color="primary" onClick={() => handleViewCDS(row)}>
@@ -600,6 +695,20 @@ useEffect(() => {
                 </MenuItem>
               ))}
             </TextField>
+
+                          {/* Grade Code Section */}
+{isEdit && (
+  <TextField
+    label="Grade Code"
+    value={selectedGradeCode}
+    fullWidth
+    sx={{ mt: 2 }}
+    disabled
+  />
+)}
+
+
+
             <TextField
               select
               label="Operation"
@@ -619,14 +728,19 @@ useEffect(() => {
           {/* Specification & Value Add Section */}
           <Box mt={3}>
             <Stack direction="row" spacing={2}>
-              <Autocomplete
-  options={const [specificationOptions, setSpecificationOptions] = useState([]);
-}
-  getOptionLabel={(option) => option?.specificationName || ""}  // ✅ FIX
+             <Autocomplete
+  freeSolo
+  options={specificationOptions} // ✅ master list from API
+  value={tempSpec}
+  onChange={(e, newValue) => setTempSpec(newValue || "")}
+  onInputChange={(e, newInputValue) => setTempSpec(newInputValue)}
   renderInput={(params) => (
-    <TextField {...params} label="Select Specification" />
+    <TextField {...params} label="Specification" fullWidth />
   )}
+  sx={{ flex: 1 }}
 />
+
+
 
               <TextField
                 label="Value"
@@ -654,22 +768,39 @@ useEffect(() => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {specValues.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>{row.specification}</TableCell>
-                      <TableCell>{row.value}</TableCell>
-                      <TableCell>
-                        <Button
-                          color="error"
-                          size="small"
-                          onClick={() => handleRemoveSpecValue(row.id)}
-                        >
-                          Delete
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
+  {specValues.map((row) => (
+    <TableRow key={row.id}>
+      <TableCell>{row.specification}</TableCell>
+      <TableCell>
+        <TextField
+          size="small"
+          fullWidth
+          value={row.value}
+          sx={{ width: 150 }} 
+          onChange={(e) =>
+            setSpecValues((prev) =>
+              prev.map((r) =>
+                r.id === row.id ? { ...r, value: e.target.value } : r
+              )
+            )
+          }
+        />
+      </TableCell>
+      <TableCell>
+        {!row.isFixed && ( // 🚫 Hide delete for fixed row
+          <Button
+            color="error"
+            size="small"
+            onClick={() => handleRemoveSpecValue(row.id)}
+          >
+            Delete
+          </Button>
+        )}
+      </TableCell>
+    </TableRow>
+  ))}
+</TableBody>
+
               </Table>
             </Box>
           )}
