@@ -74,3 +74,33 @@ export const getItemIdsByInternalWoid = async (internalWoid) => {
     return [];
   }
 };
+
+const API_BASE_SPECIFICATION = "https://admin.urest.in:8089/api/planning";
+// 🔹 Get all specifications
+export const getAllSpecifications = async () => {
+  try {
+    const res = await axios.get(`${API_BASE_SPECIFICATION}/Specification`);
+    return res.data || [];
+  } catch (err) {
+    console.error("Failed to fetch specifications:", err);
+    return [];
+  }
+};
+
+// 🔹 Create new specification
+export const createSpecification = async (specificationName) => {
+  try {
+    const payload = {
+      id: 0,
+      specificationName,
+      createdBy: 1,
+      createdOn: new Date().toISOString(),
+    };
+    const res = await axios.post(`${API_BASE_SPECIFICATION}/Specification`, payload);
+    console.log("✅ createSpecification Response:", res.data);
+    return res.data;
+  } catch (err) {
+    console.error("❌ Failed to create specification:", err.response?.data || err.message);
+    throw err;
+  }
+};
