@@ -242,7 +242,7 @@ const AssetCheckinout = () => {
   return (
     <Box p={2}>
       <Typography variant="h5" gutterBottom>
-        Asset Spare Repair
+        Asset Maintenance
       </Typography>
 
       {/* Assets Table */}

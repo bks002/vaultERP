@@ -317,7 +317,7 @@ const ConstructionDesignSheet = () => {
 
       // Build array for API
       const payload = specValues.map((sv) => ({
-        id: selectedCDS ? selectedCDS.id : 0,
+        id: sv ? sv.id : 0,
         internalWoid: internalWoidId,
         operationId: operationIdNum,
         productId: productIdNum,
@@ -333,6 +333,7 @@ const ConstructionDesignSheet = () => {
       }));
 
       if (selectedCDS) {
+        console.log(payload);
         // Update (PUT) - still array if your API expects it
         await updateConstructionDesignSheet(internalWoidId, payload);
         alert("Construction data updated successfully!");
