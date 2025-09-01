@@ -65,12 +65,11 @@ export const createOperation = async (operationData) => {
 
 export const getEmployeesByOperation = async (operationId) => {
   try {
-    const response = await axios.get(
-      `${API_BASE}/EmpOps/employees-by-operation`,
-      {
-        params: { operationId },
-      }
-    );
+
+    const response = await axios.get(`${API_BASE}/EmpOps/employees-by-operation`, {
+      params: { operationId },
+    });
+
     return response.data;
   } catch (error) {
     console.error("Failed to fetch employees by operation:", error);
