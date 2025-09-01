@@ -22,16 +22,18 @@ import {
   Stack,
   Box,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import InputAdornment from "@mui/material/InputAdornment";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useSelector } from "react-redux";
-
 import {
   getJobCards,
   createJobCard,
   updateJobCard,
   deleteJobCard,
+  getConstructionByGrade,
 } from "../../Services/JobCard";
 import { getAllShift } from "../../Services/ShiftService";
 import { getInternalWorkOrdersByOffice } from "../../Services/InternalWorkOrderService";
@@ -39,35 +41,41 @@ import { getAllAssets } from "../../Services/AssetService";
 import { getAllItems } from "../../Services/InventoryService";
 import { getAllOperation } from "../../Services/OperationService";
 import { getContructionByitemoperationinwo } from "../../Services/ConstructionDesignSheet";
-import { getEmployeesByOperation } from "../../Services/OperationService"; // New API
+import { getEmployeesByOperation } from "../../Services/OperationService";
 import { getAllEmployees } from "../../Services/EmployeeService";
+import { getItemById } from "../../Services/InventoryService";
+import { getAssetsByOperation } from "../../Services/AssetOperation";
 
 const JobCardMaster = () => {
   const officeId = useSelector((state) => state.user.officeId);
-
   const [jobCards, setJobCards] = useState([]);
   const [shifts, setShifts] = useState([]);
   const [assets, setAssets] = useState([]);
   const [internalWos, setInternalWos] = useState([]);
-  const [compounds, setCompounds] = useState([]);
   const [operations, setOperations] = useState([]);
-  const [allEmployees, setAllEmployees] = useState([]); // All employees fetched initially
-  const [filteredEmployees, setFilteredEmployees] = useState([]); // Employees filtered by operation
+  const [allEmployees, setAllEmployees] = useState([]);
+  const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [constructionData, setConstructionData] = useState([]);
-
+  const [compoundName, setCompoundName] = useState("");
+  const [filteredAssetsByOperation, setFilteredAssetsByOperation] = useState(
+    []
+  );
+  const [gradeCodes, setGradeCodes] = useState([]);
+  const [selectedGrade, setSelectedGrade] = useState("");
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({});
   const [editId, setEditId] = useState(null);
   const [viewOpen, setViewOpen] = useState(false);
   const [viewData, setViewData] = useState({});
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Helper for current date string YYYY-MM-DD
-  const getCurrentDateString = () => {
-    const d = new Date();
-    return d.toISOString().substring(0, 10);
+  const getCurrentDateString = () => new Date().toISOString().substring(0, 10);
+
+  const getGradeCodeNameByItemId = (itemId) => {
+    const foundGrade = gradeCodes.find((g) => g.itemId === itemId);
+    return foundGrade ? foundGrade.gradecode : "-";
   };
 
-  // Load initial data including employees
   useEffect(() => {
     if (officeId) loadData();
   }, [officeId]);
@@ -78,7 +86,7 @@ const JobCardMaster = () => {
         shiftData,
         assetData,
         inwoData,
-        compoundData,
+        itemData,
         operationData,
         employeeData,
       ] = await Promise.all([
@@ -89,29 +97,73 @@ const JobCardMaster = () => {
         getAllOperation(officeId),
         getAllEmployees(officeId),
       ]);
-
       setShifts(shiftData);
       setAssets(assetData);
       setInternalWos(inwoData);
-      setCompounds(compoundData);
       setOperations(operationData);
       setAllEmployees(employeeData);
+      const jobCardsData = await getJobCards(officeId);
+      setJobCards(jobCardsData);
 
-      const jcData = await getJobCards(officeId);
-      setJobCards(jcData);
+      // Fetch grade codes for all job cards
+      const pairs = Array.from(
+        new Set(jobCardsData.map((jc) => `${jc.internalWo}-${jc.operationId}`))
+      );
+      const allGradeCodes = [];
+      for (const pair of pairs) {
+        const [internalWo, operationId] = pair.split("-");
+        if (internalWo && operationId) {
+          const data = await getConstructionByGrade(
+            parseInt(internalWo),
+            parseInt(operationId)
+          );
+          if (data && data.length) {
+            allGradeCodes.push(...data);
+          }
+        }
+      }
+      setGradeCodes(allGradeCodes);
     } catch (err) {
       console.error("Failed to load data:", err);
     }
   };
 
-  // Fetch employees by operation and set filteredEmployees
+  useEffect(() => {
+    const fetchGradeCodesForJobCards = async () => {
+      if (!jobCards.length) return;
+      try {
+        const pairs = Array.from(
+          new Set(jobCards.map((jc) => `${jc.internalWo}-${jc.operationId}`))
+        );
+        const allGradeCodes = [];
+        for (const pair of pairs) {
+          const [internalWo, operationId] = pair.split("-");
+          if (internalWo && operationId) {
+            const data = await getConstructionByGrade(
+              parseInt(internalWo),
+              parseInt(operationId)
+            );
+            if (data && data.length) {
+              allGradeCodes.push(...data);
+            }
+          }
+        }
+        setGradeCodes(allGradeCodes);
+      } catch (error) {
+        console.error("Failed to preload grade codes for job cards:", error);
+        setGradeCodes([]);
+      }
+    };
+
+    fetchGradeCodesForJobCards();
+  }, [jobCards]);
+
   const fetchEmployeesForOperation = async (operationId) => {
-    if (!operationId) {
-      // If no operation selected, show all employees or empty list
-      setFilteredEmployees([]);
-      return;
-    }
     try {
+      if (!operationId) {
+        setFilteredEmployees([]);
+        return;
+      }
       const data = await getEmployeesByOperation(operationId);
       setFilteredEmployees(data);
     } catch (err) {
@@ -121,49 +173,30 @@ const JobCardMaster = () => {
   };
 
   const handleView = async (jobCard) => {
-    const updatedData = {
+    setViewData({
       ...jobCard,
       internalWoId: jobCard.internalWo,
-      shiftId: jobCard.shiftId,
-      assetId: jobCard.assetId,
       compoundId: jobCard.itemId,
-      operationId: jobCard.operationId,
-      operatorId: jobCard.operatorId,
       date: jobCard.date?.substring(0, 10) || "",
-      isCode: jobCard.isCode,
       compacted: jobCard.compected === 1 ? "Yes" : "No",
-      diaOfAMWire: jobCard.noDiaOfAmWire,
-      payOffDNo: jobCard.payOffDNo,
-      takeUpDrumSize: jobCard.takeUpDrumSize,
-      embossing: jobCard.embrossing,
-      remark: jobCard.remark,
-    };
-
-    setViewData(updatedData);
-
-    // For view, also fetch employees by operation to limit operator dropdown
-    await fetchEmployeesForOperation(updatedData.operationId);
-
-    if (
-      updatedData.internalWoId &&
-      updatedData.compoundId &&
-      updatedData.operationId
-    ) {
+      diaOfAMWire: jobCard.noDiaOfAmWire || "", // <-- correct mapping
+      embossing: jobCard.embrossing || "", // <-- correct mapping (fix spelling)
+    });
+    await fetchEmployeesForOperation(jobCard.operationId);
+    if (jobCard.internalWo && jobCard.itemId && jobCard.operationId) {
       try {
         const data = await getContructionByitemoperationinwo(
-          updatedData.internalWoId,
-          updatedData.compoundId,
-          updatedData.operationId
+          jobCard.internalWo,
+          jobCard.itemId,
+          jobCard.operationId
         );
         setConstructionData(data);
-      } catch (err) {
-        console.error("Failed to fetch construction data for view:", err);
+      } catch {
         setConstructionData([]);
       }
     } else {
       setConstructionData([]);
     }
-
     setViewOpen(true);
   };
 
@@ -179,27 +212,15 @@ const JobCardMaster = () => {
       const mappedData = {
         ...jobCard,
         internalWoId: jobCard.internalWo,
-        shiftId: jobCard.shiftId,
-        assetId: jobCard.assetId,
         compoundId: jobCard.itemId,
-        operationId: jobCard.operationId,
-        operatorId: jobCard.operatorId,
         date: jobCard.date?.substring(0, 10) || "",
-        isCode: jobCard.isCode || "",
         compacted: jobCard.compected === 1 ? "Yes" : "No",
-        diaOfAMWire: jobCard.noDiaOfAmWire || "",
-        payOffDNo: jobCard.payOffDNo || "",
-        takeUpDrumSize: jobCard.takeUpDrumSize || "",
-        embossing: jobCard.embrossing || "",
-        remark: jobCard.remark || "",
+        diaOfAMWire: jobCard.noDiaOfAmWire || "", // <-- add this
+        embossing: jobCard.embrossing || "", // <-- add this (fix spelling)
       };
-
       setFormData(mappedData);
       setEditId(jobCard.id);
-
-      // Fetch filtered employees matching operation (for edit)
       await fetchEmployeesForOperation(mappedData.operationId);
-
       if (
         mappedData.internalWoId &&
         mappedData.compoundId &&
@@ -212,44 +233,111 @@ const JobCardMaster = () => {
             mappedData.operationId
           );
           setConstructionData(data);
-        } catch (err) {
-          console.error("Failed to fetch construction data for edit:", err);
+        } catch {
           setConstructionData([]);
         }
-      } else {
-        setConstructionData([]);
+
+        try {
+          const gradeData = await getConstructionByGrade(
+            mappedData.internalWoId,
+            mappedData.operationId
+          );
+          setGradeCodes(gradeData || []);
+          const gradeObj = gradeData.find(
+            (item) => item.itemId === mappedData.compoundId
+          );
+          setSelectedGrade(gradeObj?.gradecode || "");
+          if (gradeObj?.itemId) {
+            const itemData = await getItemById(gradeObj.itemId);
+            setCompoundName(itemData?.name || "");
+          } else {
+            setCompoundName("");
+          }
+        } catch {
+          setGradeCodes([]);
+          setSelectedGrade("");
+          setCompoundName("");
+        }
       }
     } else {
-      // Add new job card: reset form
-      setFormData({ date: getCurrentDateString() }); // Set date to current by default
+      setFormData({ date: getCurrentDateString() });
       setEditId(null);
-      setFilteredEmployees([]); // No filtered employees yet
+      setFilteredEmployees([]);
       setConstructionData([]);
+      setGradeCodes([]);
+      setSelectedGrade("");
+      setCompoundName("");
     }
-
     setOpen(true);
   };
 
-  const handleClose = () => {
+  const handleClose = async () => {
     setOpen(false);
     setFormData({});
     setEditId(null);
     setFilteredEmployees([]);
     setConstructionData([]);
+    setSelectedGrade("");
+    setCompoundName("");
+    // Reload grade codes for all job cards after closing dialog
+    try {
+      const pairs = Array.from(
+        new Set(jobCards.map((jc) => `${jc.internalWo}-${jc.operationId}`))
+      );
+      const allGradeCodes = [];
+      for (const pair of pairs) {
+        const [internalWo, operationId] = pair.split("-");
+        if (internalWo && operationId) {
+          const data = await getConstructionByGrade(
+            parseInt(internalWo),
+            parseInt(operationId)
+          );
+          if (data && data.length) {
+            allGradeCodes.push(...data);
+          }
+        }
+      }
+      setGradeCodes(allGradeCodes);
+    } catch {
+      setGradeCodes([]);
+    }
   };
 
   const handleChange = async (e) => {
     const { name, value } = e.target;
     const updatedForm = { ...formData, [name]: value };
     setFormData(updatedForm);
-
-    // If operation changes, fetch operator options dynamically
     if (name === "operationId") {
       await fetchEmployeesForOperation(value);
-      // Reset operatorId when operation changes
-      setFormData((prev) => ({ ...prev, operatorId: "" }));
+      try {
+        const assetsByOp = await getAssetsByOperation(value);
+        setFilteredAssetsByOperation(assetsByOp);
+      } catch {
+        setFilteredAssetsByOperation([]);
+      }
+      setFormData((prev) => ({ ...prev, operatorId: "", assetId: "" }));
+      setSelectedGrade("");
+      setGradeCodes([]);
+      setCompoundName("");
+      setConstructionData([]);
     }
-
+    if (name === "internalWoId" || name === "operationId") {
+      setSelectedGrade("");
+      setConstructionData([]);
+      setGradeCodes([]);
+      setCompoundName("");
+      if (updatedForm.internalWoId && updatedForm.operationId) {
+        try {
+          const data = await getConstructionByGrade(
+            updatedForm.internalWoId,
+            updatedForm.operationId
+          );
+          setGradeCodes(data || []);
+        } catch {
+          setGradeCodes([]);
+        }
+      }
+    }
     if (
       updatedForm.internalWoId &&
       updatedForm.compoundId &&
@@ -262,12 +350,38 @@ const JobCardMaster = () => {
           updatedForm.operationId
         );
         setConstructionData(data);
-      } catch (err) {
-        console.error("Failed to fetch construction data:", err);
+      } catch {
         setConstructionData([]);
       }
     } else {
       setConstructionData([]);
+    }
+  };
+
+  const handleGradeChange = async (e) => {
+    const gradeCode = e.target.value;
+    setSelectedGrade(gradeCode);
+    const gradeObj = gradeCodes.find((item) => item.gradecode === gradeCode);
+    setFormData((prev) => ({
+      ...prev,
+      gradeCode,
+      compoundId: gradeObj?.itemId || "",
+    }));
+    if (gradeObj) {
+      setConstructionData([gradeObj]);
+      if (gradeObj.itemId) {
+        try {
+          const itemData = await getItemById(gradeObj.itemId);
+          setCompoundName(itemData?.name || "");
+        } catch {
+          setCompoundName("");
+        }
+      } else {
+        setCompoundName("");
+      }
+    } else {
+      setConstructionData([]);
+      setCompoundName("");
     }
   };
 
@@ -296,13 +410,11 @@ const JobCardMaster = () => {
         updatedOn: formData.updatedOn || new Date().toISOString(),
         operationId: formData.operationId || 0,
       };
-
       if (editId) {
         await updateJobCard(editId, payload);
       } else {
         await createJobCard(payload);
       }
-
       await loadData();
       handleClose();
     } catch (err) {
@@ -320,11 +432,47 @@ const JobCardMaster = () => {
       }
     }
   };
-  
- const getDateInputProps = () => {
-  // No restrictions on date input (user can pick any date)
-  return {};
-};
+
+  // Filter job cards based on search term (across all visible columns)
+  const filteredJobCards = jobCards.filter((jc) => {
+    const internalWoName =
+      internalWos.find((i) => i.id === (jc.internalWoId || jc.internalWo))
+        ?.name ||
+      jc.internalWoId ||
+      jc.internalWo ||
+      "";
+    const shiftName =
+      shifts.find((s) => s.shiftId === jc.shiftId)?.shiftName ||
+      jc.shiftId ||
+      "";
+    const machineName =
+      assets.find((a) => a.assetId === jc.assetId)?.assetName ||
+      jc.assetId ||
+      "";
+    const gradeCode = getGradeCodeNameByItemId(jc.itemId) || "";
+    const operationName =
+      operations.find((o) => o.operationId === jc.operationId)?.operationName ||
+      jc.operationId ||
+      "";
+    const operatorName =
+      allEmployees.find((e) => e.employeeId === jc.operatorId)?.employeeName ||
+      jc.operatorId ||
+      "";
+    const date = jc.date?.substring(0, 10) || "";
+
+    const search = searchTerm.toLowerCase();
+
+    return (
+      (internalWoName + "").toLowerCase().includes(search) ||
+      (shiftName + "").toLowerCase().includes(search) ||
+      (machineName + "").toLowerCase().includes(search) ||
+      (gradeCode + "").toLowerCase().includes(search) ||
+      (operationName + "").toLowerCase().includes(search) ||
+      (operatorName + "").toLowerCase().includes(search) ||
+      (date + "").toLowerCase().includes(search) ||
+      (jc.isCode + "").toLowerCase().includes(search)
+    );
+  });
 
   return (
     <Container>
@@ -336,6 +484,21 @@ const JobCardMaster = () => {
       >
         <Typography variant="h4">Job Card Master</Typography>
         <Box display="flex" alignItems="center" gap={2}>
+          {/* Search Bar */}
+          <TextField
+            size="small"
+            placeholder="Search"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ minWidth: 220 }}
+          />
           <Button
             variant="contained"
             color="primary"
@@ -354,7 +517,7 @@ const JobCardMaster = () => {
               <TableCell>Internal WO</TableCell>
               <TableCell>Shift</TableCell>
               <TableCell>Machine</TableCell>
-              <TableCell>Compound</TableCell>
+              <TableCell>Grade Code</TableCell>
               <TableCell>Operation</TableCell>
               <TableCell>Operator Name</TableCell>
               <TableCell>Date</TableCell>
@@ -362,7 +525,14 @@ const JobCardMaster = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {jobCards.map((jc) => (
+            {filteredJobCards.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={8} align="center">
+                  No records found
+                </TableCell>
+              </TableRow>
+            )}
+            {filteredJobCards.map((jc) => (
               <TableRow key={jc.id}>
                 <TableCell>
                   {internalWos.find(
@@ -379,9 +549,7 @@ const JobCardMaster = () => {
                   {assets.find((a) => a.assetId === jc.assetId)?.assetName ||
                     jc.assetId}
                 </TableCell>
-                <TableCell>
-                  {compounds.find((c) => c.id === jc.itemId)?.name || jc.itemId}
-                </TableCell>
+                <TableCell>{getGradeCodeNameByItemId(jc.itemId)}</TableCell>
                 <TableCell>
                   {operations.find((o) => o.operationId === jc.operationId)
                     ?.operationName || jc.operationId}
@@ -413,23 +581,15 @@ const JobCardMaster = () => {
                 </TableCell>
               </TableRow>
             ))}
-            {jobCards.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={8} align="center">
-                  No records found
-                </TableCell>
-              </TableRow>
-            )}
           </TableBody>
         </Table>
       </TableContainer>
 
-      {/* Dialog */}
+      {/* Add/Edit Dialog */}
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
         <DialogTitle>{editId ? "Edit Job Card" : "Add Job Card"}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
-            {/* Internal WO */}
             <TextField
               select
               fullWidth
@@ -444,7 +604,6 @@ const JobCardMaster = () => {
                 </MenuItem>
               ))}
             </TextField>
-
             <TextField
               fullWidth
               label="Is Code"
@@ -452,7 +611,6 @@ const JobCardMaster = () => {
               value={formData.isCode || ""}
               onChange={handleChange}
             />
-
             <TextField
               fullWidth
               type="date"
@@ -461,10 +619,7 @@ const JobCardMaster = () => {
               InputLabelProps={{ shrink: true }}
               value={formData.date || ""}
               onChange={handleChange}
-              {...getDateInputProps()}
             />
-
-            {/* Operation */}
             <TextField
               select
               fullWidth
@@ -479,8 +634,6 @@ const JobCardMaster = () => {
                 </MenuItem>
               ))}
             </TextField>
-
-            {/* Operator Name */}
             <TextField
               select
               fullWidth
@@ -489,7 +642,6 @@ const JobCardMaster = () => {
               value={formData.operatorId || ""}
               onChange={handleChange}
             >
-              {/* Show filtered employees by selected operation */}
               {(filteredEmployees.length > 0 ? filteredEmployees : []).map(
                 (e) => (
                   <MenuItem key={e.employeeId} value={e.employeeId}>
@@ -498,28 +650,24 @@ const JobCardMaster = () => {
                 )
               )}
             </TextField>
-
-            {/* Compound */}
             <TextField
               select
               fullWidth
-              label="Compound"
-              name="compoundId"
-              value={formData.compoundId || ""}
-              onChange={handleChange}
+              label="Grade Code"
+              name="gradeCode"
+              value={selectedGrade}
+              onChange={handleGradeChange}
             >
-              {compounds.map((c) => (
-                <MenuItem key={c.id} value={c.id}>
-                  {c.name}
+              {gradeCodes.map((g) => (
+                <MenuItem key={g.gradecode} value={g.gradecode}>
+                  {g.gradecode}
                 </MenuItem>
               ))}
             </TextField>
-
-            {/* Construction Data Table */}
-            {constructionData.length > 0 && (
+            {selectedGrade && constructionData.length > 0 && (
               <TableContainer component={Paper} sx={{ mt: 3 }}>
                 <Typography variant="subtitle1" sx={{ p: 1 }}>
-                  Technical Specifications
+                  Compound {compoundName && ` - ${compoundName}`}
                 </Typography>
                 <Table size="small">
                   <TableHead>
@@ -529,20 +677,18 @@ const JobCardMaster = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {constructionData.flatMap((row) =>
-                      row.specifications.map((spec) => (
+                    {constructionData
+                      .find((item) => item.gradecode === selectedGrade)
+                      ?.specifications.map((spec) => (
                         <TableRow key={spec.id}>
                           <TableCell>{spec.specification}</TableCell>
                           <TableCell>{spec.value}</TableCell>
                         </TableRow>
-                      ))
-                    )}
+                      ))}
                   </TableBody>
                 </Table>
               </TableContainer>
             )}
-
-            {/* Machine */}
             <TextField
               select
               fullWidth
@@ -551,14 +697,15 @@ const JobCardMaster = () => {
               value={formData.assetId || ""}
               onChange={handleChange}
             >
-              {assets.map((a) => (
+              {(filteredAssetsByOperation.length > 0
+                ? filteredAssetsByOperation
+                : assets
+              ).map((a) => (
                 <MenuItem key={a.assetId} value={a.assetId}>
                   {a.assetName}
                 </MenuItem>
               ))}
             </TextField>
-
-            {/* Shift */}
             <TextField
               select
               fullWidth
@@ -573,8 +720,6 @@ const JobCardMaster = () => {
                 </MenuItem>
               ))}
             </TextField>
-
-            {/* Compacted */}
             <TextField
               select
               fullWidth
@@ -586,7 +731,6 @@ const JobCardMaster = () => {
               <MenuItem value="Yes">Yes</MenuItem>
               <MenuItem value="No">No</MenuItem>
             </TextField>
-
             <TextField
               fullWidth
               label="Dia of AM Wire/Strip"
@@ -639,7 +783,6 @@ const JobCardMaster = () => {
         <DialogTitle>View Job Card</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
-            {/* Internal WO */}
             <TextField
               select
               fullWidth
@@ -654,7 +797,6 @@ const JobCardMaster = () => {
                 </MenuItem>
               ))}
             </TextField>
-
             <TextField
               fullWidth
               label="Is Code"
@@ -662,7 +804,6 @@ const JobCardMaster = () => {
               value={viewData.isCode || ""}
               disabled
             />
-
             <TextField
               fullWidth
               type="date"
@@ -672,7 +813,6 @@ const JobCardMaster = () => {
               value={viewData.date || ""}
               disabled
             />
-
             <TextField
               select
               fullWidth
@@ -687,8 +827,6 @@ const JobCardMaster = () => {
                 </MenuItem>
               ))}
             </TextField>
-
-            {/* Operator Name disabled */}
             <TextField
               select
               fullWidth
@@ -697,7 +835,6 @@ const JobCardMaster = () => {
               value={viewData.operatorId || ""}
               disabled
             >
-              {/* Show filtered employees by operation */}
               {(filteredEmployees.length > 0 ? filteredEmployees : []).map(
                 (e) => (
                   <MenuItem key={e.employeeId} value={e.employeeId}>
@@ -706,23 +843,12 @@ const JobCardMaster = () => {
                 )
               )}
             </TextField>
-
             <TextField
-              select
               fullWidth
-              label="Compound"
-              name="compoundId"
-              value={viewData.compoundId || ""}
+              label="Grade Code"
+              value={getGradeCodeNameByItemId(viewData.compoundId)}
               disabled
-            >
-              {compounds.map((c) => (
-                <MenuItem key={c.id} value={c.id}>
-                  {c.name}
-                </MenuItem>
-              ))}
-            </TextField>
-
-            {/* Construction Data Table */}
+            />
             {constructionData.length > 0 && (
               <TableContainer component={Paper} sx={{ mt: 3 }}>
                 <Typography variant="subtitle1" sx={{ p: 1 }}>
@@ -748,7 +874,6 @@ const JobCardMaster = () => {
                 </Table>
               </TableContainer>
             )}
-
             <TextField
               select
               fullWidth
@@ -763,7 +888,6 @@ const JobCardMaster = () => {
                 </MenuItem>
               ))}
             </TextField>
-
             <TextField
               select
               fullWidth
@@ -778,7 +902,6 @@ const JobCardMaster = () => {
                 </MenuItem>
               ))}
             </TextField>
-
             <TextField
               select
               fullWidth
@@ -790,7 +913,6 @@ const JobCardMaster = () => {
               <MenuItem value="Yes">Yes</MenuItem>
               <MenuItem value="No">No</MenuItem>
             </TextField>
-
             <TextField
               fullWidth
               label="Dia of AM Wire/Strip"
