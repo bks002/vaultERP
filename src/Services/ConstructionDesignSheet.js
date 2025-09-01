@@ -25,13 +25,24 @@ export const createConstruction = async (constructionData) => {
   }
 };
 
-// Update existing Construction Design Sheet
 export const updateConstructionDesignSheet = async (id, constructionData) => {
   try {
-    const response = await axios.put(`${API_BASE}/${id}`, constructionData);
+    const response = await axios.put(
+      `${API_BASE}/${id}`,
+      Array.isArray(constructionData) ? constructionData : [constructionData], // ✅ ensure array
+      {
+        headers: { "Content-Type": "application/json" }, // ✅ tell backend it's JSON
+        withCredentials: false
+      }
+    );
     return response.data;
   } catch (error) {
-    console.error("Error updating construction design sheet:", error);
+    if (error.response) {
+      console.error("API Error:", error.response.data);
+      console.error("Status:", error.response.status);
+    } else {
+      console.error("Axios Error:", error.message);
+    }
     throw error;
   }
 };
