@@ -695,19 +695,16 @@ if (row.items && row.items.length > 0) {
                 </MenuItem>
               ))}
             </TextField>
-
                           {/* Grade Code Section */}
-{isEdit && (
-  <TextField
-    label="Grade Code"
-    value={selectedGradeCode}
-    fullWidth
-    sx={{ mt: 2 }}
-    disabled
-  />
-)}
-
-
+                          {isEdit && (
+                            <TextField
+                              label="Grade Code"
+                              value={selectedGradeCode}
+                              fullWidth
+                              sx={{ mt: 2 }}
+                              disabled
+                            />
+                          )}
 
             <TextField
               select
