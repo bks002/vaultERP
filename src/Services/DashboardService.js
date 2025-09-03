@@ -2,13 +2,7 @@ import axios from 'axios';
 
 const API_BASE_URL = 'https://admin.urest.in:8089/api';
 
-/**
- * Get attendance summary for a single department
- * @param {number} officeId 
- * @param {string} monthYear - format 'YYYY-MM'
- * @param {string} department 
- * @returns {Promise<object>}
- */
+// ✅ Get attendance summary for single department
 export const getAttendanceSummary = async (officeId, monthYear, department) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/AttendanceSummary/status-summary`, {
@@ -21,18 +15,11 @@ export const getAttendanceSummary = async (officeId, monthYear, department) => {
   }
 };
 
-/**
- * Get attendance summary for multiple departments
- * @param {number} officeId 
- * @param {string} monthYear - format 'YYYY-MM'
- * @param {string[]} departments 
- * @returns {Promise<object>} - { departmentName: chartData }
- */
+// ✅ Get attendance summary for multiple departments
 export const getAttendanceSummaryForDepartments = async (officeId, monthYear, departments) => {
   const results = {};
   for (const dept of departments) {
     const data = await getAttendanceSummary(officeId, monthYear, dept);
-    console.log(`Data for ${dept}:`, data);
     if (data) {
       results[dept] = [
         { name: 'Present', value: data.presentCount, color: '#279a83' },
@@ -42,4 +29,23 @@ export const getAttendanceSummaryForDepartments = async (officeId, monthYear, de
     }
   }
   return results;
+};
+// ✅ Fetch Service Due Summary (by date range)
+export const getServiceDueSummary = async (fromDate, toDate) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/assetservice/AssetServiceRecord/GetServiceDueSummary`,
+      {
+        params: {
+          filterType: "date",
+          fromDate,
+          toDate,
+        },
+      }
+    );
+    return response.data; // { summary, data }
+  } catch (error) {
+    console.error("Error fetching service due summary:", error);
+    throw error;
+  }
 };
