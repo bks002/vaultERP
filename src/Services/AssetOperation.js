@@ -33,3 +33,14 @@ export const OperationMapping = async ({ assetId, operationIds, updatedBy }) => 
     throw new Error(error.message || 'Failed to map operations');
   }
 };
+
+export const getAssetsByOperation = async (operationId) => {
+  try {
+    const response = await fetch(`${API_BASE}assets-by-operation?operationId=${operationId}`);
+    if (!response.ok) throw new Error("Failed to fetch assets by operation");
+    return await response.json();
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+};
