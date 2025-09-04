@@ -7,39 +7,12 @@ import {
 } from "recharts";
 import {  CartesianGrid, } from "recharts";
 import { getAttendanceSummaryForDepartments } from '../../Services/DashboardService';
-import { getServiceDueSummary } from '../../Services/DashboardService';
+import { getServiceDueSummary, getExpenseReport, getMinStockAll } from '../../Services/DashboardService';
 import { useSelector } from "react-redux";
 
 
 const departments = ["IT", "HR", "Operation"];
-const months = ["2025-01","2025-02","2025-03","2025-04","2025-05","2025-06", "2025-07", "2025-08","2025-09","2025-10","2025-11","2025-12"];
-const barData = [
-  {
-    year: "2020",
-    currentLiabilities: 8.5,
-    nonCurrentLiabilities: 20,
-    
-  },
-  {
-    year: "2021",
-    currentLiabilities: 8.5,
-    nonCurrentLiabilities: 20,
-    
-  },
-  {
-    year: "2022",
-    currentLiabilities: 7,
-    nonCurrentLiabilities: 19,
-   
-  },
-  {
-    year: "2023",
-     currentLiabilities: 7,
-    nonCurrentLiabilities: 19,
-   
-    
-  },
-];
+
 
 
 
@@ -48,32 +21,106 @@ const DepartmentAttendanceDashboard = () => {
  const [fromDate, setFromDate] = useState("2025-01-01");
   const [toDate, setToDate] = useState("2025-12-31");
   const officeId = useSelector((state) => state.user.officeId);
+   const [minStockData, setMinStockData] = useState([]);
 const [assetServiceSummary, setAssetServiceSummary] = useState({ overdue: 0, upcoming: 0, total: 0 });
-
+  const [expenseData, setExpenseData] = useState([]);
   const [attendanceData, setAttendanceData] = useState({});
   const [assetServiceData, setAssetServiceData] = useState([]);  
   const [loading, setLoading] = useState(false);
-  
-
+const [attendanceChartData, setAttendanceChartData] = useState([]);
+   // ✅ Fetch Min Stock API data
   useEffect(() => {
-    const fetchData = async () => {
-      let finalData = [];
-      for (let month of months) {
-        let row = { month };
-        for (let dept of departments) {
-          const res = await getAttendanceSummaryForDepartments(officeId, month, [dept]);
-          if (res && res[dept]) {
-            // 👇 Example: Only Present count add kar raha hu
-            row[dept] = res[dept].reduce((sum, item) => sum + item.value, 0); 
+    const fetchMinStock = async () => {
+      if (!fromDate || !toDate) return;
+      try {
+        const result = await getMinStockAll(officeId, fromDate, toDate);
+         console.log("Min Stock Data:", result);
+        const filtered = result
+          .filter(item => item.runningStock < item.minStockLevel)
+          .map(item => ({
+            itemName: item.itemName,
+            runningStock: item.runningStock,
+            minStockLevel: item.minStockLevel
+          }));
+        const latestData = Object.values(
+          filtered.reduce((acc, cur) => {
+            acc[cur.itemName] = cur; 
+            return acc;
+          }, {})
+        );
+        setMinStockData(latestData);
+      } catch (error) {
+        console.error("Error fetching Min Stock data:", error);
+        setMinStockData([]);
+      }
+    };
+    fetchMinStock();
+  }, [fromDate, toDate, officeId]);
 
+// Helper function: fromDate–toDate ke beech ke months nikalna
+function getMonthsBetween(fromDate, toDate) {
+  const start = new Date(fromDate);
+  const end = new Date(toDate);
+  let months = [];
+
+  while (start <= end) {
+    const monthYear = `${start.getFullYear()}-${String(
+      start.getMonth() + 1
+    ).padStart(2, "0")}`;
+    months.push(monthYear);
+    start.setMonth(start.getMonth() + 1);
+  }
+
+  return months;
+}
+
+// --- Attendance Fetch ---
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      let finalData = [];
+
+      for (let dept of departments) {
+        let totalPresent = 0;
+        let totalAbsent = 0;
+        let totalLeave = 0;
+
+        // ✅ Get all months between fromDate–toDate
+        const months = getMonthsBetween(fromDate, toDate);
+
+        for (let month of months) {
+          const res = await getAttendanceSummaryForDepartments(
+            officeId,
+            month,   // 👈 sirf monthYear pass hoga (YYYY-MM)
+            dept
+          );
+
+          if (res) {
+            totalPresent += res.presentCount || 0;
+            totalAbsent += res.absentCount || 0;
+            totalLeave += res.leaveCount || 0;
           }
         }
-        finalData.push(row);
+
+        finalData.push({
+          name: dept,
+          Present: totalPresent,
+          Absent: totalAbsent,
+          Leave: totalLeave,
+        });
       }
-      setChartData(finalData);
-    };
-    fetchData();
-  }, [officeId]);
+
+      setAttendanceChartData(finalData);
+    } catch (err) {
+      console.error("Error fetching attendance:", err);
+      setAttendanceChartData([]);
+    }
+  };
+
+  fetchData();
+}, [fromDate, toDate, officeId]);
+
+
  useEffect(() => {
   const fetchAssets = async () => {
     if (!fromDate || !toDate) return;
@@ -82,9 +129,7 @@ const [assetServiceSummary, setAssetServiceSummary] = useState({ overdue: 0, upc
         const result = await getServiceDueSummary(fromDate, toDate);
       console.log("From:", fromDate, "To:", toDate);
       console.log("Service Due Summary:", result);
-
       setAssetServiceSummary(result.summary || { overdue: 0, upcoming: 0, total: 0 });
-
       const formatted = result.data.map(item => ({
         assetName: item.assetName,
         value: 1,
@@ -105,13 +150,43 @@ const [assetServiceSummary, setAssetServiceSummary] = useState({ overdue: 0, upc
   fetchAssets();
 }, [fromDate, toDate]);
 
+// --- useEffect for Expense API Call
+useEffect(() => {
+  const fetchExpenses = async () => {
+    if (!fromDate || !toDate) return;
+    try {
+      const result = await getExpenseReport(officeId, fromDate, toDate);
 
-  const formatDate = (dateStr) => {
-  if (!dateStr) return null;
-  const [day, month, year] = dateStr.split("-");
-  return `${year}-${month}-${day}`;
-};
+      // Grouping by expenseType
+      const grouped = result.reduce((acc, item) => {
+        const existing = acc.find((x) => x.name === item.expenseType);
+        if (existing) {
+          existing.value += item.totalAmount;
+          existing.subTypes.push({
+            name: item.expenseSubType,
+            value: item.totalAmount,
+          });
+        } else {
+          acc.push({
+            name: item.expenseType,
+            value: item.totalAmount,
+            subTypes: [
+              { name: item.expenseSubType, value: item.totalAmount },
+            ],
+          });
+        }
+        return acc;
+      }, []);
 
+      setExpenseData(grouped);
+    } catch (error) {
+      console.error("Error loading expenses:", error);
+      setExpenseData([]);
+    }
+  };
+
+  fetchExpenses();
+}, [officeId, fromDate, toDate]);
 
   const renderChart = (title, data) => {
     const words = title.split(" & ");
@@ -160,7 +235,6 @@ const [assetServiceSummary, setAssetServiceSummary] = useState({ overdue: 0, upc
       </Box>
     );
   };
-
 return (
   <Box sx={{ width: '100%', textAlign: 'center' }}>
     {/* Date Filters */}
@@ -174,7 +248,6 @@ return (
           InputLabelProps={{ shrink: true }}
           sx={{ width: "180px" }}
         />
-
         <TextField
           size="small"
           type="date"
@@ -186,62 +259,76 @@ return (
         />
       </Box>
     {/* Parent flex box for four sections (2 top + 2 bottom) */}
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 3 }}>
-      
-      
-      <Box sx={{ border: '1px solid #ccc', borderRadius: 1, p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '45%', height: 300 }}>
-        <Box sx={{ mb: 1, fontSize: '18px' }}>Attendance</Box>
-      
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 3 }}> 
+       {/* --- Attendance --- */}
+        <Box sx={{ border: '1px solid #ccc', borderRadius: 1, p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '45%', height: 300 }}>
+          <Box sx={{ mb: 1, fontSize: '18px' }}>Attendance</Box>
+<ResponsiveContainer width="100%" height={280}>
+  <BarChart data={attendanceChartData} barSize={20}>
+    <CartesianGrid strokeDasharray="3 3" />
+    <XAxis dataKey="name" />   {/* Dept names */}
+    <YAxis />
+    <Tooltip
+      cursor={{ fill: "rgba(0,0,0,0.05)" }}
+      formatter={(value, key) => [value, key]}
+    />
+    <Legend />
 
-  
-  <ResponsiveContainer width="100%" height={250}>
-    <BarChart data={chartData}>
-      <XAxis
-        dataKey="month"
-        tickFormatter={(month) => {
-          const date = new Date(month + "-01");
-          return date.toLocaleString("default", { month: "short" }); // Jan, Feb, Mar...
-        }}
-      />
-      <YAxis />
-      <Tooltip />
-      <Legend verticalAlign="top" height={36} />
-      <Bar dataKey="IT" fill="#4285F4" name="IT" />
-      <Bar dataKey="HR" fill="#FFB300" name="HR" />
-      <Bar dataKey="Operation" fill="#DB4437" name="Operation" />
-    </BarChart>
-  </ResponsiveContainer>
-
-
-      </Box>
-
-      {/* --- Expense Block --- */}
-      <Box sx={{ border: '1px solid #ccc', borderRadius: 1, p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '45%', height: 300 }}>
-        <Box sx={{ mb: 1, fontSize: '18px' }}>Expense</Box>
-        <ResponsiveContainer width="100%" height="100%">
-  <PieChart>
-    <Pie
-      data={[
-        { name: 'Category A', value: 400, color: '#FFB300' },
-        { name: 'Category B', value: 600, color: '#4285F4' },
-      ]}
-      dataKey="value"
-      nameKey="name"
-      cx="50%"
-      cy="50%"
-      outerRadius={100}
-      label
-    >
-      {['#FFB300', '#4285F4'].map((color, index) => (
-        <Cell key={`inner-${index}`} fill={color} />
-      ))}
-    </Pie>
-    <Tooltip />
-    <Legend verticalAlign="middle" align="right" layout="vertical" />
-  </PieChart>
+   {/* ✅ Stacked Bars with value labels */}
+    <Bar dataKey="Present" stackId="a" fill="#34A853">
+      <LabelList dataKey="Present" position="top" fontSize={10} />
+    </Bar>
+    <Bar dataKey="Absent" stackId="a" fill="#EA4335">
+      <LabelList dataKey="Absent" position="top" fontSize={10} />
+    </Bar>
+    <Bar dataKey="Leave" stackId="a" fill="#FFB300">
+      <LabelList dataKey="Leave" position="top" fontSize={10} />
+    </Bar>
+  </BarChart>
 </ResponsiveContainer>
 
-      </Box>
+        </Box>   
+    {/* --- Expense Block --- */}
+<Box sx={{ border: '1px solid #ccc', borderRadius: 1, p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '45%', height: 300 }}>
+  <Box sx={{ mb: 1, fontSize: '18px' }}>Expense</Box>
+  <ResponsiveContainer width="100%" height="100%">
+    <PieChart>
+      <Pie
+        data={expenseData}
+        dataKey="value"
+        nameKey="name"
+        cx="50%"
+        cy="50%"
+       
+        labelLine={false}
+      >
+        {expenseData.map((entry, index) => (
+          <Cell key={`cell-${index}`} fill={["#4285F4","#FFB300","#DB4437","#34A853","#00CFFF","#FF69B4"][index % 6]} />
+        ))}
+      </Pie>
+
+      {/* Tooltip me subtype details show hoga */}
+      <Tooltip
+        formatter={(value, name, props) => {
+          const subTypes = expenseData.find((x) => x.name === props.payload.name)?.subTypes || [];
+          return [
+            value,
+            <>
+              <strong>{props.payload.name}</strong>
+              <br />
+              {subTypes.map((s, i) => (
+                <div key={i}>{s.name}: {s.value}</div>
+              ))}
+            </>
+          ];
+        }}
+      />
+
+      {/* Legend right side vertical */}
+      <Legend verticalAlign="middle" align="right" layout="vertical" />
+    </PieChart>
+  </ResponsiveContainer>
+</Box>
  {/* --- Asset Service Detail --- */}
 <Box 
   sx={{ 
@@ -256,7 +343,6 @@ return (
   }}
 >
   <Box sx={{ mb: 1, fontSize: '18px' }}>Asset Service Detail</Box>
-
   <Box sx={{ flex: 1, overflow: "auto" }}>   {/* ✅ Scroll wrapper */}
     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
       <thead>
@@ -290,30 +376,53 @@ return (
 
   {loading && <div>Loading...</div>}
 </Box>
-
-
-
-  
-
-                            
-
       {/* --- Balance Sheet Block (4th) --- */}
       <Box sx={{ border: '1px solid #ccc', borderRadius: 1, p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '45%', height: 300 }}>
         <Box sx={{ mb: 1, fontSize: '18px' }}>Min Stock Level</Box>
-       <ResponsiveContainer width="100%" height={250}>
-  <BarChart data={barData} barSize={20}>
-    <XAxis dataKey="year" />
+      <ResponsiveContainer width="100%" height={280}>
+  <BarChart 
+    data={minStockData} 
+    barSize={20} 
+    margin={{ top: 20, right: 20, left: 20, bottom: 60 }}  // 👈 extra bottom space
+  >
+    <CartesianGrid strokeDasharray="3 3" />
+    <XAxis
+      dataKey="itemName"
+      interval={0}
+      tick={({ x, y, payload }) => {
+        const words = payload.value.split(" ");
+        return (
+          <text
+            x={x}
+            y={y + 10}
+            textAnchor="end"
+            fontSize={10}
+            transform={`rotate(-40, ${x}, ${y + 10})`}
+          >
+            {words.map((word, index) => (
+              <tspan key={index} x={x} dy={index === 0 ? 0 : 12}>
+                {word}
+              </tspan>
+            ))}
+          </text>
+        );
+      }}
+    />
     <YAxis />
     <Tooltip />
-    <Bar dataKey="currentAssets" stackId="a" fill="#4285F4" />
-    <Bar dataKey="nonCurrentAssets" stackId="a" fill="#FFB300" />
-    <Bar dataKey="currentLiabilities" stackId="b" fill="#EA4335" />
-    <Bar dataKey="nonCurrentLiabilities" stackId="b" fill="#00CFFF" />
-    <Bar dataKey="capitalStock" stackId="c" fill="#34A853" />
-    <Bar dataKey="retainedEarning" stackId="c" fill="#FF69B4" />
-    <Bar dataKey="treasury" stackId="c" fill="#FF7043" />
+    <Legend verticalAlign="top" align="center" />   {/* 👈 Legend upar chala gaya */}
+    
+    {/* ✅ Bars with values on top */}
+    <Bar dataKey="runningStock" stackId="a" fill="#4285F4" name="Running Stock">
+      <LabelList dataKey="runningStock" position="top" fontSize={10} />
+    </Bar>
+    <Bar dataKey="minStockLevel" stackId="a" fill="#EA4335" name="Min Stock Level">
+      <LabelList dataKey="minStockLevel" position="top" fontSize={10} />
+    </Bar>
   </BarChart>
 </ResponsiveContainer>
+
+
 
       </Box>
     </Box>
