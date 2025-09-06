@@ -22,3 +22,8 @@ export const updateAssetSpare = async (spareId, assetspare) => {
   const response = await axios.put(`${API_BASE}/${spareId}`, assetspare);
   return response.data;
 };
+
+export const getAllAssetSparesByName = async (sparename) => {
+  const response = await axios.get(`${API_BASE}/name/${sparename}`);
+  return response.data;
+}

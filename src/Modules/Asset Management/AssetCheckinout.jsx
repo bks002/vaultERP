@@ -19,15 +19,19 @@ import {
   Autocomplete,
   FormControlLabel,
   Checkbox,
+  IconButton
 } from "@mui/material";
+import { CheckCircle, Cancel } from "@mui/icons-material";
 import {
   getAllAssetCheckinout,
   checkoutAsset,
   checkinAsset,
+  approveAssetCheckout,
+  approveAssetCheckin
 } from "../../Services/AssetService";
 import { getAllEmployees } from "../../Services/EmployeeService";
 import { getAllOffices } from "../../Services/OfficeService";
-import { getAssetSpares } from "../../Services/AssetSpare";
+import { getAssetSpares, getAllAssetSparesByName } from "../../Services/AssetSpare";
 import { useSelector } from "react-redux";
 
 const AssetMaintenance = () => {
@@ -117,41 +121,75 @@ const AssetMaintenance = () => {
 
   const openCheckinDialog = async (asset) => {
     setSelectedAsset(asset);
-
-    // if spare was under warranty (came from vendor), prefill ReturnedBy
-    if (asset.sentTo) {
-      setReturnedBy(asset.sentTo);
-    } else {
-      setReturnedBy("");
-    }
-
+    // Prefill ReturnedBy with asset.sentTo (from API)
+    setReturnedBy(asset.sentTo || "");
     setCheckinDateTime(new Date().toISOString().slice(0, 16));
     setImageIn(null);
-    setReturnCondition("");
-
+    setReturnCondition(asset.returnCondition || "");
+    const spareFields = await getAllAssetSparesByName(asset.spareName);
+    setSpareOptionsData(spareFields);
+    // Prefill spares with all available details from API
     const prefilledSpares =
-      asset.spareFields?.map((s) => ({
+      spareOptionsData?.map((s) => ({
+        spare_id: s.spareId || null,
+        spare_code: s.spareCode || "",
         spareName: s.spareName || "",
+        part_number: s.partNumber || "",
+        category: s.category || "",
+        specification: s.specification || "",
+        unit_of_measure: s.unitOfMeasure || "Piece",
+        current_stock: s.currentStock || 0,
+        reorder_level: s.reorderLevel || 0,
+        reorder_quantity: s.reorderQuantity || 0,
+        location: s.location || "",
+        linked_asset_id: asset.linkedAssetId,
+        vendor_name: s.vendorName || "",
+        purchase_rate: s.purchaseRate || 0,
+        average_cost: s.averageCost || 0,
+        lead_time_days: s.leadTimeDays || 0,
+        criticality: s.criticality || "Medium",
+        warranty_expiry: s.warrantyExpiry || "",
+        remarks: s.remarks || "",
+        // return-specific fields
         returnDateTime: new Date().toISOString().slice(0, 16),
         spareAmount: s.spareAmount || 0,
         repairNeeded: s.repairNeeded || false,
-        scrapOldValue: s.scrapOldSpareValue || 0,
+        scrapOldSpareValue: s.scrapOldSpareValue || 0,
         isScrap: s.isScrap || false,
+        isNew: false, // existing spare
       })) || [
         {
+          spare_id: null,
+          spare_code: "",
           spareName: "",
+          part_number: "",
+          category: "",
+          specification: "",
+          unit_of_measure: "Piece",
+          current_stock: 0,
+          reorder_level: 0,
+          reorder_quantity: 0,
+          location: "",
+          linked_asset_id: asset.id,
+          vendor_name: "",
+          purchase_rate: 0,
+          average_cost: 0,
+          lead_time_days: 0,
+          criticality: "Medium",
+          warranty_expiry: "",
+          remarks: "",
           returnDateTime: "",
           spareAmount: 0,
           repairNeeded: false,
-          scrapOldValue: 0,
+          scrapOldSpareValue: 0,
           isScrap: false,
+          isNew: true,
         },
       ];
 
     setCheckinSpares(prefilledSpares);
-
-    const sparesData = await getAssetSpares(asset.id);
-    setSpareOptionsData(sparesData);
+    // const sparesData = await getAssetSpares(asset.id);
+    // setSpareOptionsData(sparesData);
     setOpenCheckin(true);
   };
 
@@ -187,6 +225,11 @@ const AssetMaintenance = () => {
     ]);
   };
 
+  const rows =
+    reportAsset && reportAsset.spareFields && reportAsset.spareFields.length > 0
+      ? reportAsset.spareFields
+      : [null];
+
   const handleSpareChange = (index, field, value, type) => {
     const list = type === "checkout" ? [...spares] : [...checkinSpares];
     list[index][field] = value;
@@ -210,7 +253,6 @@ const AssetMaintenance = () => {
     if (!selectedAsset) return;
 
     const payload = {
-      officeId,
       assetId: selectedAsset.id,
       assetName: selectedAsset.name,
       assigneeName,
@@ -218,98 +260,65 @@ const AssetMaintenance = () => {
       checkOutDateTime: new Date(checkoutDateTime).toISOString(),
       outFrom,
       sentTo,
+      imageOut, // optional
       approvedBy,
-      imageOut,
-      spareFields: spares.map((s) => {
-        // find full spare info from API
-        const apiSpare = spareOptionsData.find((x) => x.spareName === s.spareName) || {};
-
-        return {
-          // user fields (override API if filled)
-          spareName: s.spareName || apiSpare.spareName,
-          warrantyExpiry: s.warrantyExpiry
-            ? new Date(s.warrantyExpiry + "T00:00:00Z").toISOString()
-            : apiSpare.warrantyExpiry
-              ? new Date(apiSpare.warrantyExpiry).toISOString()
-              : null,
-          tentativeReturnDate: s.tentativeReturnDate
-            ? new Date(s.tentativeReturnDate + "T00:00:00Z").toISOString()
-            : null,
-          spareAmount: parseInt(s.spareAmount || 0, 10),
-
-          // new fields merged from API
-          spareCode: apiSpare.spareCode || "",
-          partNumber: apiSpare.partNumber || "",
-          category: apiSpare.category || "",
-          specification: apiSpare.specification || "",
-          unitOfMeasure: apiSpare.unitOfMeasure || "",
-          vendorName: apiSpare.vendorName || "",
-          purchaseRate: apiSpare.purchaseRate || 0,
-          averageCost: apiSpare.averageCost || 0,
-          leadTimeDays: apiSpare.leadTimeDays || 0,
-          criticality: apiSpare.criticality || "",
-          remarks: apiSpare.remarks || "",
-
-          // user controlled flags
-          repairNeeded: s.repairNeeded,
-          scrapOldSpareValue: parseInt(s.scrapOldValue || 0, 10),
-          isScrap: s.isScrap,
-          isNew: s.isNew || false,
-        };
-      }),
+      checkoutApprovalStatus: "Pending", // <--- send for approval
+      checkoutApprovedBy: "",           // leave blank until approved
+      checkoutApprovalDateTime: null,
+      spareFields: spares.map((s) => ({
+        spareName: s.spareName || "",
+        isNew: s.isNew || true,
+        tentativeReturnDate: s.tentativeReturnDate ? new Date(s.tentativeReturnDate).toISOString() : null,
+        // do NOT send amounts, repairNeeded, scrap info yet
+        spareCode: "",
+        partNumber: "",
+        category: "",
+        specification: "",
+        unitOfMeasure: "",
+        currentStock: 0,
+        vendorName: "",
+        purchaseRate: 0,
+        averageCost: 0,
+        leadTimeDays: 0,
+        criticality: "",
+        warrantyExpiry: s.warrantyExpiry || null,
+        remarks: ""
+      }))
     };
 
     await checkoutAsset(payload);
     setOpenCheckout(false);
-    fetchAssets();
+    fetchAssets(); // table will update with pending request
   };
 
   const handleCheckinSubmit = async () => {
     if (!selectedAsset) return;
 
     const payload = {
-      assetId: selectedAsset.id,
-      assetName: selectedAsset.name,
-      checkOutDateTime: selectedAsset.checkOutDateTime,
+      checkoutId: selectedAsset.checkoutId,
+      assetId: selectedAsset.assetId,
       returnedBy,
       returnDateTime: new Date(checkinDateTime).toISOString(),
-      imageIn,
       returnCondition,
-      spareFields: checkinSpares.map((s) => ({
-        spare_id: s.spare_id,
-        spare_code: s.spare_code,
+      imageIn,
+      returnApprovalStatus: "Pending",
+      returnApprovedBy: selectedAsset.approvedBy || "",
+      returnApprovalDateTime: null,
+      SpareFields: checkinSpares.map(s => ({
         spareName: s.spareName,
-        part_number: s.part_number,
-        category: s.category,
-        specification: s.specification,
-        unit_of_measure: s.unit_of_measure,
-        current_stock: s.current_stock,
-        reorder_level: s.reorder_level,
-        reorder_quantity: s.reorder_quantity,
-        location: s.location,
-        linked_asset_id: selectedAsset.id,
-        vendor_name: s.vendor_name,
-        purchase_rate: s.purchase_rate,
-        average_cost: s.average_cost,
-        lead_time_days: s.lead_time_days,
-        criticality: s.criticality,
-        warranty_expiry: s.warranty_expiry,
-        remarks: s.remarks,
         spareAmount: s.spareAmount,
-        repairNeeded: s.repairNeeded,
-        isScrap: s.isScrap,
-        isNew: s.isNew || false,
-      })),
+        repairNeeded: s.repairNeeded || false,
+        isScrap: s.isScrap || false,
+        scrapOldSpareValue: s.scrapOldSpareValue || 0
+      }))
     };
 
     await checkinAsset(payload);
-
-    // Optionally, persist new spares in main spare table
-    const newSpares = checkinSpares.filter((s) => s.isNew);
-    if (newSpares.length) {
-      await addNewSparesToSpareTable(newSpares);
-    }
-
+    // // Optionally, persist new spares in main spare table
+    // const newSpares = checkinSpares.filter((s) => s.isNew);
+    // if (newSpares.length) {
+    //   await addNewSparesToSpareTable(newSpares);
+    // }
     setOpenCheckin(false);
     fetchAssets();
   };
@@ -336,20 +345,25 @@ const AssetMaintenance = () => {
               const showCheckinButton = checkoutTime && checkoutTime <= now && (!returnTime || returnTime < now);
               const showCheckoutButton = !checkoutTime || (returnTime && returnTime <= now);
 
+              // Row color based on approval status
+              let rowStyle = {};
+              if (asset.checkoutApprovalStatus === "Pending") rowStyle.backgroundColor = "#ffcccc"; // red
+              else if (asset.checkoutApprovalStatus === "Approved") rowStyle.backgroundColor = "#fde39bff"; // green
+
               return (
-                <TableRow key={asset.id}>
-                  <TableCell>{asset.id}</TableCell>
+                <TableRow key={asset.id} style={rowStyle}>
+                  <TableCell>{asset.assetId}</TableCell>
                   <TableCell>{asset.name}</TableCell>
                   <TableCell>
-                    {showCheckinButton && <Button variant="outlined" onClick={() => openCheckinDialog(asset)}>Checkin</Button>}
-                    {showCheckoutButton && <Button variant="contained" onClick={() => openCheckoutDialog(asset)} disabled={returnTime && returnTime > now}>Checkout</Button>}
-                    <Button
-                      variant="text"
-                      color="secondary"
-                      onClick={() => openReportDialog(asset)}
-                    >
-                      View
-                    </Button>
+                    {showCheckinButton && asset.checkoutApprovalStatus === "Approved" && (
+                      <Button variant="contained" onClick={() => openCheckinDialog(asset)}>
+                        Open Return Form
+                      </Button>
+                    )}
+                    {showCheckoutButton && asset.checkoutApprovalStatus !== "Pending" && (
+                      <Button variant="contained" onClick={() => openCheckoutDialog(asset)}>Checkout</Button>
+                    )}
+                    <Button variant="text" color="secondary" onClick={() => openReportDialog(asset)}>View</Button>
                   </TableCell>
                 </TableRow>
               );
@@ -378,7 +392,6 @@ const AssetMaintenance = () => {
           {spares.map((spare, index) => {
             const selectedSpare = spareOptionsData.find((s) => s.spareName === spare.spareName);
             const isUnderWarranty = selectedSpare?.warrantyExpiry && new Date(selectedSpare.warrantyExpiry) >= new Date();
-            const disableScrapFields = isUnderWarranty || spare.repairNeeded; // <-- new logic
 
             return (
               <Box key={index} mb={1} borderBottom="1px solid #ddd" pb={1}>
@@ -406,48 +419,6 @@ const AssetMaintenance = () => {
                   value={spare.tentativeReturnDate}
                   onChange={(e) => handleSpareChange(index, "tentativeReturnDate", e.target.value, "checkout")}
                 />
-
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Amount"
-                  margin="dense"
-                  value={spare.spareAmount}
-                  onChange={(e) => handleSpareChange(index, "spareAmount", e.target.value, "checkout")}
-                  disabled={isUnderWarranty}  // still disabled if under warranty
-                />
-
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={spare.repairNeeded}
-                      onChange={(e) => handleSpareChange(index, "repairNeeded", e.target.checked, "checkout")}
-                      disabled={isUnderWarranty}  // still disabled if under warranty
-                    />
-                  }
-                  label="Repair Needed"
-                />
-
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Scrap Old Value"
-                  margin="dense"
-                  value={spare.scrapOldValue}
-                  onChange={(e) => handleSpareChange(index, "scrapOldValue", e.target.value, "checkout")}
-                  disabled={disableScrapFields}  // <-- conditional
-                />
-
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={spare.isScrap}
-                      onChange={(e) => handleSpareChange(index, "isScrap", e.target.checked, "checkout")}
-                      disabled={disableScrapFields}  // <-- conditional
-                    />
-                  }
-                  label="Is Scrap"
-                />
               </Box>
             );
           })}
@@ -459,9 +430,9 @@ const AssetMaintenance = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Checkin Dialog */}
+      {/* ✅ Checkin (Return) Dialog */}
       <Dialog open={openCheckin} onClose={() => setOpenCheckin(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Checkin Asset</DialogTitle>
+        <DialogTitle>Return / Checkin Asset</DialogTitle>
         <DialogContent>
           {/* Basic Fields */}
           <TextField
@@ -496,13 +467,18 @@ const AssetMaintenance = () => {
           </Box>
 
           {/* Spares Section */}
-          <Typography mt={2} variant="subtitle1">Spares</Typography>
+          <Typography mt={2} variant="subtitle1">Returned Spares</Typography>
           {checkinSpares.map((spare, index) => {
             const selectedSpare = spareOptionsData.find((s) => s.spareName === spare.spareName);
-            const isUnderWarranty = selectedSpare?.warrantyExpiry && new Date(selectedSpare.warrantyExpiry) >= new Date();
+            const checkoutDate = selectedAsset?.checkOutDateTime
+              ? new Date(selectedAsset.checkOutDateTime)
+              : new Date(); // fallback today if missing
 
+            const isUnderWarranty =
+              selectedSpare?.warrantyExpiry &&
+              new Date(selectedSpare.warrantyExpiry) >= checkoutDate;
             // disable fields if old spare is under warranty or repair-needed
-            const disableFields = (isUnderWarranty || spare.repairNeeded) && !spare.isNew;
+            const disableFields = (spare.repairNeeded && !spare.isNew);
 
             return (
               <Box key={index} mb={2} p={2} border="1px solid #ddd" borderRadius={2}>
@@ -541,20 +517,12 @@ const AssetMaintenance = () => {
                     margin="dense"
                     InputLabelProps={{ shrink: true }}
                     value={spare.warrantyExpiry || ""}
-                    onChange={(e) => handleSpareChange(index, "warrantyExpiry", e.target.value, "checkin")}
+                    onChange={(e) =>
+                      handleSpareChange(index, "warrantyExpiry", e.target.value, "checkin")
+                    }
                     disabled={disableFields}
                   />
                 )}
-
-                {/* Vendor */}
-                <TextField
-                  fullWidth
-                  label="Vendor Name"
-                  margin="dense"
-                  value={spare.vendorName || ""}
-                  onChange={(e) => handleSpareChange(index, "vendorName", e.target.value, "checkin")}
-                  disabled={disableFields}
-                />
 
                 {/* Amount */}
                 <TextField
@@ -563,7 +531,10 @@ const AssetMaintenance = () => {
                   label="Spare Amount"
                   margin="dense"
                   value={spare.spareAmount || 0}
-                  onChange={(e) => handleSpareChange(index, "spareAmount", e.target.value, "checkin")}
+                  onChange={(e) =>
+                    handleSpareChange(index, "spareAmount", e.target.value, "checkin")
+                  }
+                  inputProps={{ min: 0 }}
                   disabled={disableFields}
                 />
 
@@ -572,7 +543,9 @@ const AssetMaintenance = () => {
                   control={
                     <Checkbox
                       checked={spare.repairNeeded || false}
-                      onChange={(e) => handleSpareChange(index, "repairNeeded", e.target.checked, "checkin")}
+                      onChange={(e) =>
+                        handleSpareChange(index, "repairNeeded", e.target.checked, "checkin")
+                      }
                       disabled={isUnderWarranty}
                     />
                   }
@@ -586,16 +559,21 @@ const AssetMaintenance = () => {
                   label="Scrap Old Spare Value"
                   margin="dense"
                   value={spare.scrapOldSpareValue || 0}
-                  onChange={(e) => handleSpareChange(index, "scrapOldSpareValue", e.target.value, "checkin")}
-                  disabled={disableFields}
+                  onChange={(e) =>
+                    handleSpareChange(index, "scrapOldSpareValue", e.target.value, "checkin")
+                  }
+                  inputProps={{ min: 0 }}
+                  disabled={isUnderWarranty}
                 />
 
                 <FormControlLabel
                   control={
                     <Checkbox
                       checked={spare.isScrap || false}
-                      onChange={(e) => handleSpareChange(index, "isScrap", e.target.checked, "checkin")}
-                      disabled={disableFields}
+                      onChange={(e) =>
+                        handleSpareChange(index, "isScrap", e.target.checked, "checkin")
+                      }
+                      disabled={isUnderWarranty}
                     />
                   }
                   label="Is Scrap"
@@ -607,80 +585,158 @@ const AssetMaintenance = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenCheckin(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleCheckinSubmit}>Checkin</Button>
+          <Button variant="contained" onClick={handleCheckinSubmit}>
+            Submit Return
+          </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog
         open={openReport}
         onClose={() => setOpenReport(false)}
-        maxWidth="md"
+        maxWidth="lg"
         fullWidth
       >
         <DialogTitle>Asset Maintenance Report</DialogTitle>
         <DialogContent>
           {reportAsset ? (
-            <>
-              <Typography variant="h6">Asset Details</Typography>
-              <Typography>ID: {reportAsset.id}</Typography>
-              <Typography>Name: {reportAsset.name}</Typography>
-              <Typography>
-                Checked Out:{" "}
-                {reportAsset.checkOutDateTime
-                  ? new Date(reportAsset.checkOutDateTime).toLocaleString()
-                  : "N/A"}
-              </Typography>
-              <Typography>
-                Returned:{" "}
-                {reportAsset.returnDate
-                  ? new Date(reportAsset.returnDate).toLocaleString()
-                  : "N/A"}
-              </Typography>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Asset ID</TableCell>
+                  <TableCell>Asset Name</TableCell>
+                  <TableCell>Checked Out</TableCell>
+                  <TableCell>Returned</TableCell>
+                  <TableCell>Approval Status</TableCell>
+                  <TableCell>Spare Name</TableCell>
+                  <TableCell>Warranty Expiry</TableCell>
+                  <TableCell>Amount</TableCell>
+                  <TableCell>Repair Needed</TableCell>
+                  <TableCell>Is Scrap</TableCell>
+                  <TableCell>Return Date</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {rows.map((s, i) => (
+                  <TableRow key={i}>
+                    {/* Asset Columns */}
+                    <TableCell>{reportAsset.assetId}</TableCell>
+                    <TableCell>{reportAsset.name}</TableCell>
+                    <TableCell>
+                      {reportAsset.checkOutDateTime
+                        ? new Date(reportAsset.checkOutDateTime).toLocaleString()
+                        : "N/A"}
+                    </TableCell>
+                    <TableCell>
+                      {reportAsset.returnDate
+                        ? new Date(reportAsset.returnDate).toLocaleString()
+                        : "N/A"}
+                    </TableCell>
+                    <TableCell>{reportAsset.checkoutApprovalStatus}</TableCell>
 
-              <Typography mt={2} variant="h6">
-                Spares History
-              </Typography>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Spare Name</TableCell>
-                    <TableCell>Warranty Expiry</TableCell>
-                    <TableCell>Amount</TableCell>
-                    <TableCell>Repair Needed</TableCell>
-                    <TableCell>Is Scrap</TableCell>
-                    <TableCell>Return Date</TableCell>
+                    {/* Spare Columns */}
+                    <TableCell>{reportAsset ? reportAsset.spareName : "-"}</TableCell>
+                    <TableCell>
+                      {s && s.warrantyExpiry
+                        ? new Date(s.warrantyExpiry).toLocaleDateString()
+                        : "-"}
+                    </TableCell>
+                    <TableCell>{s ? s.spareAmount : "-"}</TableCell>
+                    <TableCell>{s ? (s.repairNeeded ? "Yes" : "No") : "-"}</TableCell>
+                    <TableCell>{s ? (s.isScrap ? "Yes" : "No") : "-"}</TableCell>
+                    <TableCell>
+                      {s && s.tentativeReturnDate
+                        ? new Date(s.tentativeReturnDate).toLocaleDateString()
+                        : "-"}
+                    </TableCell>
+
+                    {/* Action Buttons only on first row */}
+                    <TableCell>
+                      {/* Checkout approval actions */}
+                      {i === 0 && reportAsset.checkoutApprovalStatus === "Pending" && (
+                        <>
+                          <IconButton
+                            color="success"
+                            onClick={async () => {
+                              try {
+                                await approveAssetCheckout(
+                                  reportAsset.checkoutId,
+                                  reportAsset.checkoutApprovedBy
+                                );
+                                fetchAssets(officeId);
+                                setOpenReport(false);
+                              } catch (err) {
+                                console.error("Checkout Approval failed:", err);
+                                alert("Checkout approval failed. Please try again.");
+                              }
+                            }}
+                          >
+                            <CheckCircle />
+                          </IconButton>
+                          <IconButton
+                            color="error"
+                            onClick={async () => {
+                              try {
+                                await rejectAssetCheckout(reportAsset.checkoutId);
+                                fetchAssets(officeId);
+                                setOpenReport(false);
+                              } catch (err) {
+                                console.error("Checkout Rejection failed:", err);
+                                alert("Checkout rejection failed. Please try again.");
+                              }
+                            }}
+                          >
+                            <Cancel />
+                          </IconButton>
+                        </>
+                      )}
+
+                      {/* ✅ Check-in approval actions */}
+                      {i === 0 && reportAsset.returnApprovalStatus === "Pending" && (
+                        <>
+                          {console.log("Report Asset:", reportAsset)}
+                          <IconButton
+                            color="success"
+                            onClick={async () => {
+                              try {
+                                await approveAssetCheckin(
+                                  reportAsset.checkoutId,
+                                  reportAsset.returnApprovedBy,
+                                  { spareFields: reportAsset.spareFields || [] } // pass spares if any
+                                );
+                                fetchAssets(officeId);
+                                setOpenReport(false);
+                              } catch (err) {
+                                console.error("Check-in Approval failed:", err);
+                                alert("Check-in approval failed. Please try again.");
+                              }
+                            }}
+                          >
+                            <CheckCircle />
+                          </IconButton>
+                          <IconButton
+                            color="error"
+                            onClick={async () => {
+                              try {
+                                await rejectAssetCheckin(reportAsset.checkoutId);
+                                fetchAssets(officeId);
+                                setOpenReport(false);
+                              } catch (err) {
+                                console.error("Check-in Rejection failed:", err);
+                                alert("Check-in rejection failed. Please try again.");
+                              }
+                            }}
+                          >
+                            <Cancel />
+                          </IconButton>
+                        </>
+                      )}
+                    </TableCell>
                   </TableRow>
-                </TableHead>
-                <TableBody>
-                  {reportAsset.spareFields && reportAsset.spareFields.length > 0 ? (
-                    reportAsset.spareFields.map((s, i) => (
-                      <TableRow key={i}>
-                        <TableCell>{s.spareName}</TableCell>
-                        <TableCell>
-                          {s.warrantyExpiry
-                            ? new Date(s.warrantyExpiry).toLocaleDateString()
-                            : "N/A"}
-                        </TableCell>
-                        <TableCell>{s.spareAmount}</TableCell>
-                        <TableCell>{s.repairNeeded ? "Yes" : "No"}</TableCell>
-                        <TableCell>{s.isScrap ? "Yes" : "No"}</TableCell>
-                        <TableCell>
-                          {s.tentativeReturnDate
-                            ? new Date(s.tentativeReturnDate).toLocaleDateString()
-                            : "N/A"}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={6} align="center">
-                        No spares history available
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </>
+                ))}
+              </TableBody>
+            </Table>
           ) : (
             <Typography>No data available</Typography>
           )}

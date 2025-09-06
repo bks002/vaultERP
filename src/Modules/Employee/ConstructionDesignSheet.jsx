@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, use } from "react";
 import {
   Box,
   Typography,
@@ -20,12 +20,19 @@ import {
   TableContainer,
   Paper,
   InputAdornment,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+  FormControl,
+  FormLabel,
+  Divider,
 } from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 
 import ViewIcon from "@mui/icons-material/Visibility";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import SearchIcon from "@mui/icons-material/Search";
 import { useSelector } from "react-redux";
 
 import { getAllOperation } from "../../Services/OperationService.js";
@@ -33,7 +40,7 @@ import {
   getInternalWorkOrdersByOffice,
   getInternalWorkOrderProduct,
 } from "../../Services/InternalWorkOrderService.js";
-import { getProductByID } from "../../Services/ProductMasterService.js";
+import { getProductByID, getProductMasters } from "../../Services/ProductMasterService.js";
 import { getAllItems } from "../../Services/InventoryService.jsx";
 import {
   getConstructionDesignSheets,
@@ -44,20 +51,19 @@ import {
   createSpecification,
 } from "../../Services/ConstructionDesignSheet.js";
 import ExportCSVButton from "../../Components/Export to CSV/ExportCSVButton";
-import SearchIcon from "@mui/icons-material/Search";
+import { getPartyMasters } from "../../Services/PartyMasterService.js";
 
-// 🔹 Permanent default row
-const FIXED_ROW = {
-  id: "temp-min-thickness", // unique temporary id
-  specification: "Min. Thickness",
-  value: "",
-};
+// 🔹 Permanent default rows
+const FIXED_ROWS = [
+  { id: "temp-min-thickness", specification: "Min. Thickness", value: "", isFixed: true },
+  { id: "temp-color", specification: "Color", value: "", isFixed: true },
+];
 
 const ConstructionDesignSheet = () => {
   const officeId = useSelector((state) => state.user.officeId);
 
   const [openDialog, setOpenDialog] = useState(false);
-  const [viewOpen, setViewOpen] = useState(false);
+  const [viewopen, setViewOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [constructionData, setConstructionData] = useState([]);
@@ -66,6 +72,7 @@ const ConstructionDesignSheet = () => {
   const [products, setProducts] = useState([]);
   const [items, setItems] = useState([]);
   const [productDetailsMap, setProductDetailsMap] = useState({});
+  const [selectedWOData, setSelectedWOData] = useState([]);
 
   const [selectedItem, setSelectedItem] = useState("");
   const [selectedInternalWO, setSelectedInternalWO] = useState("");
@@ -79,18 +86,54 @@ const ConstructionDesignSheet = () => {
   const [specValues, setSpecValues] = useState([]);
   const [tempSpec, setTempSpec] = useState("");
   const [tempValue, setTempValue] = useState("");
-
+  const [party, setParty] = useState([]);
   const [gradeCodes, setGradeCodes] = useState([]);
   const [selectedGradeCode, setSelectedGradeCode] = useState("");
+  const [selectionMode, setSelectionMode] = useState("item"); // 'item' | 'grade'
 
   const [searchQuery, setSearchQuery] = useState("");
+
+  // 🔸 Track baseline when an existing Grade Code is chosen. Used to decide if form changed.
+  const [gradeBaseline, setGradeBaseline] = useState(null);
+
+  const isExistingGrade = useMemo(
+    () => !!selectedGradeCode && gradeCodes.map(String).includes(String(selectedGradeCode)),
+    [selectedGradeCode, gradeCodes]
+  );
+
+  const isGradeDirty = useMemo(() => {
+    if (!gradeBaseline) return false;
+    const sameWO = String(gradeBaseline.internalWoid || "") === String(selectedInternalWO || "");
+    const sameOp = String(gradeBaseline.operationId || "") === String(selectedOperation || "");
+    const sameProd = String(gradeBaseline.productId || "") === String(selectedProduct || "");
+    const sameItem = String(gradeBaseline.itemId || "") === String(selectedItem || "");
+
+    const normalize = (arr) =>
+      (arr || []).map((r) => ({ specification: r.specification, value: r.value, isFixed: !!r.isFixed }));
+
+    const baselineSpecs = JSON.stringify(normalize(gradeBaseline.specValues || []));
+    const currentSpecs = JSON.stringify(normalize(specValues || []));
+
+    const specsSame = baselineSpecs === currentSpecs;
+
+    return !(sameWO && sameOp && sameProd && sameItem && specsSame);
+  }, [gradeBaseline, selectedInternalWO, selectedOperation, selectedProduct, selectedItem, specValues]);
+
+  const canSubmit = useMemo(() => {
+    if (selectionMode === "grade" && isExistingGrade && !isEdit) {
+      // Only allow submit when something changed compared to the baseline snapshot
+      return isGradeDirty;
+    }
+    // Otherwise allow submit (you may still want to check required fields in handleSubmit)
+    return true;
+  }, [selectionMode, isExistingGrade, isEdit, isGradeDirty]);
 
   // 🔹 Load grade codes
   useEffect(() => {
     const fetchGradeCodes = async () => {
       try {
         const data = await getConstructionDesignSheets(officeId);
-        const uniqueCodes = [...new Set(data.map((item) => item.gradecode))];
+        const uniqueCodes = [...new Set(data.map((item) => item.gradecode).filter(Boolean))];
         setGradeCodes(uniqueCodes);
       } catch (err) {
         console.error("Failed to load grade codes:", err);
@@ -122,6 +165,7 @@ const ConstructionDesignSheet = () => {
             loadOperations(),
             loadItems(),
             loadConstructionData(),
+            loadParty(),
           ]);
         } finally {
           setLoading(false);
@@ -130,12 +174,21 @@ const ConstructionDesignSheet = () => {
     }
   }, [officeId]);
 
+  const loadParty = async () => {
+    try {
+      const data = await getPartyMasters(officeId);
+      console.log(data);
+      setParty(data || []);
+    } catch (err) {
+      console.error("Failed to fetch Party:", err.message);
+    }
+  };
+
   const loadConstructionData = async () => {
     try {
       const data = await getConstructionDesignSheets(officeId);
       setConstructionData(data || []);
 
-      // Build product map
       const allProductIds = Array.from(
         new Set((data || []).map((d) => d.productId).filter(Boolean))
       );
@@ -195,7 +248,7 @@ const ConstructionDesignSheet = () => {
         productArray.forEach((p) => {
           map[p.id] = p.name || p.product_name;
         });
-        setProductDetailsMap(map);
+        setProductDetailsMap((prev) => ({ ...prev, ...map }));
       }
     } catch (err) {
       console.error("Failed to fetch products:", err.message);
@@ -216,7 +269,6 @@ const ConstructionDesignSheet = () => {
     if (tempSpec.trim() && tempValue.trim()) {
       const finalSpec = tempSpec.trim();
 
-      // Prevent duplicates in current table
       const exists = specValues.some(
         (row) => row.specification.toLowerCase() === finalSpec.toLowerCase()
       );
@@ -226,7 +278,6 @@ const ConstructionDesignSheet = () => {
       }
 
       try {
-        // Save to backend if new
         const found = specificationOptions.find(
           (s) => s.toLowerCase() === finalSpec.toLowerCase()
         );
@@ -236,7 +287,6 @@ const ConstructionDesignSheet = () => {
           setSpecificationOptions(updatedSpecs.map((s) => s.specificationName));
         }
 
-        // Add locally
         setSpecValues((prev) => [
           ...prev,
           { id: "temp-" + Date.now(), specification: finalSpec, value: tempValue.trim() },
@@ -283,38 +333,61 @@ const ConstructionDesignSheet = () => {
     setSelectedGradeCode(row.gradecode || "");
 
     if (row.items && row.items.length > 0) {
-      const fixedItem = row.items.find(
-        (it) => it.specification?.toLowerCase() === "min. thickness"
-      );
-      const others = row.items.filter(
-        (it) => it.specification?.toLowerCase() !== "min. thickness"
-      );
+      const fixedMin = row.items.find(it => it.specification?.toLowerCase() === "min. thickness");
+      const fixedColor = row.items.find(it => it.specification?.toLowerCase() === "color");
+      const others = row.items.filter(it => !["min. thickness", "color"].includes(it.specification?.toLowerCase()));
+
       setSpecValues([
-        fixedItem
-          ? { id: fixedItem.id, specification: "Min. Thickness", value: fixedItem.value }
-          : FIXED_ROW,
-        ...others.map((it) => ({
-          id: it.id,
-          specification: it.specification,
-          value: it.value,
-        })),
+        fixedMin ? { ...fixedMin, specification: "Min. Thickness", isFixed: true } : FIXED_ROWS[0],
+        fixedColor ? { ...fixedColor, specification: "Color", isFixed: true } : FIXED_ROWS[1],
+        ...others.map(it => ({ id: it.id, specification: it.specification, value: it.value })),
       ]);
     } else {
-      setSpecValues([FIXED_ROW]);
+      setSpecValues(FIXED_ROWS);
     }
+
     setOpenDialog(true);
+  };
+
+  const resetForm = () => {
+    setOpenDialog(false);
+    setIsEdit(false);
+    setSelectedCDS(null);
+    setSelectedInternalWO("");
+    setSelectedOperation("");
+    setSelectedProduct("");
+    setSelectedItem("");
+    setSelectedGradeCode("");
+    setSpecValues([]);
+    setGradeBaseline(null);
   };
 
   const handleSubmit = async () => {
     try {
+      if (selectionMode === "grade" && isExistingGrade && !isEdit && !isGradeDirty) {
+        alert("Select a Grade Code and then change Internal WO / Operation / Product or modify Specifications before submitting.");
+        return;
+      }
+
       const internalWoidId = Number(selectedInternalWO) || 0;
       const operationIdNum = Number(selectedOperation) || 0;
       const productIdNum = Number(selectedProduct) || 0;
-      const itemIdNum = Number(selectedItem) || 0;
 
+      let itemIdNum = 0;
+
+      if (selectionMode === "item") {
+        itemIdNum = Number(selectedItem) || 0;
+      } else if (selectionMode === "grade" && selectedGradeCode) {
+        // 🔹 If existing grade code, keep the original itemId; if new, keep current or 0.
+        const allCDS = await getConstructionDesignSheets(officeId);
+        const cds = allCDS.find((cd) => cd.gradecode === selectedGradeCode);
+        itemIdNum = cds?.itemId ? Number(cds.itemId) : Number(selectedItem) || 0;
+      }
+
+      const now = new Date().toISOString();
       const payload = specValues.map((sv) => ({
         id: String(sv.id).startsWith("temp") ? 0 : Number(sv.id),
-        internalWoid: internalWoidId,   // must match URL param
+        internalWoid: internalWoidId,
         operationId: operationIdNum,
         productId: productIdNum,
         itemId: itemIdNum,
@@ -322,11 +395,10 @@ const ConstructionDesignSheet = () => {
         value: sv.value,
         officeId: Number(officeId),
         isActive: true,
-        createdOn: new Date().toISOString(),
+        createdOn: now,
         createdBy: 0,
         updatedBy: 0,
-        updatedOn: new Date().toISOString(),
-        ...(selectedGradeCode && { gradecode: selectedGradeCode }),
+        updatedOn: now,
       }));
 
       if (isEdit && selectedCDS) {
@@ -337,15 +409,7 @@ const ConstructionDesignSheet = () => {
         alert("Created successfully!");
       }
 
-      // Reset
-      setOpenDialog(false);
-      setIsEdit(false);
-      setSelectedCDS(null);
-      setSelectedInternalWO("");
-      setSelectedOperation("");
-      setSelectedProduct("");
-      setSelectedItem("");
-      setSpecValues([]);
+      resetForm();
       await loadConstructionData();
     } catch (error) {
       console.error("Error saving:", error);
@@ -353,7 +417,6 @@ const ConstructionDesignSheet = () => {
     }
   };
 
-  // ---------- Filtered Data ----------
   const filteredConstructionData = constructionData.filter((row) => {
     const productName = productDetailsMap[row.productId] || "";
     const operationName =
@@ -366,7 +429,84 @@ const ConstructionDesignSheet = () => {
     );
   });
 
-  // ---------- Render ----------
+  const handleInternalWOChange = (id) => {
+    setSelectedInternalWO(id);
+    setSelectedProduct("");
+
+    const filteredData = internalWorkOrders.filter((wo) => wo.id === id);
+    setSelectedWOData(filteredData);
+
+    loadProductsByInternalWO(id); // Use id for fetching products
+  };
+
+  // --- Helpers ---
+  const handleSelectGradeCode = async (grade) => {
+    setSelectedGradeCode(grade || "");
+
+    if (!grade) {
+      // New/empty grade code: clear fields but keep fixed rows
+      setSelectedInternalWO("");
+      setSelectedOperation("");
+      setSelectedProduct("");
+      setSelectedItem("");
+      setSpecValues(FIXED_ROWS);
+      setGradeBaseline(null);
+      return;
+    }
+
+    const cds = constructionData.find((cd) => cd.gradecode === grade);
+    if (cds) {
+      setSelectedInternalWO(cds.internalWoid || "");
+      setSelectedOperation(cds.operationId || "");
+      setSelectedProduct(cds.productId || "");
+      setSelectedItem(cds.itemId || "");
+
+      // ensure products are loaded for this internal WO
+      await loadProductsByInternalWO(cds.internalWoid);
+
+      if (cds.items && cds.items.length > 0) {
+        const fixedMin = cds.items.find((it) => it.specification?.toLowerCase() === "min. thickness");
+        const fixedColor = cds.items.find((it) => it.specification?.toLowerCase() === "color");
+        const others = cds.items.filter(
+          (it) => !["min. thickness", "color"].includes(it.specification?.toLowerCase())
+        );
+
+        const nextSpecs = [
+          fixedMin ? { ...fixedMin, specification: "Min. Thickness", isFixed: true } : FIXED_ROWS[0],
+          fixedColor ? { ...fixedColor, specification: "Color", isFixed: true } : FIXED_ROWS[1],
+          ...others.map((it) => ({ id: it.id, specification: it.specification, value: it.value })),
+        ];
+        setSpecValues(nextSpecs);
+
+        // Snapshot baseline for change detection
+        setGradeBaseline({
+          internalWoid: cds.internalWoid || "",
+          operationId: cds.operationId || "",
+          productId: cds.productId || "",
+          itemId: cds.itemId || "",
+          specValues: nextSpecs,
+        });
+      } else {
+        setSpecValues(FIXED_ROWS);
+        setGradeBaseline({
+          internalWoid: cds.internalWoid || "",
+          operationId: cds.operationId || "",
+          productId: cds.productId || "",
+          itemId: cds.itemId || "",
+          specValues: FIXED_ROWS,
+        });
+      }
+    } else {
+      // New grade code entered manually (freeSolo)
+      setSelectedInternalWO("");
+      setSelectedOperation("");
+      setSelectedProduct("");
+      setSelectedItem("");
+      setSpecValues(FIXED_ROWS);
+      setGradeBaseline(null);
+    }
+  };
+
   return (
     <div className="col-12">
       <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
@@ -407,7 +547,10 @@ const ConstructionDesignSheet = () => {
               setSelectedOperation("");
               setSelectedProduct("");
               setSelectedItem("");
-              setSpecValues([FIXED_ROW]);
+              setSelectedGradeCode("");
+              setSpecValues(FIXED_ROWS);
+              setSelectionMode("item");
+              setGradeBaseline(null);
               setOpenDialog(true);
             }}
           >
@@ -483,23 +626,63 @@ const ConstructionDesignSheet = () => {
         <DialogTitle>{isEdit ? "Edit" : "Create"} Technical Specification</DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
-            <TextField
-              select
-              label="Internal Work Order"
-              value={selectedInternalWO}
-              onChange={(e) => {
-                setSelectedInternalWO(e.target.value);
-                setSelectedProduct("");
-                loadProductsByInternalWO(e.target.value);
-              }}
-            >
-              <MenuItem value=""></MenuItem>
-              {internalWorkOrders.map((wo) => (
-                <MenuItem key={wo.id} value={wo.id}>
-                  {wo.id}
-                </MenuItem>
-              ))}
-            </TextField>
+            <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
+              {/* Dropdown */}
+              <TextField
+                select
+                label="Internal Work Order"
+                value={selectedInternalWO}
+                onChange={(e) => handleInternalWOChange(e.target.value)}
+                size="small"
+                sx={{ minWidth: 100 }}
+                InputProps={{
+                  sx: {
+                    height: 70,
+                    display: "flex",
+                    alignItems: "center",
+                  },
+                }}
+              >
+                <MenuItem value=""></MenuItem>
+                {internalWorkOrders.map((wo) => (
+                  <MenuItem key={wo.id} value={wo.id}>
+                    {wo.id}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              {/* Table */}
+              {selectedWOData.length > 0 && (
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Work Order ID</TableCell>
+                      <TableCell>Quantity</TableCell>
+                      <TableCell>Dispatch Date</TableCell>
+                      <TableCell>Delivery Date</TableCell>
+                      <TableCell>Total Deliverable</TableCell>
+                      <TableCell>Board Name</TableCell>
+                      <TableCell>Party Name</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {selectedWOData.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell>{row.woid}</TableCell>
+                        <TableCell>{row.quantity}</TableCell>
+                        <TableCell>{new Date(row.dispatchDate).toLocaleDateString()}</TableCell>
+                        <TableCell>{new Date(row.deliveryDate).toLocaleDateString()}</TableCell>
+                        <TableCell>{row.totalDeliverable}</TableCell>
+                        <TableCell>{row.boardName}</TableCell>
+                        <TableCell>
+                          {party.find(p => p.id === row.partyId)?.name || "-"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </Box>
 
             <TextField
               select
@@ -515,19 +698,52 @@ const ConstructionDesignSheet = () => {
               ))}
             </TextField>
 
-            <TextField
-              select
-              label="Item"
-              value={selectedItem}
-              onChange={(e) => setSelectedItem(e.target.value)}
-            >
-              <MenuItem value="">Select Item</MenuItem>
-              {items.map((it) => (
-                <MenuItem key={it.id} value={it.id}>
-                  {it.name || it.itemName}
-                </MenuItem>
-              ))}
-            </TextField>
+            <FormControl component="fieldset" sx={{ mt: 1 }}>
+              <FormLabel component="legend">Select By</FormLabel>
+              <RadioGroup
+                row
+                value={selectionMode}
+                onChange={(e) => {
+                  const mode = e.target.value;
+                  setSelectionMode(mode);
+                  setSelectedItem("");
+                  setSelectedGradeCode("");
+                  setSpecValues(FIXED_ROWS);
+                  setGradeBaseline(null);
+                }}
+              >
+                <FormControlLabel value="item" control={<Radio />} label="Item" />
+                <FormControlLabel value="grade" control={<Radio />} label="Grade Code" />
+              </RadioGroup>
+            </FormControl>
+
+            {selectionMode === "item" ? (
+              <TextField
+                select
+                label="Item"
+                value={selectedItem}
+                onChange={(e) => setSelectedItem(e.target.value)}
+              >
+                <MenuItem value="">Select Item</MenuItem>
+                {items.map((it) => (
+                  <MenuItem key={it.id} value={it.id}>
+                    {it.name || it.itemName}
+                  </MenuItem>
+                ))}
+              </TextField>
+            ) : (
+              // 🔹 Single Grade Code control (no duplicates). FreeSolo allows new code entry.
+              <Autocomplete
+                freeSolo
+                options={gradeCodes}
+                value={selectedGradeCode}
+                onChange={(e, newValue) => handleSelectGradeCode(newValue || "")}
+                onInputChange={(e, newInput) => setSelectedGradeCode(newInput || "")}
+                renderInput={(params) => (
+                  <TextField {...params} label="Grade Code" placeholder="Select or type new" />
+                )}
+              />
+            )}
 
             {isEdit && (
               <TextField label="Grade Code" value={selectedGradeCode} fullWidth disabled />
@@ -552,141 +768,118 @@ const ConstructionDesignSheet = () => {
             <Stack direction="row" spacing={2}>
               <Autocomplete
                 freeSolo
-                options={specificationOptions} // ✅ master list from API
+                options={specificationOptions}
                 value={tempSpec}
                 onChange={(e, newValue) => setTempSpec(newValue || "")}
-                onInputChange={(e, newInputValue) => setTempSpec(newInputValue)}
+                onInputChange={(e, newInputValue) => setTempSpec(newInputValue || "")}
                 renderInput={(params) => (
                   <TextField {...params} label="Specification" fullWidth />
                 )}
                 sx={{ flex: 1 }}
               />
 
-
-
               <TextField
                 label="Value"
                 value={tempValue}
                 onChange={(e) => setTempValue(e.target.value)}
-                fullWidth
-                sx={{ flex: 1 }}   // ✅ Equal width
+                sx={{ flex: 1 }}
               />
+
               <Button variant="contained" onClick={handleAddSpecValue}>
                 Add
               </Button>
             </Stack>
-          </Box>
 
-          {/* Table of added spec-values */}
-          {specValues.length > 0 && (
-            <Box mt={2}>
-              <Typography variant="subtitle1">Specification & Values</Typography>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Specification</TableCell>
-                    <TableCell>Value</TableCell>
-                    <TableCell>Action</TableCell>
+            <Table size="small" sx={{ mt: 2 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Specification</TableCell>
+                  <TableCell>Value</TableCell>
+                  <TableCell>Action</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {specValues.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell>{row.specification}</TableCell>
+                    <TableCell>
+                      <TextField
+                        fullWidth
+                        value={row.value}
+                        onChange={(e) => {
+                          const newValue = e.target.value;
+                          setSpecValues((prev) =>
+                            prev.map((r) => (r.id === row.id ? { ...r, value: newValue } : r))
+                          );
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {!row.isFixed && (
+                        <IconButton color="error" onClick={() => handleRemoveSpecValue(row.id)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
+                    </TableCell>
                   </TableRow>
-                </TableHead>
-                <TableBody>
-                  {specValues.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>{row.specification}</TableCell>
-                      <TableCell>
-                        <TextField
-                          size="small"
-                          fullWidth
-                          value={row.value}
-                          sx={{ width: 150 }}
-                          onChange={(e) =>
-                            setSpecValues((prev) =>
-                              prev.map((r) =>
-                                r.id === row.id ? { ...r, value: e.target.value } : r
-                              )
-                            )
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {!row.isFixed && ( // 🚫 Hide delete for fixed row
-                          <Button
-                            color="error"
-                            size="small"
-                            onClick={() => handleRemoveSpecValue(row.id)}
-                          >
-                            Delete
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-
-              </Table>
-            </Box>
-          )}
+                ))}
+              </TableBody>
+            </Table>
+          </Box>
         </DialogContent>
-
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-          <Button variant="contained" color="success" onClick={handleSubmit}>
-            {isEdit ? "Update" : "Submit"}
+          <Button onClick={handleSubmit} disabled={!canSubmit}>
+            {isEdit ? "Update" : "Create"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* VIEW Dialog */}
-      <Dialog open={viewOpen} onClose={() => setViewOpen(false)} fullWidth maxWidth="md">
+      {/* View Dialog */}
+      <Dialog open={viewopen} onClose={() => setViewOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>View Technical Specification</DialogTitle>
         <DialogContent>
-          {selectedCDS && (
-            <Stack spacing={2} mt={1}>
-              <TextField label="Internal Work Order" value={selectedCDS.internalWoid} fullWidth disabled />
-              <TextField
-                label="Product"
-                value={productDetailsMap[selectedCDS.productId] || "-"}
-                fullWidth
-                disabled
-              />
-              <TextField
-                label="Operation"
-                value={
-                  operations.find((op) => String(op.operationId) === String(selectedCDS.operationId))
-                    ?.operationName || "-"
-                }
-                fullWidth
-                disabled
-              />
-              <TextField
-                label="Item"
-                value={
-                  items.find((item) => String(item.id) === String(selectedCDS.itemId))
-                    ?.name || "-"
-                }
-                fullWidth
-                disabled
-              />
-              <Box mt={2}>
-                <Typography variant="subtitle1">Specification & Value</Typography>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Specification</TableCell>
-                      <TableCell>Value</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {selectedCDS.items?.map((it) => (
+          {selectedCDS ? (
+            <Box>
+              <Typography><b>Internal Work Order:</b> {selectedCDS.internalWoid}</Typography>
+              <Typography><b>Product:</b> {productDetailsMap[selectedCDS.productId] || "-"}</Typography>
+              <Typography>
+                <b>Operation:</b>{" "}
+                {operations.find((op) => String(op.operationId) === String(selectedCDS.operationId))?.operationName || "-"}
+              </Typography>
+              <Typography>
+                <b>Item:</b>{" "}
+                {items.find((it) => String(it.id) === String(selectedCDS.itemId))?.name || "-"}
+              </Typography>
+              <Typography><b>Grade Code:</b> {selectedCDS.gradecode || "-"}</Typography>
+
+              <Table size="small" sx={{ mt: 2 }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Specification</TableCell>
+                    <TableCell>Value</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {selectedCDS.items?.length ? (
+                    selectedCDS.items.map((it) => (
                       <TableRow key={it.id}>
                         <TableCell>{it.specification}</TableCell>
                         <TableCell>{it.value}</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Box>
-            </Stack>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={2} align="center">
+                        No specifications found
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </Box>
+          ) : (
+            <Typography>No data</Typography>
           )}
         </DialogContent>
         <DialogActions>
