@@ -212,45 +212,94 @@ const Attendance = () => {
     const getAttendanceByDate = (dateStr) =>
         attendanceData.filter(record => record.punchDate.startsWith(dateStr));
 
-    const generateAttendanceSummary = () => {
-        const employeeMap = {};
-        attendanceData.forEach(record => {
-            const { employeeName, totalWorkingTime } = record;
-            if (!employeeMap[employeeName]) {
-                employeeMap[employeeName] = {
-                    employeeName,
-                    totalWorkingDays: 0,
-                    present: 0,
-                    absent: 0,
-                    leave: 0,
-                };
-            }
-            const emp = employeeMap[employeeName];
-            if (!['Holiday', 'Weekend'].includes(totalWorkingTime)) {
-                emp.totalWorkingDays += 1;
-            }
-            if (totalWorkingTime === 'Absent') emp.absent += 1;
-            else if (totalWorkingTime === 'Leave') emp.leave += 1;
-            else if (totalWorkingTime && !['Absent', 'Leave', 'Holiday', 'Weekend'].includes(totalWorkingTime)) emp.present += 1;
-        });
-        return Object.values(employeeMap);
-    };
+    // ---------------- MATRIX BUILD FUNCTION ----------------
+    
 
-    const summaryCSVHeaders = [
-        { label: "Employee Name", key: "employeeName" },
-        { label: "Total Working Days", key: "totalWorkingDays" },
-        { label: "Present Days", key: "present" },
-        { label: "Absent Days", key: "absent" },
-        { label: "Leave Days", key: "leave" },
-    ];
+  const generateAttendanceSummary = () => {
+    const empMap = {};
 
-    const dayWiseCSVHeaders = [
-        { label: "Employee Name", key: "employeeName" },
-        { label: "Check In", key: "minCheckIn" },
-        { label: "Check Out", key: "maxCheckOut" },
-        { label: "Working Time", key: "totalWorkingTime" },
-        { label: "Status", key: "status" },
-    ];
+    attendanceData.forEach(record => {
+        const dateKey = record.punchDate.split("T")[0].split("-")[2]; // day number
+        if (!empMap[record.employeeName]) {
+            empMap[record.employeeName] = { name: record.employeeName, days: {}, summary: {} };
+        }
+
+        let status = "A"; // default absent
+        let workingTime = record.totalWorkingTime || "--";
+
+        // --- Holiday direct check ---
+        if (workingTime === "Holiday") {
+            status = "H";
+            workingTime = "--";
+        }
+        // --- Weekend direct check ---
+        else if (workingTime === "Weekend") {
+            status = "WO";
+            workingTime = "--";
+        }
+        // --- Absent direct check ---
+        else if (workingTime === "Absent" || workingTime === "--" || workingTime === "00:00:00") {
+            status = "A";
+            workingTime = "--";
+        }
+        // --- Otherwise Present (any time > 0) ---
+        else {
+            status = "P";
+        }
+
+        empMap[record.employeeName].days[dateKey] = {
+            combined: `Status: ${status}  WT: ${workingTime}`,
+            status,
+            workingTime,
+        };
+    });
+
+    // ✅ Summary calculation
+    Object.values(empMap).forEach(emp => {
+        let present = 0, absent = 0, half = 0, weekOff = 0, holiday = 0, totalSeconds = 0;
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dayKey = String(d).padStart(2, "0");
+            const dayData = emp.days[dayKey];
+
+            if (!dayData) continue;
+
+            switch (dayData.status) {
+                case "P": present++; break;
+                case "A": absent++; break;
+                case "H": holiday++; break;
+                case "WO": weekOff++; break;
+                case "Half": half++; break;
+            }
+
+            if (dayData.status === "P" && dayData.workingTime && dayData.workingTime !== "--") {
+                const parts = dayData.workingTime.split(":").map(Number);
+                if (parts.length === 3) {
+                    const [h, m, s] = parts;
+                    totalSeconds += (h * 3600) + (m * 60) + s;
+                }
+            }
+        }
+
+        const totalHrs = Math.floor(totalSeconds / 3600);
+        const totalMins = Math.floor((totalSeconds % 3600) / 60);
+        const totalSecs = totalSeconds % 60;
+        const totalFormatted = `${String(totalHrs).padStart(2, "0")}:${String(totalMins).padStart(2, "0")}:${String(totalSecs).padStart(2, "0")}`;
+
+        emp.summary = {
+            present,
+            absent,
+            half,
+            weekOff,
+            holiday,
+            payable: present + half + weekOff, // holiday add karna hai ya exclude?
+            totalHrs: totalFormatted,
+        };
+    });
+
+    return Object.values(empMap);
+};
+
 
     return (
         <Box>
@@ -273,10 +322,27 @@ const Attendance = () => {
 
                 <Box display="flex" gap={1}>
                     <ExportCSVButton
-                        data={generateAttendanceSummary()}
-                        filename={`Attendance_Summary_${selectedYear}-${selectedMonth + 1}.csv`}
-                        headers={summaryCSVHeaders}
-                    />
+    data={generateAttendanceSummary()}
+    filename={`Attendance_Summary_${selectedYear}-${selectedMonth + 1}.csv`}
+    headers={[
+        { label: "Employee Name", key: "name" },
+        ...Array.from({ length: daysInMonth }, (_, i) => {
+            const currentDate = new Date(selectedYear, selectedMonth, i + 1);
+            const dayOfWeek = currentDate.toLocaleDateString("en-US", { weekday: "short" }); // Mon, Tue, ...
+            return {
+                label: `Day ${i + 1} (${dayOfWeek})`,
+                key: `days.${String(i + 1).padStart(2, "0")}.combined`
+            };
+        }),
+        { label: "Present", key: "summary.present" },
+        { label: "Absent", key: "summary.absent" },
+        { label: "Half Day", key: "summary.half" },
+        { label: "Week Off", key: "summary.weekOff" },
+        { label: "Payable Days", key: "summary.payable" },
+        { label: "Total Working Hours", key: "summary.totalHrs" }
+    ]}
+/>
+
                     <Button variant="contained" color="primary" onClick={handleOpenManualForm}>
                         Add Manual Attendance
                     </Button>
@@ -367,7 +433,14 @@ const Attendance = () => {
                             <ExportCSVButton
                                 data={getAttendanceByDate(selectedDate)}
                                 filename={`Attendance_${selectedDate}.csv`}
-                                headers={dayWiseCSVHeaders}
+                                headers={[
+                                    { label: "Employee Name", key: "employeeName" },
+                                    { label: "Check In", key: "minCheckIn" },
+                                    { label: "Check Out", key: "maxCheckOut" },
+                                    { label: "Working Time", key: "totalWorkingTime" },
+                                    { label: "Status", key: "status" }
+                                ]}
+                                
                             />
                             <IconButton onClick={handleCloseModal}><CloseIcon /></IconButton>
                         </Box>
