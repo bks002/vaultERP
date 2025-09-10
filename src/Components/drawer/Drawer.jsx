@@ -150,6 +150,12 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemText primary="Expense Report" />
                     </ListItemButton>
                 </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/WorkInProcess" >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Work In Process" />
+                    </ListItemButton>
+                </ListItem>
             </List>
             <Divider />
             <List>

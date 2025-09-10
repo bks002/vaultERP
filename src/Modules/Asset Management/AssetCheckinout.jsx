@@ -1,333 +1,328 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  Box,
-  Button,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  MenuItem,
-  Autocomplete,
-  FormControlLabel,
-  Checkbox,
-  IconButton
+  Box, Button, Dialog, DialogTitle, DialogContent, DialogActions,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Paper, TextField, IconButton, Select, MenuItem, FormControl, InputLabel, Checkbox,
+  Menu
 } from "@mui/material";
-import { CheckCircle, Cancel } from "@mui/icons-material";
-import {
-  getAllAssetCheckinout,
-  checkoutAsset,
-  checkinAsset,
-  approveAssetCheckout,
-  approveAssetCheckin
-} from "../../Services/AssetService";
-import { getAllEmployees } from "../../Services/EmployeeService";
-import { getAllOffices } from "../../Services/OfficeService";
-import { getAssetSpares, getAllAssetSparesByName } from "../../Services/AssetSpare";
+import { Add, Delete } from "@mui/icons-material";
 import { useSelector } from "react-redux";
 
-const AssetMaintenance = () => {
+const API_BASE = "/api/asset/AssetSpareOps";
+
+export default function AssetMaintenance() {
+  const officeId = useSelector(state => state.user.officeId);
   const [assets, setAssets] = useState([]);
+  const [selectedAsset, setSelectedAsset] = useState(null);
+  const [approverId, setApproverId] = useState(""); // <-- Add this
+  const [outFromOptions, setOutFromOptions] = useState([]);
+  const [spares, setSpares] = useState([]);
   const [openCheckout, setOpenCheckout] = useState(false);
   const [openCheckin, setOpenCheckin] = useState(false);
-  const [selectedAsset, setSelectedAsset] = useState(null);
-  const [offices, setOffices] = useState([]);
-  const [employees, setEmployees] = useState([]);
-  const [spares, setSpares] = useState([]);
-  const [checkinSpares, setCheckinSpares] = useState([]);
-  const [spareOptions, setSpareOptions] = useState([]);
-  const [spareOptionsData, setSpareOptionsData] = useState([]);
-  const [purpose, setPurpose] = useState("");
-  const [checkoutDateTime, setCheckoutDateTime] = useState("");
-  const [checkinDateTime, setCheckinDateTime] = useState("");
+
   const [assigneeName, setAssigneeName] = useState("");
-  const [returnedBy, setReturnedBy] = useState("");
+  const [checkoutDateTime, setCheckoutDateTime] = useState(
+    new Date().toISOString().slice(0, 16)
+  );
+  const [checkinDateTime, setCheckinDateTime] = useState(new Date().toISOString().slice(0, 16));
+  const [returnCondition, setReturnCondition] = useState("");
+  const [purpose, setPurpose] = useState("");
   const [outFrom, setOutFrom] = useState("");
   const [sentTo, setSentTo] = useState("");
-  const [approvedBy, setApprovedBy] = useState("");
-  const [returnCondition, setReturnCondition] = useState("");
-  const [imageOut, setImageOut] = useState(null);
-  const [imageIn, setImageIn] = useState(null);
+  const [availableSpares, setAvailableSpares] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [assetStatus, setAssetStatus] = useState({});
 
-  const officeId = useSelector((state) => state.user.officeId);
-  const purposes = ["Purchase", "Maintenance", "Inspection", "Other"];
-  const [openReport, setOpenReport] = useState(false);
-  const [reportAsset, setReportAsset] = useState(null);
-  const [repairSpareOptions, setRepairSpareOptions] = useState([]);
-
-  const openReportDialog = async (asset) => {
-    setReportAsset(asset);
-    setOpenReport(true);
-  };
-
-  // Fetch initial data
   useEffect(() => {
     fetchAssets();
-    fetchOffices();
+    fetchOutFromOptions();
     fetchEmployees();
   }, []);
 
-  const fetchAssets = async () => {
-    const res = await getAllAssetCheckinout(officeId);
-    setAssets(res || []);
-  };
-
-  const fetchOffices = async () => {
-    const res = await getAllOffices();
-    setOffices(res || []);
-  };
-
   const fetchEmployees = async () => {
-    const res = await getAllEmployees(officeId);
-    setEmployees(res || []);
-  };
-
-  // Watch spares and update SentTo automatically for under-warranty items
-  useEffect(() => {
-    if (!spares.length || !spareOptionsData.length) return;
-    spares.forEach((spare) => {
-      const selectedSpare = spareOptionsData.find((s) => s.spareName === spare.spareName);
-      if (selectedSpare?.warrantyExpiry && new Date(selectedSpare.warrantyExpiry) >= new Date()) {
-        if (selectedSpare.vendorName) setSentTo(selectedSpare.vendorName);
-      }
-    });
-  }, [spares, spareOptionsData]);
-
-  const openCheckoutDialog = async (asset) => {
-    setSelectedAsset(asset);
-    setAssigneeName("");
-    setPurpose("");
-    setCheckoutDateTime(new Date().toISOString().slice(0, 16));
-    setOutFrom("");
-    setSentTo("");
-    setApprovedBy("");
-    setImageOut(null);
-    setSpares([{ spareName: "", tentativeReturnDate: "", spareAmount: 0, repairNeeded: false, scrapOldValue: 0, isScrap: false }]);
-
-    const sparesData = await getAssetSpares(asset.id);
-    setSpareOptionsData(sparesData);
-    setSpareOptions(sparesData.map((s) => s.spareName));
-
-    setOpenCheckout(true);
-  };
-
-  const openCheckinDialog = async (asset) => {
-    setSelectedAsset(asset);
-    // Prefill ReturnedBy with asset.sentTo (from API)
-    setReturnedBy(asset.sentTo || "");
-    setCheckinDateTime(new Date().toISOString().slice(0, 16));
-    setImageIn(null);
-    setReturnCondition(asset.returnCondition || "");
-    const spareFields = await getAllAssetSparesByName(asset.spareName);
-    setSpareOptionsData(spareFields);
-    // Prefill spares with all available details from API
-    const prefilledSpares =
-      spareOptionsData?.map((s) => ({
-        spare_id: s.spareId || null,
-        spare_code: s.spareCode || "",
-        spareName: s.spareName || "",
-        part_number: s.partNumber || "",
-        category: s.category || "",
-        specification: s.specification || "",
-        unit_of_measure: s.unitOfMeasure || "Piece",
-        current_stock: s.currentStock || 0,
-        reorder_level: s.reorderLevel || 0,
-        reorder_quantity: s.reorderQuantity || 0,
-        location: s.location || "",
-        linked_asset_id: asset.linkedAssetId,
-        vendor_name: s.vendorName || "",
-        purchase_rate: s.purchaseRate || 0,
-        average_cost: s.averageCost || 0,
-        lead_time_days: s.leadTimeDays || 0,
-        criticality: s.criticality || "Medium",
-        warranty_expiry: s.warrantyExpiry || "",
-        remarks: s.remarks || "",
-        // return-specific fields
-        returnDateTime: new Date().toISOString().slice(0, 16),
-        spareAmount: s.spareAmount || 0,
-        repairNeeded: s.repairNeeded || false,
-        scrapOldSpareValue: s.scrapOldSpareValue || 0,
-        isScrap: s.isScrap || false,
-        isNew: false, // existing spare
-      })) || [
-        {
-          spare_id: null,
-          spare_code: "",
-          spareName: "",
-          part_number: "",
-          category: "",
-          specification: "",
-          unit_of_measure: "Piece",
-          current_stock: 0,
-          reorder_level: 0,
-          reorder_quantity: 0,
-          location: "",
-          linked_asset_id: asset.id,
-          vendor_name: "",
-          purchase_rate: 0,
-          average_cost: 0,
-          lead_time_days: 0,
-          criticality: "Medium",
-          warranty_expiry: "",
-          remarks: "",
-          returnDateTime: "",
-          spareAmount: 0,
-          repairNeeded: false,
-          scrapOldSpareValue: 0,
-          isScrap: false,
-          isNew: true,
-        },
-      ];
-
-    setCheckinSpares(prefilledSpares);
-    // const sparesData = await getAssetSpares(asset.id);
-    // setSpareOptionsData(sparesData);
-    setOpenCheckin(true);
-  };
-
-  const handleAddSpare = () => {
-    setSpares([...spares, { spareName: "", tentativeReturnDate: "", spareAmount: 0, repairNeeded: false, scrapOldValue: 0, isScrap: false }]);
-  };
-
-  const handleAddCheckinSpare = () => {
-    setCheckinSpares([
-      ...checkinSpares,
-      {
-        spare_id: null,         // will be assigned by backend
-        spare_code: "",         // user can enter
-        spareName: "",          // maps to spare_name
-        part_number: "",
-        category: "",
-        specification: "",
-        unit_of_measure: "Piece",
-        current_stock: 0,
-        reorder_level: 0,
-        reorder_quantity: 0,
-        location: "",
-        linked_asset_id: selectedAsset?.id || null,
-        vendor_name: "",
-        purchase_rate: 0,
-        average_cost: 0,
-        lead_time_days: 0,
-        criticality: "Medium",
-        warranty_expiry: "",
-        remarks: "",
-        isNew: true,           // mark as new
-      }
-    ]);
-  };
-
-  const rows =
-    reportAsset && reportAsset.spareFields && reportAsset.spareFields.length > 0
-      ? reportAsset.spareFields
-      : [null];
-
-  const handleSpareChange = (index, field, value, type) => {
-    const list = type === "checkout" ? [...spares] : [...checkinSpares];
-    list[index][field] = value;
-    type === "checkout" ? setSpares(list) : setCheckinSpares(list);
-    if (field === "spareName" && value && !spareOptions.includes(value)) {
-      setSpareOptions([...spareOptions, value]);
+    try {
+      const res = await fetch(`https://admin.urest.in:8089/api/Employee?officeId=${officeId}`);
+      const data = await res.json();
+      setEmployees(data);
+    } catch (err) {
+      console.error("Failed to fetch employees", err);
     }
   };
 
-  const handleFileToBase64 = (file, setter) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64String = reader.result.split(",")[1];
-      setter(base64String);
-    };
-    reader.readAsDataURL(file);
+  const fetchAssets = async () => {
+    try {
+      const res = await fetch(`https://admin.urest.in:8089/api/asset/AssetSpareOps/all-assets/${officeId}`);
+      const data = await res.json();
+      setAssets(data);
+
+      // create a map of assetId -> status
+      const statusMap = {};
+      data.forEach(a => {
+        statusMap[a.id] = {
+          assetStatus: a.maintenanceStatus || "Available",
+          approvalStatus: a.approvalStatus || null,
+          lastCheckout: {
+            outFrom: a.outFrom || "",
+            sentTo: a.sentTo || ""
+          }
+        };
+      });
+      setAssetStatus(statusMap);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
+  const fetchSpares = async (assetId) => {
+    try {
+      const res = await fetch(`https://admin.urest.in:8089/api/asset/AssetSpare/asset/${assetId}`);
+      const data = await res.json();
+      setAvailableSpares(data);
+    } catch (err) {
+      console.error("Failed to fetch spares for asset", err);
+    }
+  };
+
+  const fetchOutFromOptions = async () => {
+    try {
+      const res = await fetch("https://admin.urest.in:8089/api/Office");
+      const data = await res.json();
+      setOutFromOptions(data);
+    } catch (err) {
+      console.error("Failed to fetch Out From options", err);
+    }
+  };
+
+  const handleAddSpareRow = () => {
+    setSpares([...spares, {
+      spareName: "",
+      spareAmount: 1,
+      tentativeReturnDate: "",
+      remarks: "",
+      imageFile: null
+    }]);
+  };
+
+  const handleRemoveSpareRow = (index) => {
+    const updated = [...spares];
+    updated.splice(index, 1);
+    setSpares(updated);
+  };
+
+
+  const handleImageUpload = (index, file) => {
+    handleSpareChange(index, "imageFile", file);
+  };
+
+  // helper: convert file -> base64
+  const toBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result.split(",")[1]); // strip "data:image/png;base64,"
+    reader.onerror = (err) => reject(err);
+  });
+
+  const handleApproval = async (assetId, status = "Approved", comments = "Approved") => {
+    try {
+      const approvedBy = 1; // Replace with dynamic user ID if needed
+      const url = `https://admin.urest.in:8089/api/asset/AssetSpareOps/approve?maintenanceId=${assetId}&status=${status}&approvedBy=${approvedBy}&comments=${encodeURIComponent(comments)}`;
+
+      const res = await fetch(url, { method: "PUT" });
+
+      if (res.ok) {
+        alert(`Asset ${status.toLowerCase()} successfully!`);
+        fetchAssets(); // refresh asset list
+      } else {
+        const errData = await res.json();
+        console.error(errData);
+        alert("Approval failed!");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Approval failed!");
+    }
+  };
+
+  // ===================== CHECKOUT =====================
   const handleCheckoutSubmit = async () => {
     if (!selectedAsset) return;
 
-    const payload = {
-      assetId: selectedAsset.id,
-      assetName: selectedAsset.name,
-      assigneeName,
-      purpose,
-      checkOutDateTime: new Date(checkoutDateTime).toISOString(),
-      outFrom,
-      sentTo,
-      imageOut, // optional
-      approvedBy,
-      checkoutApprovalStatus: "Pending", // <--- send for approval
-      checkoutApprovedBy: "",           // leave blank until approved
-      checkoutApprovalDateTime: null,
-      spareFields: spares.map((s) => ({
-        spareName: s.spareName || "",
-        isNew: s.isNew || true,
-        tentativeReturnDate: s.tentativeReturnDate ? new Date(s.tentativeReturnDate).toISOString() : null,
-        // do NOT send amounts, repairNeeded, scrap info yet
-        spareCode: "",
-        partNumber: "",
-        category: "",
-        specification: "",
-        unitOfMeasure: "",
-        currentStock: 0,
-        vendorName: "",
-        purchaseRate: 0,
-        averageCost: 0,
-        leadTimeDays: 0,
-        criticality: "",
-        warrantyExpiry: s.warrantyExpiry || null,
-        remarks: ""
-      }))
-    };
+    try {
+      for (const spare of spares) {
+        const formData = new FormData();
+        formData.append("SpareId", spare.spareId);
+        formData.append("AssetId", selectedAsset.id);
+        formData.append("IssuedTo", assigneeName || 0); // employeeId (int)
+        formData.append("IssuedBy", "");
+        formData.append("IssueDate", new Date(checkoutDateTime).toISOString());
+        formData.append("ExpectedReturnDate", spare.tentativeReturnDate || null);
+        formData.append("ActualReturnDate", new Date(checkoutDateTime).toISOString());
 
-    await checkoutAsset(payload);
-    setOpenCheckout(false);
-    fetchAssets(); // table will update with pending request
+        // ✅ provide defaults
+        formData.append("UnderWarranty", !!spare.warrantyExpiry);
+        formData.append("WarrantyExpiry", spare.warrantyExpiry || new Date().toISOString());
+        formData.append("ReplacementCost", 0);
+        formData.append("ScrapValue", 0);
+        formData.append("NetCost", 0);
+
+        // ✅ must not be empty
+        formData.append("ReturnCondition", returnCondition || "Good");
+
+        formData.append("Quantity", spare.spareAmount || 1);
+        formData.append("Status", "CheckedOut");
+        formData.append("Purpose", purpose || "NA");
+        formData.append("OutFrom", outFrom || "NA");
+        formData.append("SentTo", sentTo || "NA");
+        formData.append("Remarks", spare.remarks || "NA");
+        formData.append("CreatedAt", new Date().toISOString());
+        formData.append("UpdatedAt", new Date().toISOString());
+
+        // ✅ Convert image to base64 if present
+        if (spare.imageFile) {
+          const base64 = await toBase64(spare.imageFile);
+          formData.append("ImageOut", base64);
+        }
+
+        await fetch(
+          `https://admin.urest.in:8089/api/asset/AssetSpareOps/log-action?actionType=checkout`,
+          { method: "POST", body: formData }
+        );
+      }
+
+      setOpenCheckout(false);
+      setSpares([]);
+      fetchAssets();
+      setAssetStatus(prev => ({
+        ...prev,
+        [selectedAsset.id]: {
+          ...(prev[selectedAsset.id] || {}),
+          assetStatus: "CheckedOut",
+          lastCheckout: { outFrom, sentTo }
+        }
+      }));
+    } catch (err) {
+      console.error(err);
+      alert("Checkout failed");
+    }
+  };
+
+  const handleSpareChange = (index, field, value) => {
+    const updated = [...spares];
+    updated[index][field] = value;
+    setSpares(updated);
   };
 
   const handleCheckinSubmit = async () => {
     if (!selectedAsset) return;
 
-    const payload = {
-      checkoutId: selectedAsset.checkoutId,
-      assetId: selectedAsset.assetId,
-      returnedBy,
-      returnDateTime: new Date(checkinDateTime).toISOString(),
-      returnCondition,
-      imageIn,
-      returnApprovalStatus: "Pending",
-      returnApprovedBy: selectedAsset.approvedBy || "",
-      returnApprovalDateTime: null,
-      SpareFields: checkinSpares.map(s => ({
-        spareName: s.spareName,
-        spareAmount: s.spareAmount,
-        repairNeeded: s.repairNeeded || false,
-        isScrap: s.isScrap || false,
-        scrapOldSpareValue: s.scrapOldSpareValue || 0
-      }))
-    };
+    try {
+      // Prepare the payload for each spare
+      for (const spare of spares) {
+        const isReplacement = purpose === "Replacement" && spare.replacementRequired;
 
-    await checkinAsset(payload);
-    // // Optionally, persist new spares in main spare table
-    // const newSpares = checkinSpares.filter((s) => s.isNew);
-    // if (newSpares.length) {
-    //   await addNewSparesToSpareTable(newSpares);
-    // }
-    setOpenCheckin(false);
-    fetchAssets();
+        const formData = new FormData();
+
+// maintenance object → stringify
+formData.append("maintenance", JSON.stringify({
+  id: 0,
+  spareId: spare.spareId || 0,
+  assetId: selectedAsset.id,
+  issuedTo: assigneeName || 0,
+  issuedBy: 0,
+  issueDate: new Date().toISOString(),
+  expectedReturnDate: spare.tentativeReturnDate
+    ? new Date(spare.tentativeReturnDate).toISOString()
+    : new Date().toISOString(),
+  actualReturnDate: new Date(checkinDateTime).toISOString(),
+  underWarranty: !!spare.warrantyExpiry,
+  warrantyExpiry: spare.warrantyExpiry || new Date().toISOString(),
+  replacementCost: spare.replacementCost || 0,
+  scrapValue: spare.scrapValue || 0,
+  netCost: spare.netCost || 0,
+  returnCondition: returnCondition || "Good",
+  quantity: spare.spareAmount || 1,
+  status: "CheckedIn",
+  purpose: purpose || "",
+  outFrom: outFrom || "",
+  sentTo: sentTo || "",
+  imageOut: spare.imageOut || "",
+  remarks: spare.remarks || "",
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+}));
+
+// If you need to upload an image (binary file), append it separately
+if (spare.imageFile) {
+  formData.append("imageIn", spare.imageFile);
+} else {
+  formData.append("imageIn", ""); // optional
+}
+
+// replacementRequired flag
+formData.append("replacementRequired", isReplacement);
+
+// replacement object → stringify only if required
+if (isReplacement) {
+  formData.append("replacement", JSON.stringify({
+    oldSpareId: spare.spareId || 0,
+    assetId: selectedAsset.id,
+    useExistingSpare: true,
+    newSpareId: spare.newSpare?.spareId || 0,
+    newSpare: spare.newSpare || {},
+    scrapValue: spare.scrapValue || 0,
+    replacementCost: spare.replacementCost || 0,
+    remarks: spare.remarks || "",
+  }));
+}
+
+// approverId
+formData.append("approverId", approverId || 0);
+
+const res = await fetch(
+  "https://admin.urest.in:8089/api/asset/AssetSpareOps/checkin-full",
+  {
+    method: "POST",
+    body: formData, // do NOT set Content-Type, browser will set with boundary
+  }
+);
+
+const data = await res.json();
+console.log(data);
+
+        if (!res.ok) {
+          const errData = await res.json();
+          console.error(errData);
+          alert("Checkin failed");
+          return;
+        }
+      }
+
+      // Reset UI
+      setOpenCheckin(false);
+      setSpares([]);
+      fetchAssets();
+      setAssetStatus((prev) => ({ ...prev, [selectedAsset.id]: "Available" }));
+    } catch (err) {
+      console.error(err);
+      alert("Checkin failed");
+    }
+  };
+
+  // When opening Checkin dialog
+  const openCheckinDialog = (asset) => {
+    setSelectedAsset(asset);
+    fetchSpares(asset.id);
+    console.log(assetStatus[asset.id]?.lastCheckout);
+    // Use the lastCheckout info from assetStatus map
+    setOutFrom(assetStatus[asset.id]?.lastCheckout?.sentTo || asset.sentTo || "");
+    setSentTo(assetStatus[asset.id]?.lastCheckout?.outFrom || asset.outFrom || "");
+    setOpenCheckin(true);
   };
 
   return (
-    <Box p={2}>
-      <Typography variant="h5" gutterBottom>Asset Maintenance</Typography>
+    <Box p={1}>
+      <h2>Asset Maintenance</h2>
 
-      {/* Assets Table */}
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -338,415 +333,494 @@ const AssetMaintenance = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {assets.map((asset) => {
-              const now = new Date();
-              const checkoutTime = asset.checkOutDateTime ? new Date(asset.checkOutDateTime) : null;
-              const returnTime = asset.returnDate ? new Date(asset.returnDate) : null;
-              const showCheckinButton = checkoutTime && checkoutTime <= now && (!returnTime || returnTime < now);
-              const showCheckoutButton = !checkoutTime || (returnTime && returnTime <= now);
+            {assets.map(asset => (
+              <TableRow key={asset.id}>
+                <TableCell>{asset.id}</TableCell>
+                <TableCell>{asset.assetName}</TableCell>
+                <TableCell>
+                  {(() => {
+                    const status = assetStatus[asset.id]?.assetStatus;
+                    const approval = assetStatus[asset.id]?.approvalStatus;
 
-              // Row color based on approval status
-              let rowStyle = {};
-              if (asset.checkoutApprovalStatus === "Pending") rowStyle.backgroundColor = "#ffcccc"; // red
-              else if (asset.checkoutApprovalStatus === "Approved") rowStyle.backgroundColor = "#fde39bff"; // green
+                    if (status === "N/A" && approval === "Pending") {
+                      // Step 1
+                      return (
+                        <Button
+                          color="primary"
+                          onClick={() => {
+                            setSelectedAsset(asset);
+                            fetchSpares(asset.id);
+                            setOpenCheckout(true);
+                          }}
+                        >
+                          Checkout
+                        </Button>
+                      );
+                    }
 
-              return (
-                <TableRow key={asset.id} style={rowStyle}>
-                  <TableCell>{asset.assetId}</TableCell>
-                  <TableCell>{asset.name}</TableCell>
-                  <TableCell>
-                    {showCheckinButton && asset.checkoutApprovalStatus === "Approved" && (
-                      <Button variant="contained" onClick={() => openCheckinDialog(asset)}>
-                        Open Return Form
-                      </Button>
-                    )}
-                    {showCheckoutButton && asset.checkoutApprovalStatus !== "Pending" && (
-                      <Button variant="contained" onClick={() => openCheckoutDialog(asset)}>Checkout</Button>
-                    )}
-                    <Button variant="text" color="secondary" onClick={() => openReportDialog(asset)}>View</Button>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+                    if (status === "CheckedOut" && approval === "Pending") {
+                      // Step 2
+                      return (
+                        <>
+                          <Button
+                            color="success"
+                            onClick={() =>
+                              handleApproval(asset.maintenanceId, "Approved", "approved")
+                            }
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            color="error"
+                            sx={{ ml: 1 }}
+                            onClick={() =>
+                              handleApproval(asset.maintenanceId, "Rejected", "Not approved")
+                            }
+                          >
+                            Reject
+                          </Button>
+                        </>
+                      );
+                    }
+
+                    if (status === "Approved" && approval === "Approved") {
+                      // Step 3
+                      return (
+                        <Button
+                          color="secondary"
+                          onClick={() => openCheckinDialog(asset)}
+                        >
+                          Checkin
+                        </Button>
+                      );
+                    }
+
+                    if (status === "CheckedIn" && approval === "Pending") {
+                      // Step 2
+                      return (
+                        <>
+                          <Button
+                            color="success"
+                            onClick={() =>
+                              handleApproval(asset.maintenanceId, "Approved", "approved")
+                            }
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            color="error"
+                            sx={{ ml: 1 }}
+                            onClick={() =>
+                              handleApproval(asset.maintenanceId, "Rejected", "Not approved")
+                            }
+                          >
+                            Reject
+                          </Button>
+                        </>
+                      );
+                    }
+
+                    if (status === "CheckedIn") {
+                      // Step 4 (reset state, show Checkout again)
+                      return (
+                        <Button
+                          color="primary"
+                          onClick={() => {
+                            setSelectedAsset(asset);
+                            fetchSpares(asset.id);
+                            setOpenCheckout(true);
+                          }}
+                        >
+                          Checkout
+                        </Button>
+                      );
+                    }
+
+                    return null;
+                  })()}
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
 
       {/* Checkout Dialog */}
-      <Dialog open={openCheckout} onClose={() => setOpenCheckout(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Checkout Asset</DialogTitle>
+      <Dialog open={openCheckout} onClose={() => setOpenCheckout(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Checkout Asset: {selectedAsset?.assetName}</DialogTitle>
         <DialogContent>
-          <TextField fullWidth label="Assignee Name" margin="dense" value={assigneeName} onChange={(e) => setAssigneeName(e.target.value)} />
-          <Autocomplete freeSolo options={purposes} value={purpose} onChange={(e, newVal) => setPurpose(newVal || "")} onInputChange={(e, newVal) => setPurpose(newVal)} renderInput={(params) => <TextField {...params} label="Purpose" margin="dense" fullWidth />} />
-          <TextField fullWidth type="datetime-local" label="Checkout Date & Time" margin="dense" InputLabelProps={{ shrink: true }} value={checkoutDateTime} onChange={(e) => setCheckoutDateTime(e.target.value)} />
-          <TextField select fullWidth label="Out From" margin="dense" value={outFrom} onChange={(e) => setOutFrom(e.target.value)}>
-            {offices.map((office) => <MenuItem key={office.officeId} value={office.officeName}>{office.officeName}</MenuItem>)}
-          </TextField>
-          <TextField fullWidth label="Sent To" margin="dense" value={sentTo} onChange={(e) => setSentTo(e.target.value)} />
-          <TextField select fullWidth label="Approved By" margin="dense" value={approvedBy} onChange={(e) => setApprovedBy(e.target.value)}>
-            {employees.map((emp) => <MenuItem key={emp.employeeId} value={emp.employeeName}>{emp.employeeName}</MenuItem>)}
-          </TextField>
-          <Box mt={2}><input type="file" accept="image/*" onChange={(e) => handleFileToBase64(e.target.files[0], setImageOut)} /></Box>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="assignee-label">Assignee</InputLabel>
+            <Select
+              labelId="assignee-label"
+              value={assigneeName}
+              onChange={(e) => setAssigneeName(e.target.value)}
+            >
+              {employees.map((emp) => (
+                <MenuItem key={emp.employeeId} value={emp.employeeId}>
+                  {emp.employeeName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField
+            type="datetime-local"
+            label="Checkout Date"
+            fullWidth
+            value={checkoutDateTime}
+            onChange={e => setCheckoutDateTime(e.target.value)}
+            margin="normal"
+          />
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="purpose-label">Purpose</InputLabel>
+            <Select
+              labelId="purpose-label"
+              value={purpose}
+              onChange={e => setPurpose(e.target.value)}
+            >
+              <MenuItem value="Repair">Repair</MenuItem>
+              <MenuItem value="Replacement">Replacement</MenuItem>
+              <MenuItem value="Loan">Loan</MenuItem>
+              <MenuItem value="Testing">Testing</MenuItem>
+              <MenuItem value="Other">Other</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="outfrom-label">Out From</InputLabel>
+            <Select
+              labelId="outfrom-label"
+              value={outFrom}
+              onChange={e => setOutFrom(e.target.value)}
+            >
+              {outFromOptions.map((opt) => (
+                <MenuItem key={opt.officeId} value={opt.officeName}>
+                  {opt.officeName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField label="Sent To" fullWidth value={sentTo} onChange={e => setSentTo(e.target.value)} margin="normal" />
 
-          <Typography mt={2} variant="subtitle1">Spares</Typography>
-          {spares.map((spare, index) => {
-            const selectedSpare = spareOptionsData.find((s) => s.spareName === spare.spareName);
-            const isUnderWarranty = selectedSpare?.warrantyExpiry && new Date(selectedSpare.warrantyExpiry) >= new Date();
+          <Box mt={2}>
+            <Button startIcon={<Add />} onClick={handleAddSpareRow}>Add Spare</Button>
 
-            return (
-              <Box key={index} mb={1} borderBottom="1px solid #ddd" pb={1}>
-                <Autocomplete
-                  freeSolo
-                  options={spareOptions}
-                  value={spare.spareName || ""}
-                  onChange={(e, newVal) => handleSpareChange(index, "spareName", newVal || "", "checkout")}
-                  onInputChange={(e, newVal) => handleSpareChange(index, "spareName", newVal, "checkout")}
-                  renderInput={(params) => <TextField {...params} label={`Spare Name ${index + 1}`} margin="dense" fullWidth />}
-                />
+            {spares.map((spare, idx) => (
+              <Table key={idx} size="small" sx={{ mt: 2, border: "1px solid #ddd" }}>
+                <TableBody>
+                  <TableRow>
+                    <TableCell><b>Spare Name</b></TableCell>
+                    <TableCell>
+                      <FormControl fullWidth>
+                        <Select
+                          value={spare.spareId || ""}
+                          onChange={(e) => {
+                            const selected = availableSpares.find(s => s.spareId === e.target.value);
+                            handleSpareChange(idx, "spareId", selected.spareId);
+                            handleSpareChange(idx, "spareName", selected.spareName);
+                            handleSpareChange(idx, "warrantyExpiry", selected.warrantyExpiry); // ✅ save expiry
+                            setSentTo(selected.vendorName || "");
+                          }}
+                        >
+                          {availableSpares.map((s) => (
+                            <MenuItem key={s.spareId} value={s.spareId}>
+                              {s.spareName}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      {spare.warrantyExpiry && (() => {
+                        const expiryDate = new Date(spare.warrantyExpiry);
+                        const today = new Date();
+                        const diffTime = expiryDate - today;
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                {selectedSpare?.warrantyExpiry && (
-                  <Typography variant="body2" color={isUnderWarranty ? "primary" : "error"}>
-                    Warranty Expiry: {new Date(selectedSpare.warrantyExpiry).toLocaleDateString()}
-                  </Typography>
-                )}
-
-                <TextField
-                  fullWidth
-                  type="date"
-                  label="Tentative Return Date"
-                  margin="dense"
-                  InputLabelProps={{ shrink: true }}
-                  value={spare.tentativeReturnDate}
-                  onChange={(e) => handleSpareChange(index, "tentativeReturnDate", e.target.value, "checkout")}
-                />
-              </Box>
-            );
-          })}
-          <Button onClick={handleAddSpare}>+ Add Spare</Button>
+                        return (
+                          <p style={{ marginTop: "4px", fontSize: "0.9em", color: diffDays < 0 ? "red" : "gray" }}>
+                            Warranty Expiry: {expiryDate.toLocaleDateString()}{" "}
+                            {diffDays >= 0
+                              ? `( ${diffDays} days left )`
+                              : `( Expired ${Math.abs(diffDays)} days ago )`}
+                          </p>
+                        );
+                      })()}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell><b>Quantity</b></TableCell>
+                    <TableCell>
+                      <TextField
+                        type="number"
+                        value={spare.spareAmount}
+                        onChange={e => handleSpareChange(idx, "spareAmount", e.target.value)}
+                        fullWidth
+                      />
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell><b>Tentative Return Date</b></TableCell>
+                    <TableCell>
+                      <TextField
+                        type="date"
+                        value={spare.tentativeReturnDate}
+                        onChange={e => handleSpareChange(idx, "tentativeReturnDate", e.target.value)}
+                        fullWidth
+                      />
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell><b>Remarks</b></TableCell>
+                    <TableCell>
+                      <TextField
+                        value={spare.remarks}
+                        onChange={e => handleSpareChange(idx, "remarks", e.target.value)}
+                        fullWidth
+                      />
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell><b>Image</b></TableCell>
+                    <TableCell>
+                      <input type="file" onChange={e => handleImageUpload(idx, e.target.files[0])} />
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell><b>Action</b></TableCell>
+                    <TableCell>
+                      <IconButton onClick={() => handleRemoveSpareRow(idx)}><Delete /></IconButton>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            ))}
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenCheckout(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleCheckoutSubmit}>Checkout</Button>
+          <Button variant="contained" onClick={handleCheckoutSubmit}>Submit</Button>
         </DialogActions>
       </Dialog>
 
-      {/* ✅ Checkin (Return) Dialog */}
-      <Dialog open={openCheckin} onClose={() => setOpenCheckin(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Return / Checkin Asset</DialogTitle>
+      {/* Checkin Dialog */}
+      <Dialog open={openCheckin} onClose={() => setOpenCheckin(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Checkin Asset: {selectedAsset?.assetName}</DialogTitle>
         <DialogContent>
-          {/* Basic Fields */}
           <TextField
-            fullWidth
-            label="Returned By"
-            margin="dense"
-            value={returnedBy}
-            onChange={(e) => setReturnedBy(e.target.value)}
-          />
-          <TextField
-            fullWidth
             type="datetime-local"
-            label="Checkin Date & Time"
-            margin="dense"
-            InputLabelProps={{ shrink: true }}
+            label="Checkin Date"
+            fullWidth
             value={checkinDateTime}
-            onChange={(e) => setCheckinDateTime(e.target.value)}
+            onChange={e => setCheckinDateTime(e.target.value)}
+            margin="normal"
           />
           <TextField
+            label="Out From"
             fullWidth
-            label="Return Condition"
-            margin="dense"
-            value={returnCondition}
-            onChange={(e) => setReturnCondition(e.target.value)}
+            value={outFrom}
+            disabled
+            margin="normal"
           />
+
+          <TextField
+            label="Sent To"
+            fullWidth
+            value={sentTo}
+            disabled
+            margin="normal"
+          />
+          <TextField label="Return Condition" fullWidth value={returnCondition} onChange={e => setReturnCondition(e.target.value)} margin="normal" />
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="purpose-checkin-label">Purpose</InputLabel>
+            <Select
+              labelId="purpose-checkin-label"
+              value={purpose}
+              onChange={(e) => setPurpose(e.target.value)}
+            >
+              <MenuItem value="Maintenance">Maintenance</MenuItem>
+              <MenuItem value="Replacement">Replacement</MenuItem>
+            </Select>
+          </FormControl>
+
+          {/* Approver Dropdown */}
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="approver-label">Approver</InputLabel>
+            <Select
+              labelId="approver-label"
+              value={approverId || ""}
+              onChange={(e) => setApproverId(e.target.value)}
+            >
+              {employees.map(emp => (
+                <MenuItem key={emp.employeeId} value={emp.employeeId}>
+                  {emp.employeeName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
           <Box mt={2}>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleFileToBase64(e.target.files[0], setImageIn)}
-            />
-          </Box>
+            <Button startIcon={<Add />} onClick={handleAddSpareRow}>
+              Add Spare
+            </Button>
 
-          {/* Spares Section */}
-          <Typography mt={2} variant="subtitle1">Returned Spares</Typography>
-          {checkinSpares.map((spare, index) => {
-            const selectedSpare = spareOptionsData.find((s) => s.spareName === spare.spareName);
-            const checkoutDate = selectedAsset?.checkOutDateTime
-              ? new Date(selectedAsset.checkOutDateTime)
-              : new Date(); // fallback today if missing
+            {spares.map((spare, idx) => (
+              <Table key={idx} size="small" sx={{ mt: 2, border: "1px solid #ddd" }}>
+                <TableBody>
+                  <TableRow>
+                    <TableCell><b>Spare Name</b></TableCell>
+                    <TableCell>
+                      <FormControl fullWidth>
+                        <Select
+                          value={spare.spareId || ""}
+                          onChange={(e) => {
+                            const selected = availableSpares.find(s => s.spareId === e.target.value);
+                            handleSpareChange(idx, "spareId", selected.spareId);
+                            handleSpareChange(idx, "spareName", selected.spareName);
+                            handleSpareChange(idx, "warrantyExpiry", selected.warrantyExpiry);
+                            setSentTo(selected.vendorName || "");
+                          }}
+                        >
+                          {availableSpares.map((s) => (
+                            <MenuItem key={s.spareId} value={s.spareId}>
+                              {s.spareName}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      {spare.warrantyExpiry && (() => {
+                        const expiryDate = new Date(spare.warrantyExpiry);
+                        const today = new Date();
+                        const diffTime = expiryDate - today;
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-            const isUnderWarranty =
-              selectedSpare?.warrantyExpiry &&
-              new Date(selectedSpare.warrantyExpiry) >= checkoutDate;
-            // disable fields if old spare is under warranty or repair-needed
-            const disableFields = (spare.repairNeeded && !spare.isNew);
+                        return (
+                          <p style={{ marginTop: "4px", fontSize: "0.9em", color: diffDays < 0 ? "red" : "gray" }}>
+                            Warranty Expiry: {expiryDate.toLocaleDateString()}{" "}
+                            {diffDays >= 0
+                              ? `( ${diffDays} days left )`
+                              : `( Expired ${Math.abs(diffDays)} days ago )`}
+                          </p>
+                        );
+                      })()}
+                    </TableCell>
+                  </TableRow>
 
-            return (
-              <Box key={index} mb={2} p={2} border="1px solid #ddd" borderRadius={2}>
-                {/* Spare Name */}
-                <Autocomplete
-                  freeSolo
-                  options={spareOptionsData.map((s) => s.spareName)}
-                  value={spare.spareName || ""}
-                  onChange={(e, newVal) =>
-                    handleSpareChange(index, "spareName", newVal || "", "checkin")
-                  }
-                  onInputChange={(e, newVal) =>
-                    handleSpareChange(index, "spareName", newVal, "checkin")
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label={`Spare Name ${index + 1}`}
-                      margin="dense"
-                      fullWidth
-                      disabled={disableFields}
-                    />
+                  <TableRow>
+                    <TableCell><b>Quantity</b></TableCell>
+                    <TableCell>
+                      <TextField
+                        type="number"
+                        value={spare.spareAmount || 1}
+                        onChange={(e) => handleSpareChange(idx, "spareAmount", Number(e.target.value))}
+                        fullWidth
+                      />
+                    </TableCell>
+                  </TableRow>
+
+                  <TableRow>
+                    <TableCell><b>Remarks</b></TableCell>
+                    <TableCell>
+                      <TextField
+                        value={spare.remarks || ""}
+                        onChange={(e) => handleSpareChange(idx, "remarks", e.target.value)}
+                        fullWidth
+                      />
+                    </TableCell>
+                  </TableRow>
+
+                  {/* Replacement Logic */}
+                  <TableRow>
+                    <TableCell><b>Replacement Required?</b></TableCell>
+                    <TableCell>
+                      <Checkbox
+                        checked={spare.replacementRequired || false}
+                        onChange={(e) => {
+                          const updated = [...spares];
+                          updated[idx].replacementRequired = e.target.checked;
+                          if (!e.target.checked) {
+                            updated[idx].scrapValue = 0;
+                            updated[idx].replacementCost = 0;
+                            updated[idx].netCost = 0;
+                          }
+                          setSpares(updated);
+                        }}
+                      />
+                    </TableCell>
+                  </TableRow>
+
+                  {spare.replacementRequired && (
+                    <>
+                      <TableRow>
+                        <TableCell><b>Scrap Value</b></TableCell>
+                        <TableCell>
+                          <TextField
+                            type="number"
+                            value={spare.scrapValue || ""}
+                            onChange={(e) => {
+                              const updated = [...spares];
+                              updated[idx].scrapValue = Number(e.target.value) || 0;
+                              updated[idx].netCost =
+                                (updated[idx].replacementCost || 0) - updated[idx].scrapValue;
+                              setSpares(updated);
+                            }}
+                            fullWidth
+                          />
+                        </TableCell>
+                      </TableRow>
+
+                      <TableRow>
+                        <TableCell><b>Replacement Cost</b></TableCell>
+                        <TableCell>
+                          <TextField
+                            type="number"
+                            value={spare.replacementCost || ""}
+                            onChange={(e) => {
+                              const updated = [...spares];
+                              updated[idx].replacementCost = Number(e.target.value) || 0;
+                              updated[idx].netCost =
+                                updated[idx].replacementCost - (updated[idx].scrapValue || 0);
+                              setSpares(updated);
+                            }}
+                            fullWidth
+                          />
+                        </TableCell>
+                      </TableRow>
+
+                      <TableRow>
+                        <TableCell><b>Net Cost</b></TableCell>
+                        <TableCell>
+                          <TextField
+                            type="number"
+                            value={spare.netCost || 0}
+                            disabled
+                            fullWidth
+                          />
+                        </TableCell>
+                      </TableRow>
+                    </>
                   )}
-                />
 
-                {/* Warranty Info */}
-                {selectedSpare?.warrantyExpiry ? (
-                  <Typography variant="body2" color={isUnderWarranty ? "primary" : "error"}>
-                    Warranty Expiry: {new Date(selectedSpare.warrantyExpiry).toLocaleDateString()}
-                  </Typography>
-                ) : (
-                  <TextField
-                    fullWidth
-                    type="date"
-                    label="Warranty Expiry"
-                    margin="dense"
-                    InputLabelProps={{ shrink: true }}
-                    value={spare.warrantyExpiry || ""}
-                    onChange={(e) =>
-                      handleSpareChange(index, "warrantyExpiry", e.target.value, "checkin")
-                    }
-                    disabled={disableFields}
-                  />
-                )}
+                  <TableRow>
+                    <TableCell><b>Image</b></TableCell>
+                    <TableCell>
+                      <input type="file" onChange={e => handleImageUpload(idx, e.target.files[0])} />
+                    </TableCell>
+                  </TableRow>
 
-                {/* Amount */}
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Spare Amount"
-                  margin="dense"
-                  value={spare.spareAmount || 0}
-                  onChange={(e) =>
-                    handleSpareChange(index, "spareAmount", e.target.value, "checkin")
-                  }
-                  inputProps={{ min: 0 }}
-                  disabled={disableFields}
-                />
-
-                {/* Repair Needed */}
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={spare.repairNeeded || false}
-                      onChange={(e) =>
-                        handleSpareChange(index, "repairNeeded", e.target.checked, "checkin")
-                      }
-                      disabled={isUnderWarranty}
-                    />
-                  }
-                  label="Repair Needed"
-                />
-
-                {/* Scrap */}
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Scrap Old Spare Value"
-                  margin="dense"
-                  value={spare.scrapOldSpareValue || 0}
-                  onChange={(e) =>
-                    handleSpareChange(index, "scrapOldSpareValue", e.target.value, "checkin")
-                  }
-                  inputProps={{ min: 0 }}
-                  disabled={isUnderWarranty}
-                />
-
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={spare.isScrap || false}
-                      onChange={(e) =>
-                        handleSpareChange(index, "isScrap", e.target.checked, "checkin")
-                      }
-                      disabled={isUnderWarranty}
-                    />
-                  }
-                  label="Is Scrap"
-                />
-              </Box>
-            );
-          })}
-          <Button onClick={handleAddCheckinSpare}>+ Add Spare</Button>
+                  <TableRow>
+                    <TableCell><b>Action</b></TableCell>
+                    <TableCell>
+                      <IconButton onClick={() => handleRemoveSpareRow(idx)}><Delete /></IconButton>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            ))}
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenCheckin(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleCheckinSubmit}>
-            Submit Return
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={openReport}
-        onClose={() => setOpenReport(false)}
-        maxWidth="lg"
-        fullWidth
-      >
-        <DialogTitle>Asset Maintenance Report</DialogTitle>
-        <DialogContent>
-          {reportAsset ? (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Asset ID</TableCell>
-                  <TableCell>Asset Name</TableCell>
-                  <TableCell>Checked Out</TableCell>
-                  <TableCell>Returned</TableCell>
-                  <TableCell>Approval Status</TableCell>
-                  <TableCell>Spare Name</TableCell>
-                  <TableCell>Warranty Expiry</TableCell>
-                  <TableCell>Amount</TableCell>
-                  <TableCell>Repair Needed</TableCell>
-                  <TableCell>Is Scrap</TableCell>
-                  <TableCell>Return Date</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {rows.map((s, i) => (
-                  <TableRow key={i}>
-                    {/* Asset Columns */}
-                    <TableCell>{reportAsset.assetId}</TableCell>
-                    <TableCell>{reportAsset.name}</TableCell>
-                    <TableCell>
-                      {reportAsset.checkOutDateTime
-                        ? new Date(reportAsset.checkOutDateTime).toLocaleString()
-                        : "N/A"}
-                    </TableCell>
-                    <TableCell>
-                      {reportAsset.returnDate
-                        ? new Date(reportAsset.returnDate).toLocaleString()
-                        : "N/A"}
-                    </TableCell>
-                    <TableCell>{reportAsset.checkoutApprovalStatus}</TableCell>
-
-                    {/* Spare Columns */}
-                    <TableCell>{reportAsset ? reportAsset.spareName : "-"}</TableCell>
-                    <TableCell>
-                      {s && s.warrantyExpiry
-                        ? new Date(s.warrantyExpiry).toLocaleDateString()
-                        : "-"}
-                    </TableCell>
-                    <TableCell>{s ? s.spareAmount : "-"}</TableCell>
-                    <TableCell>{s ? (s.repairNeeded ? "Yes" : "No") : "-"}</TableCell>
-                    <TableCell>{s ? (s.isScrap ? "Yes" : "No") : "-"}</TableCell>
-                    <TableCell>
-                      {s && s.tentativeReturnDate
-                        ? new Date(s.tentativeReturnDate).toLocaleDateString()
-                        : "-"}
-                    </TableCell>
-
-                    {/* Action Buttons only on first row */}
-                    <TableCell>
-                      {/* Checkout approval actions */}
-                      {i === 0 && reportAsset.checkoutApprovalStatus === "Pending" && (
-                        <>
-                          <IconButton
-                            color="success"
-                            onClick={async () => {
-                              try {
-                                await approveAssetCheckout(
-                                  reportAsset.checkoutId,
-                                  reportAsset.checkoutApprovedBy
-                                );
-                                fetchAssets(officeId);
-                                setOpenReport(false);
-                              } catch (err) {
-                                console.error("Checkout Approval failed:", err);
-                                alert("Checkout approval failed. Please try again.");
-                              }
-                            }}
-                          >
-                            <CheckCircle />
-                          </IconButton>
-                          <IconButton
-                            color="error"
-                            onClick={async () => {
-                              try {
-                                await rejectAssetCheckout(reportAsset.checkoutId);
-                                fetchAssets(officeId);
-                                setOpenReport(false);
-                              } catch (err) {
-                                console.error("Checkout Rejection failed:", err);
-                                alert("Checkout rejection failed. Please try again.");
-                              }
-                            }}
-                          >
-                            <Cancel />
-                          </IconButton>
-                        </>
-                      )}
-
-                      {/* ✅ Check-in approval actions */}
-                      {i === 0 && reportAsset.returnApprovalStatus === "Pending" && (
-                        <>
-                          {console.log("Report Asset:", reportAsset)}
-                          <IconButton
-                            color="success"
-                            onClick={async () => {
-                              try {
-                                await approveAssetCheckin(
-                                  reportAsset.checkoutId,
-                                  reportAsset.returnApprovedBy,
-                                  { spareFields: reportAsset.spareFields || [] } // pass spares if any
-                                );
-                                fetchAssets(officeId);
-                                setOpenReport(false);
-                              } catch (err) {
-                                console.error("Check-in Approval failed:", err);
-                                alert("Check-in approval failed. Please try again.");
-                              }
-                            }}
-                          >
-                            <CheckCircle />
-                          </IconButton>
-                          <IconButton
-                            color="error"
-                            onClick={async () => {
-                              try {
-                                await rejectAssetCheckin(reportAsset.checkoutId);
-                                fetchAssets(officeId);
-                                setOpenReport(false);
-                              } catch (err) {
-                                console.error("Check-in Rejection failed:", err);
-                                alert("Check-in rejection failed. Please try again.");
-                              }
-                            }}
-                          >
-                            <Cancel />
-                          </IconButton>
-                        </>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <Typography>No data available</Typography>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenReport(false)}>Close</Button>
+          <Button variant="contained" onClick={handleCheckinSubmit}>Submit</Button>
         </DialogActions>
       </Dialog>
     </Box>
   );
-};
-
-export default AssetMaintenance;
+}

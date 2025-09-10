@@ -29,15 +29,10 @@ export const createWorkOrder = async (WorkOrderData) => {
     throw error;
   }
 }
-export const updateWorkOrder = async (WorkOrderId, WorkOrderData) => {
-  try {
-    const response = await axios.put(`${API_BASE}/${WorkOrderId}`, WorkOrderData);
+export const updateWorkOrder = async (id, payload) => {
+    const response = await axios.put(`${API_BASE}/${id}`, payload);
     return response.data;
-  } catch (error) {
-    console.error("Error updating work order master:", error);
-    throw error;
-  }
-}
+};
 export const deleteWorkOrder = async (WorkOrderId, officeId) => {
   try {
     const response = await axios.delete(`${API_BASE}/${WorkOrderId}/office/${officeId}`);
