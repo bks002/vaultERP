@@ -71,7 +71,6 @@ export const getOperationsByJobCard = async (jobCardId) => {
   }
 };
 
-//Get Grade Code by Internal Work Order and OperationID
 export const getConstructionByGrade = async (internalWoid, operationId) => {
   try {
     if (!internalWoid || !operationId) return [];

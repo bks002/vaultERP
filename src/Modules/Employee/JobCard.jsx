@@ -140,6 +140,7 @@ const AddEditJobCardDialog = ({
     } else {
       setGradeCodes([]);
       setSelectedGradeCode("");
+
     }
   }, [internalWO, selectByGrade, initialData]);
 
@@ -227,7 +228,6 @@ const AddEditJobCardDialog = ({
           }, []);
 
           setCompoundChoices(compoundOptions);
-
           const chosenCompoundId =
             compoundOptions.find((c) => c.itemId === selectedCompoundId)
               ?.itemId || compoundOptions[0].itemId;
@@ -389,7 +389,6 @@ const AddEditJobCardDialog = ({
                 </MenuItem>
               ))}
             </TextField>
-
             {/* Toggle switch replacing radio buttons */}
             <FormControlLabel
               control={
