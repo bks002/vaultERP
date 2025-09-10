@@ -63,7 +63,7 @@ export const getExpenseReport = async (officeId, startDate, endDate) => {
     const response = await axios.get(
       `${API_BASE_URL}/master/ExpenseMaster/report/${officeId}`,
       {
-        params: { startDate, endDate },
+        params: { startDate, endDate }, withCredentials: false
       }
     );
     return response.data;

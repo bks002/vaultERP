@@ -2,19 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Box, Select, MenuItem, FormControl, InputLabel, TextField  } from '@mui/material';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LabelList, Legend } from 'recharts';
 import {
-   
   BarChart, Bar, XAxis, YAxis
 } from "recharts";
 import {  CartesianGrid, } from "recharts";
 import { getAttendanceSummaryForDepartments } from '../../Services/DashboardService';
 import { getServiceDueSummary, getExpenseReport, getMinStockAll } from '../../Services/DashboardService';
 import { useSelector } from "react-redux";
-
-
 const departments = ["IT", "HR", "Operation"];
-
-
-
 
 const DepartmentAttendanceDashboard = () => {
   const [chartData, setChartData] = useState([]);

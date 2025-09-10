@@ -222,72 +222,72 @@ export default function AssetMaintenance() {
 
         const formData = new FormData();
 
-// maintenance object → stringify
-formData.append("maintenance", JSON.stringify({
-  id: 0,
-  spareId: spare.spareId || 0,
-  assetId: selectedAsset.id,
-  issuedTo: assigneeName || 0,
-  issuedBy: 0,
-  issueDate: new Date().toISOString(),
-  expectedReturnDate: spare.tentativeReturnDate
-    ? new Date(spare.tentativeReturnDate).toISOString()
-    : new Date().toISOString(),
-  actualReturnDate: new Date(checkinDateTime).toISOString(),
-  underWarranty: !!spare.warrantyExpiry,
-  warrantyExpiry: spare.warrantyExpiry || new Date().toISOString(),
-  replacementCost: spare.replacementCost || 0,
-  scrapValue: spare.scrapValue || 0,
-  netCost: spare.netCost || 0,
-  returnCondition: returnCondition || "Good",
-  quantity: spare.spareAmount || 1,
-  status: "CheckedIn",
-  purpose: purpose || "",
-  outFrom: outFrom || "",
-  sentTo: sentTo || "",
-  imageOut: spare.imageOut || "",
-  remarks: spare.remarks || "",
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-}));
+        // maintenance object → stringify
+        formData.append("Maintenance", JSON.stringify({
+          id: 0,
+          spareId: spare.spareId || 0,
+          assetId: selectedAsset.id,
+          issuedTo: assigneeName || 0,
+          issuedBy: 0,
+          issueDate: new Date().toISOString(),
+          expectedReturnDate: spare.tentativeReturnDate
+            ? new Date(spare.tentativeReturnDate).toISOString()
+            : new Date().toISOString(),
+          actualReturnDate: new Date(checkinDateTime).toISOString(),
+          underWarranty: !!spare.warrantyExpiry,
+          warrantyExpiry: spare.warrantyExpiry || new Date().toISOString(),
+          replacementCost: spare.replacementCost || 0,
+          scrapValue: spare.scrapValue || 0,
+          netCost: spare.netCost || 0,
+          returnCondition: returnCondition || "Good",
+          quantity: spare.spareAmount || 1,
+          status: "CheckedIn",
+          purpose: purpose || "",
+          outFrom: outFrom || "",
+          sentTo: sentTo || "",
+          imageOut: spare.imageOut || "",
+          remarks: spare.remarks || "",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }));
 
-// If you need to upload an image (binary file), append it separately
-if (spare.imageFile) {
-  formData.append("imageIn", spare.imageFile);
-} else {
-  formData.append("imageIn", ""); // optional
-}
+        // If you need to upload an image (binary file), append it separately
+        if (spare.imageFile) {
+          formData.append("imageIn", spare.imageFile);
+        } else {
+          formData.append("imageIn", ""); // optional
+        }
 
-// replacementRequired flag
-formData.append("replacementRequired", isReplacement);
+        // ReplacementRequired flag
+        formData.append("ReplacementRequired", isReplacement);
 
-// replacement object → stringify only if required
-if (isReplacement) {
-  formData.append("replacement", JSON.stringify({
-    oldSpareId: spare.spareId || 0,
-    assetId: selectedAsset.id,
-    useExistingSpare: true,
-    newSpareId: spare.newSpare?.spareId || 0,
-    newSpare: spare.newSpare || {},
-    scrapValue: spare.scrapValue || 0,
-    replacementCost: spare.replacementCost || 0,
-    remarks: spare.remarks || "",
-  }));
-}
+        // Replacement object → stringify only if required
+        if (isReplacement) {
+          formData.append("Replacement", JSON.stringify({
+            oldSpareId: spare.spareId || 0,
+            assetId: selectedAsset.id,
+            useExistingSpare: true,
+            newSpareId: spare.newSpare?.spareId || 0,
+            newSpare: spare.newSpare || {},
+            scrapValue: spare.scrapValue || 0,
+            replacementCost: spare.replacementCost || 0,
+            remarks: spare.remarks || "",
+          }));
+        }
 
-// approverId
-formData.append("approverId", approverId || 0);
+        // ApproverId
+        formData.append("ApproverId", approverId || 0);
 
-const res = await fetch(
-  "https://admin.urest.in:8089/api/asset/AssetSpareOps/checkin-full",
-  {
-    method: "POST",
-    body: formData, // do NOT set Content-Type, browser will set with boundary
-  }
-);
+        const res = await fetch(
+          "https://admin.urest.in:8089/api/asset/AssetSpareOps/checkin-full",
+          {
+            method: "POST",
+            body: formData, // do NOT set Content-Type, browser will set with boundary
+          }
+        );
 
-const data = await res.json();
-console.log(data);
+        const data = await res.json();
+        console.log(data);
 
         if (!res.ok) {
           const errData = await res.json();

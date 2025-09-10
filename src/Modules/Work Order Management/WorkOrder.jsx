@@ -142,7 +142,7 @@ const WorkOrder = () => {
             deliveryDate: workOrder.deliveryDate?.split('T')[0] || '',
             products: enrichedProducts
         });
-
+setSelectedProcessId(workOrder.processId || 0);
         setIsEdit(false);
         setIsView(true);
         setDialogOpen(true);
