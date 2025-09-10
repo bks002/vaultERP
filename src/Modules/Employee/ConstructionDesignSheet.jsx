@@ -32,6 +32,7 @@ import Autocomplete from "@mui/material/Autocomplete";
 import ViewIcon from "@mui/icons-material/Visibility";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+
 import SearchIcon from "@mui/icons-material/Search";
 import { useSelector } from "react-redux";
 
@@ -59,6 +60,14 @@ const FIXED_ROWS = [
   { id: "temp-color", specification: "Color", value: "", isFixed: true },
 ];
 
+// 🔹 Permanent row definition (always in table)
+const FIXED_ROW = {
+  id: "fixed-min-thickness",
+  specification: "Min. Thickness",
+  value: "",
+  isFixed: true,
+};
+
 const ConstructionDesignSheet = () => {
   const officeId = useSelector((state) => state.user.officeId);
 
@@ -67,6 +76,7 @@ const ConstructionDesignSheet = () => {
   const [loading, setLoading] = useState(false);
 
   const [constructionData, setConstructionData] = useState([]);
+
   const [internalWorkOrders, setInternalWorkOrders] = useState([]);
   const [operations, setOperations] = useState([]);
   const [products, setProducts] = useState([]);
@@ -78,7 +88,6 @@ const ConstructionDesignSheet = () => {
   const [selectedInternalWO, setSelectedInternalWO] = useState("");
   const [selectedOperation, setSelectedOperation] = useState("");
   const [selectedProduct, setSelectedProduct] = useState("");
-
   const [isEdit, setIsEdit] = useState(false);
   const [selectedCDS, setSelectedCDS] = useState(null);
 
@@ -331,7 +340,6 @@ const ConstructionDesignSheet = () => {
     setSelectedProduct(row.productId || "");
     setSelectedItem(row.itemId || "");
     setSelectedGradeCode(row.gradecode || "");
-
     if (row.items && row.items.length > 0) {
       const fixedMin = row.items.find(it => it.specification?.toLowerCase() === "min. thickness");
       const fixedColor = row.items.find(it => it.specification?.toLowerCase() === "color");
@@ -361,7 +369,6 @@ const ConstructionDesignSheet = () => {
     setSpecValues([]);
     setGradeBaseline(null);
   };
-
   const handleSubmit = async () => {
     try {
       if (selectionMode === "grade" && isExistingGrade && !isEdit && !isGradeDirty) {
@@ -393,6 +400,7 @@ const ConstructionDesignSheet = () => {
         itemId: itemIdNum,
         specification: sv.specification,
         value: sv.value,
+        gradecode: selectedGradeCode || generateGradeCode(),
         officeId: Number(officeId),
         isActive: true,
         createdOn: now,
@@ -606,6 +614,7 @@ const ConstructionDesignSheet = () => {
                           <DeleteIcon />
                         </IconButton>
                       </Tooltip>
+
                     </TableCell>
                   </TableRow>
                 ))
@@ -697,7 +706,6 @@ const ConstructionDesignSheet = () => {
                 </MenuItem>
               ))}
             </TextField>
-
             <FormControl component="fieldset" sx={{ mt: 1 }}>
               <FormLabel component="legend">Select By</FormLabel>
               <RadioGroup
