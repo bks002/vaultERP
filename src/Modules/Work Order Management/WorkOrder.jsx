@@ -142,7 +142,7 @@ const WorkOrder = () => {
             deliveryDate: workOrder.deliveryDate?.split('T')[0] || '',
             products: enrichedProducts
         });
-setSelectedProcessId(workOrder.processId || 0);
+        setSelectedProcessId(workOrder.processId || 0);
         setIsEdit(false);
         setIsView(true);
         setDialogOpen(true);
@@ -302,7 +302,7 @@ setSelectedProcessId(workOrder.processId || 0);
     });
 
     const csvHeaders = [
-        { label: "PO No", key: "poNo" },
+        { label: "Party No", key: "poNo" },
         { label: "PO Date", key: "poDate" },
         { label: "PO Amount", key: "poAmount" },
         { label: "Board Name", key: "boardName" },
@@ -373,7 +373,7 @@ setSelectedProcessId(workOrder.processId || 0);
                         <TableHead>
                             <TableRow>
                                 <TableCell>#</TableCell>
-                                <TableCell>PO Number</TableCell>
+                                <TableCell>Party Number</TableCell>
                                 <TableCell>PO Date</TableCell>
                                 <TableCell>PO Amount</TableCell>
                                 <TableCell>Board Name</TableCell>
@@ -458,9 +458,9 @@ setSelectedProcessId(workOrder.processId || 0);
                                 ))}
                             </Select>
                         </FormControl>
-                        {/* PO Number, PO Date, etc. */}
+                        {/* Party Number, Party Date, etc. */}
                         <TextField
-                            label="PO Number"
+                            label="Party Number"
                             value={selectedWorkOrder.poNo}
                             onChange={(e) => setSelectedWorkOrder({ ...selectedWorkOrder, poNo: e.target.value })}
                             required
@@ -543,6 +543,9 @@ setSelectedProcessId(workOrder.processId || 0);
                             onChange={(e) => setSelectedWorkOrder({ ...selectedWorkOrder, poAmount: e.target.value })}
                             fullWidth
                             disabled={isView}
+                            InputProps={{
+                                startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                            }}
                         />
                         <TextField
                             label="Board Name"
@@ -700,6 +703,16 @@ setSelectedProcessId(workOrder.processId || 0);
                 <DialogContent>
                     <Stack spacing={2} mt={1}>
                         <TextField
+                            label="Party Name"
+                            value={partyList.find(p => p.id === selectedWorkOrder.partyId)?.name || ''}
+                            InputProps={{ readOnly: true }}
+                        />
+                        <TextField
+                            label="Board Name"
+                            value={selectedWorkOrder.boardName || ''}
+                            InputProps={{ readOnly: true }}
+                        />
+                        <TextField
                             label="Target Date"
                             type="date"
                             value={newMilestone.targetDate}
@@ -839,6 +852,16 @@ setSelectedProcessId(workOrder.processId || 0);
                 <DialogContent>
                     <Stack spacing={2} mt={1}>
                         <TextField
+                            label="Party Name"
+                            value={partyList.find(p => p.id === selectedWorkOrder.partyId)?.name || ''}
+                            InputProps={{ readOnly: true }}
+                        />
+                        <TextField
+                            label="Board Name"
+                            value={selectedWorkOrder.boardName || ''}
+                            InputProps={{ readOnly: true }}
+                        />
+                        <TextField
                             label="Quantity"
                             type="number"
                             value={newDetail.quantity}
@@ -902,7 +925,6 @@ setSelectedProcessId(workOrder.processId || 0);
                     <Table size="small" sx={{ mt: 2 }}>
                         <TableHead>
                             <TableRow>
-                                <TableCell>Party Name</TableCell>
                                 <TableCell>Delivery Date</TableCell>
                                 <TableCell>Total Deliverables</TableCell>
                                 <TableCell>Quantity</TableCell>
@@ -913,9 +935,6 @@ setSelectedProcessId(workOrder.processId || 0);
                         <TableBody>
                             {details.map((d, idx) => (
                                 <TableRow key={d.id || idx}>
-                                    <TableCell>
-                                        {partyList.find(p => p.id === selectedWorkOrder.partyId)?.name || ''}
-                                    </TableCell>
                                     <TableCell>{selectedWorkOrder.deliveryDate}</TableCell>
                                     <TableCell>{selectedWorkOrder.totalDeliverable}</TableCell>
                                     <TableCell>{d.quantity}</TableCell>
