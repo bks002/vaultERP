@@ -3,23 +3,23 @@ import {
   Box, Button, Dialog, DialogTitle, DialogContent, DialogActions,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, TextField, IconButton, Select, MenuItem, FormControl, InputLabel, Checkbox,
-  Menu
+  FormControlLabel
 } from "@mui/material";
 import { Add, Delete } from "@mui/icons-material";
 import { useSelector } from "react-redux";
-
-const API_BASE = "/api/asset/AssetSpareOps";
+import ReplacementDialog from "../../Components/replacementspare";
 
 export default function AssetMaintenance() {
   const officeId = useSelector(state => state.user.officeId);
   const [assets, setAssets] = useState([]);
+  const [isReplacement, setIsReplacement] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [approverId, setApproverId] = useState(""); // <-- Add this
   const [outFromOptions, setOutFromOptions] = useState([]);
   const [spares, setSpares] = useState([]);
   const [openCheckout, setOpenCheckout] = useState(false);
   const [openCheckin, setOpenCheckin] = useState(false);
-
+  const [assigneeId, setAssigneeId] = useState("");
   const [assigneeName, setAssigneeName] = useState("");
   const [checkoutDateTime, setCheckoutDateTime] = useState(
     new Date().toISOString().slice(0, 16)
@@ -32,6 +32,10 @@ export default function AssetMaintenance() {
   const [availableSpares, setAvailableSpares] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [assetStatus, setAssetStatus] = useState({});
+  const [replacementDialogOpen, setReplacementDialogOpen] = useState(false);
+  const [replacementData, setReplacementData] = useState(null);
+  const [openReportDialog, setOpenReportDialog] = useState(false);
+  const [reportData, setReportData] = useState([]);
 
   useEffect(() => {
     fetchAssets();
@@ -49,6 +53,21 @@ export default function AssetMaintenance() {
     }
   };
 
+  const handleViewReport = async (assetId) => {
+    try {
+      const res = await fetch(
+        `https://admin.urest.in:8089/api/asset/AssetSpareOps/report?assetId=${assetId}`
+      );
+      if (!res.ok) throw new Error("Failed to fetch report");
+      const data = await res.json();
+      setReportData(data);
+      setOpenReportDialog(true);
+    } catch (err) {
+      console.error("Error fetching report:", err);
+      alert("Failed to fetch report");
+    }
+  };
+
   const fetchAssets = async () => {
     try {
       const res = await fetch(`https://admin.urest.in:8089/api/asset/AssetSpareOps/all-assets/${officeId}`);
@@ -59,8 +78,8 @@ export default function AssetMaintenance() {
       const statusMap = {};
       data.forEach(a => {
         statusMap[a.id] = {
-          assetStatus: a.maintenanceStatus || "Available",
-          approvalStatus: a.approvalStatus || null,
+          assetStatus: a.maintenanceStatus || "N/A",
+          approvalStatus: a.approvalStatus || "Pending", // default to Pending if missing
           lastCheckout: {
             outFrom: a.outFrom || "",
             sentTo: a.sentTo || ""
@@ -227,8 +246,8 @@ export default function AssetMaintenance() {
           id: 0,
           spareId: spare.spareId || 0,
           assetId: selectedAsset.id,
-          issuedTo: assigneeName || 0,
-          issuedBy: 0,
+          issuedTo: assigneeId || 0,
+          issuedBy: approverId || 0, // or logged-in user id if available
           issueDate: new Date().toISOString(),
           expectedReturnDate: spare.tentativeReturnDate
             ? new Date(spare.tentativeReturnDate).toISOString()
@@ -259,20 +278,10 @@ export default function AssetMaintenance() {
         }
 
         // ReplacementRequired flag
-        formData.append("ReplacementRequired", isReplacement);
-
+        formData.append("ReplacementRequired", isReplacement ? "true" : "false");
         // Replacement object → stringify only if required
-        if (isReplacement) {
-          formData.append("Replacement", JSON.stringify({
-            oldSpareId: spare.spareId || 0,
-            assetId: selectedAsset.id,
-            useExistingSpare: true,
-            newSpareId: spare.newSpare?.spareId || 0,
-            newSpare: spare.newSpare || {},
-            scrapValue: spare.scrapValue || 0,
-            replacementCost: spare.replacementCost || 0,
-            remarks: spare.remarks || "",
-          }));
+        if (isReplacement && replacementData) {
+          formData.append("Replacement", JSON.stringify(replacementData));
         }
 
         // ApproverId
@@ -301,7 +310,15 @@ export default function AssetMaintenance() {
       setOpenCheckin(false);
       setSpares([]);
       fetchAssets();
-      setAssetStatus((prev) => ({ ...prev, [selectedAsset.id]: "Available" }));
+      setAssetStatus((prev) => ({
+        ...prev,
+        [selectedAsset.id]: {
+          ...(prev[selectedAsset.id] || {}),
+          assetStatus: "CheckedIn",
+          approvalStatus: "Pending",  // ✅ requires approval
+          lastCheckout: { outFrom, sentTo }
+        }
+      }));
     } catch (err) {
       console.error(err);
       alert("Checkin failed");
@@ -338,6 +355,13 @@ export default function AssetMaintenance() {
                 <TableCell>{asset.id}</TableCell>
                 <TableCell>{asset.assetName}</TableCell>
                 <TableCell>
+                  <Button
+                    color="info"
+                    sx={{ ml: 1 }}
+                    onClick={() => handleViewReport(asset.id)}
+                  >
+                    View
+                  </Button>
                   {(() => {
                     const status = assetStatus[asset.id]?.assetStatus;
                     const approval = assetStatus[asset.id]?.approvalStatus;
@@ -453,8 +477,8 @@ export default function AssetMaintenance() {
             <InputLabel id="assignee-label">Assignee</InputLabel>
             <Select
               labelId="assignee-label"
-              value={assigneeName}
-              onChange={(e) => setAssigneeName(e.target.value)}
+              value={assigneeId}
+              onChange={(e) => setAssigneeId(e.target.value)}
             >
               {employees.map((emp) => (
                 <MenuItem key={emp.employeeId} value={emp.employeeId}>
@@ -728,25 +752,21 @@ export default function AssetMaintenance() {
 
                   {/* Replacement Logic */}
                   <TableRow>
-                    <TableCell><b>Replacement Required?</b></TableCell>
-                    <TableCell>
-                      <Checkbox
-                        checked={spare.replacementRequired || false}
-                        onChange={(e) => {
-                          const updated = [...spares];
-                          updated[idx].replacementRequired = e.target.checked;
-                          if (!e.target.checked) {
-                            updated[idx].scrapValue = 0;
-                            updated[idx].replacementCost = 0;
-                            updated[idx].netCost = 0;
-                          }
-                          setSpares(updated);
-                        }}
-                      />
-                    </TableCell>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={spare.replacementRequired || false}
+                          onChange={(e) => {
+                            handleSpareChange(idx, "replacementRequired", e.target.checked);
+                            if (e.target.checked) setReplacementDialogOpen(true);
+                          }}
+                        />
+                      }
+                      label="Replacement Required"
+                    />
                   </TableRow>
 
-                  {spare.replacementRequired && (
+                  {/* {spare.replacementRequired && (
                     <>
                       <TableRow>
                         <TableCell><b>Scrap Value</b></TableCell>
@@ -796,7 +816,13 @@ export default function AssetMaintenance() {
                         </TableCell>
                       </TableRow>
                     </>
-                  )}
+                  )} */}
+                  <ReplacementDialog
+                    open={replacementDialogOpen}
+                    onClose={() => setReplacementDialogOpen(false)}
+                    onSave={(data) => setReplacementData(data)}
+                    asset={selectedAsset}
+                  />
 
                   <TableRow>
                     <TableCell><b>Image</b></TableCell>
@@ -819,6 +845,59 @@ export default function AssetMaintenance() {
         <DialogActions>
           <Button onClick={() => setOpenCheckin(false)}>Cancel</Button>
           <Button variant="contained" onClick={handleCheckinSubmit}>Submit</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={openReportDialog}
+        onClose={() => setOpenReportDialog(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>Asset Report</DialogTitle>
+        <DialogContent>
+          {reportData.length > 0 ? (
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>ID</TableCell>
+                    <TableCell>Spare ID</TableCell>
+                    <TableCell>Issued To</TableCell>
+                    <TableCell>Issued By</TableCell>
+                    <TableCell>Issue Date</TableCell>
+                    <TableCell>Return Date</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Remarks</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {reportData.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell>{row.id}</TableCell>
+                      <TableCell>{row.spareId}</TableCell>
+                      <TableCell>{row.issuedTo?.employeeName || "-"}</TableCell>
+                      <TableCell>{row.issuedBy?.employeeName || "-"}</TableCell>
+                      <TableCell>
+                        {row.issueDate ? new Date(row.issueDate).toLocaleString() : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {row.actualReturnDate
+                          ? new Date(row.actualReturnDate).toLocaleString()
+                          : "-"}
+                      </TableCell>
+                      <TableCell>{row.status || "-"}</TableCell>
+                      <TableCell>{row.remarks || "-"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <p>No report data available.</p>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenReportDialog(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Box>
