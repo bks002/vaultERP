@@ -78,6 +78,7 @@ function AppRoutes() {
       <Route path="/inventory/StockRegister" element={<AuthWrapper><StockRegister /></AuthWrapper>} />
       <Route path="/Employee/ExpenseReport" element={<AuthWrapper><ExpenseReport /></AuthWrapper>} />
       <Route path="/WorkInProcess" element={<AuthWrapper><WorkInProcess /></AuthWrapper>} />
+
       {/* Redirect to dashboard if no match */}
     </Routes>
   );

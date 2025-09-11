@@ -68,7 +68,6 @@ useEffect(() => {
     fetchEmployees();
 }, []);
 
-
     useEffect(() => {
         const fetchData = async () => {
             try {

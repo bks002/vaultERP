@@ -70,6 +70,13 @@ const WorkOrder = () => {
     const [editingDetailId, setEditingDetailId] = useState(null);
 
 
+    const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+const [detailWorkOrderId, setDetailWorkOrderId] = useState(null);
+const [details, setDetails] = useState([]);
+const [newDetail, setNewDetail] = useState({ quantity: '', dispatchDate: '' });
+const [editingDetailId, setEditingDetailId] = useState(null);
+
+
     useEffect(() => {
         if (officeId) {
             loadWorkOrders();
@@ -899,7 +906,6 @@ const WorkOrder = () => {
                                     updatedOn: timestamp,
                                     isActive: true
                                 };
-
 
                                 try {
                                     if (editingDetailId) {
