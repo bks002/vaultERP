@@ -63,18 +63,13 @@ const WorkOrder = () => {
     const [newMilestone, setNewMilestone] = useState({ targetDate: '', target: '' });
     const [editingMilestoneId, setEditingMilestoneId] = useState(null);
     const [processData, setProcessData] = useState([]);
+
+
     const [detailDialogOpen, setDetailDialogOpen] = useState(false);
     const [detailWorkOrderId, setDetailWorkOrderId] = useState(null);
     const [details, setDetails] = useState([]);
     const [newDetail, setNewDetail] = useState({ quantity: '', dispatchDate: '' });
     const [editingDetailId, setEditingDetailId] = useState(null);
-
-
-    const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-const [detailWorkOrderId, setDetailWorkOrderId] = useState(null);
-const [details, setDetails] = useState([]);
-const [newDetail, setNewDetail] = useState({ quantity: '', dispatchDate: '' });
-const [editingDetailId, setEditingDetailId] = useState(null);
 
 
     useEffect(() => {
