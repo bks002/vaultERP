@@ -32,14 +32,12 @@ import SearchIcon from "@mui/icons-material/Search";
 
 import { useSelector } from "react-redux";
 import { getAllShift } from "../../Services/ShiftService";
-import { getInternalWorkOrdersByOffice } from "../../Services/InternalWorkOrderService";
 import {
   getGradeCodesByWO,
   getOperationsAndCompoundsByGradeCode,
   getCompoundByOperationWO,
 } from "../../Services/ConstructionDesignSheet";
 import { getAllItems } from "../../Services/InventoryService";
-import { getAllOperation } from "../../Services/OperationService";
 import { getAllEmployees } from "../../Services/EmployeeService";
 import { getEmployeesByOperation } from "../../Services/OperationService";
 import { getAssetsByOperation } from "../../Services/AssetOperation";
@@ -51,12 +49,8 @@ import {
   createJobCard,
   updateJobCard,
 } from "../../Services/JobCard";
-import { getAllShift } from "../../Services/ShiftService";
 import { getInternalWorkOrdersByOffice } from "../../Services/InternalWorkOrderService";
-import { getAllAssets } from "../../Services/AssetService";
-import { getAllItems } from "../../Services/InventoryService";
 import { getAllOperation } from "../../Services/OperationService";
-import { getContructionByitemoperationinwo } from "../../Services/ConstructionDesignSheet";
 
 const todayDate = () => new Date().toISOString().split("T")[0];
 
