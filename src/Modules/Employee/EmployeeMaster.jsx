@@ -181,6 +181,7 @@ const EmployeeMasterPage = () => {
         }
 
         try {
+            console.log(selectedFile);
             const result = await uploadImage(selectedFile);
             if (result && result.url) {
                 setSelectedEmployee((prev) => ({

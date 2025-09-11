@@ -27,6 +27,7 @@
     "react-dom": "^18.3.1",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.6.2",
+    "recharts": "^3.2.0",
     "redux-persist": "^6.0.0",
     "styled-components": "^6.1.19",
     "xlsx": "^0.18.5"

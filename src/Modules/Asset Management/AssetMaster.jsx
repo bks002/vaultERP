@@ -16,6 +16,8 @@ import { getAllOperation } from "../../Services/OperationService";
 import { getAssetOperation, OperationMapping } from "../../Services/AssetOperation";
 import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
 import ExportCSVButton from "../../Components/Export to CSV/ExportCSVButton";
+import BuildIcon from '@mui/icons-material/Build';
+import { getAssetSpares, deleteAssetSpare, addAssetSpare,updateAssetSpare } from "../../Services/AssetSpare";
 
 const AssetMaster = () => {
   const officeId = useSelector((state) => state.user.officeId);
@@ -30,6 +32,32 @@ const AssetMaster = () => {
   const [isEdit, setIsEdit] = useState(false);
   const [alert, setAlert] = useState({ open: false, type: 'success', message: '' });
   const [viewOpen, setViewOpen] = useState(false);
+  const [spareDialogOpen, setSpareDialogOpen] = useState(false);
+  const [spares, setSpares] = useState([]);
+  const [selectedAsset, setSelectedAsset] = useState(null);
+  const [spareViewOpen, setSpareViewOpen] = useState(false);
+  const [spareEditMode, setSpareEditMode] = useState(false);
+  // new state just for spare form
+  const [spareForm, setSpareForm] = useState({
+    spareCode: "",
+    spareName: "",
+    partNumber: "",
+    category: "",
+    specification: "",
+    unitOfMeasure: "",
+    currentStock: 0,
+    reorderLevel: 0,
+    reorderQuantity: 0,
+    location: "",
+    vendorName: "",
+    purchaseRate: 0,
+    averageCost: 0,
+    leadTimeDays: 0,
+    criticality: "",
+    warrantyExpiry: "",
+    remarks: "",
+    linkedAssetId: 0
+  });
 
   const defaultFormData = {
     assetId: 0,
@@ -59,6 +87,19 @@ const AssetMaster = () => {
       loadAllOperations();
     }
   }, [officeId]);
+
+  const handleSpareParts = async (asset) => {
+    setSelectedAsset(asset);
+    setSpares([]); // reset previous spares
+    setSpareDialogOpen(true); // open dialog immediately
+
+    try {
+      const data = await getAssetSpares(asset.assetId);
+      setSpares(data);
+    } catch {
+      showAlert("error", "Failed to load spare parts");
+    }
+  };
 
   const loadAllassets = async () => {
     try {
@@ -166,7 +207,7 @@ const AssetMaster = () => {
     } catch (err) {
       showAlert("error", "Failed to load mapped operations");
     }
-  };  
+  };
 
   const handleEdit = (asset) => {
     setIsEdit(true)
@@ -268,6 +309,11 @@ const AssetMaster = () => {
                       <Tooltip title="Edit"><IconButton onClick={() => handleEdit(asset)} color="primary"><EditIcon /></IconButton></Tooltip>
                       <Tooltip title="Delete"><IconButton onClick={() => handleDelete(asset)} color="error"><DeleteIcon /></IconButton></Tooltip>
                       <Tooltip title="Operations"><IconButton onClick={() => handleSettings(asset)}><SettingsIcon /></IconButton></Tooltip>
+                      <Tooltip title="Spare Parts">
+                        <IconButton onClick={() => handleSpareParts(asset)}>
+                          <BuildIcon />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 ))
@@ -383,6 +429,193 @@ const AssetMaster = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setViewOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={spareDialogOpen} onClose={() => setSpareDialogOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Asset Spare Parts - {selectedAsset?.assetName}</DialogTitle>
+        <DialogContent>
+          {/* Add Spare Form */}
+          <Box mt={2} mb={3}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <TextField fullWidth label="Spare Code" value={spareForm.spareCode} onChange={(e) => setSpareForm({ ...spareForm, spareCode: e.target.value })} />
+                <TextField fullWidth label="Spare Name" sx={{ mt: 2 }} value={spareForm.spareName} onChange={(e) => setSpareForm({ ...spareForm, spareName: e.target.value })} />
+                <TextField fullWidth label="Part Number" sx={{ mt: 2 }} value={spareForm.partNumber} onChange={(e) => setSpareForm({ ...spareForm, partNumber: e.target.value })} />
+                <TextField fullWidth label="Category" sx={{ mt: 2 }} value={spareForm.category} onChange={(e) => setSpareForm({ ...spareForm, category: e.target.value })} />
+                <TextField fullWidth label="Specification" sx={{ mt: 2 }} value={spareForm.specification} onChange={(e) => setSpareForm({ ...spareForm, specification: e.target.value })} />
+                <TextField fullWidth label="Unit of Measure" sx={{ mt: 2 }} value={spareForm.unitOfMeasure} onChange={(e) => setSpareForm({ ...spareForm, unitOfMeasure: e.target.value })} />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField fullWidth type="number" label="Current Stock" value={spareForm.currentStock} onChange={(e) => setSpareForm({ ...spareForm, currentStock: parseInt(e.target.value) || 0 })} />
+                <TextField fullWidth type="number" label="Reorder Level" sx={{ mt: 2 }} value={spareForm.reorderLevel} onChange={(e) => setSpareForm({ ...spareForm, reorderLevel: parseInt(e.target.value) || 0 })} />
+                <TextField fullWidth type="number" label="Reorder Quantity" sx={{ mt: 2 }} value={spareForm.reorderQuantity} onChange={(e) => setSpareForm({ ...spareForm, reorderQuantity: parseInt(e.target.value) || 0 })} />
+                <TextField fullWidth label="Location" sx={{ mt: 2 }} value={spareForm.location} onChange={(e) => setSpareForm({ ...spareForm, location: e.target.value })} />
+                <TextField fullWidth label="Vendor Name" sx={{ mt: 2 }} value={spareForm.vendorName} onChange={(e) => setSpareForm({ ...spareForm, vendorName: e.target.value })} />
+                <TextField fullWidth type="number" label="Purchase Rate" sx={{ mt: 2 }} value={spareForm.purchaseRate} onChange={(e) => setSpareForm({ ...spareForm, purchaseRate: parseFloat(e.target.value) || 0 })} />
+                <TextField fullWidth type="number" label="Average Cost" sx={{ mt: 2 }} value={spareForm.averageCost} onChange={(e) => setSpareForm({ ...spareForm, averageCost: parseFloat(e.target.value) || 0 })} />
+                <TextField fullWidth type="number" label="Lead Time (Days)" sx={{ mt: 2 }} value={spareForm.leadTimeDays} onChange={(e) => setSpareForm({ ...spareForm, leadTimeDays: parseInt(e.target.value) || 0 })} />
+                <TextField fullWidth label="Criticality" sx={{ mt: 2 }} value={spareForm.criticality} onChange={(e) => setSpareForm({ ...spareForm, criticality: e.target.value })} />
+                <TextField fullWidth type="date" label="Warranty Expiry" InputLabelProps={{ shrink: true }} sx={{ mt: 2 }} value={spareForm.warrantyExpiry?.split("T")[0] || ""} onChange={(e) => setSpareForm({ ...spareForm, warrantyExpiry: e.target.value })} />
+                <TextField fullWidth label="Remarks" sx={{ mt: 2 }} value={spareForm.remarks} onChange={(e) => setSpareForm({ ...spareForm, remarks: e.target.value })} />
+              </Grid>
+            </Grid>
+            <Button
+              sx={{ mt: 3 }}
+              variant="contained"
+              onClick={async () => {
+                const payload = {
+                  ...spareForm,
+                  linkedAssetId: selectedAsset.assetId,
+                  updatedBy: userId,
+                  isActive: true
+                };
+
+                try {
+                  if (spareEditMode) {
+                    // call your update API
+                    await updateAssetSpare(spareForm.spareId, payload);
+                    showAlert("success", "Spare updated successfully");
+                  } else {
+                    await addAssetSpare(payload);
+                    showAlert("success", "Spare added successfully");
+                  }
+
+                  const updatedSpares = await getAssetSpares(selectedAsset.assetId);
+                  setSpares(updatedSpares);
+                  setSpareForm({
+                    spareCode: "",
+                    spareName: "",
+                    partNumber: "",
+                    category: "",
+                    specification: "",
+                    unitOfMeasure: "",
+                    currentStock: 0,
+                    reorderLevel: 0,
+                    reorderQuantity: 0,
+                    location: "",
+                    vendorName: "",
+                    purchaseRate: 0,
+                    averageCost: 0,
+                    leadTimeDays: 0,
+                    criticality: "",
+                    warrantyExpiry: "",
+                    remarks: "",
+                    linkedAssetId: 0
+                  }); // reset form
+                  setSpareEditMode(false); // reset edit mode
+                } catch {
+                  showAlert("error", spareEditMode ? "Failed to update spare" : "Failed to add spare");
+                }
+              }}
+            >
+              {spareEditMode ? "Update Spare" : "Save Spare"}
+            </Button>
+          </Box>
+
+          {/* Show Spare Parts List */}
+          <TableContainer component={Paper}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>#</TableCell>
+                  <TableCell>Spare Code</TableCell>
+                  <TableCell>Spare Name</TableCell>
+                  <TableCell>Part Number</TableCell>
+                  <TableCell>Category</TableCell>
+                  <TableCell>Current Stock</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {spares.length > 0 ? (
+                  spares.map((spare, index) => (
+                    <TableRow key={spare.id}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{spare.spareCode}</TableCell>
+                      <TableCell>{spare.spareName}</TableCell>
+                      <TableCell>{spare.partNumber}</TableCell>
+                      <TableCell>{spare.category}</TableCell>
+                      <TableCell>{spare.currentStock}</TableCell>
+                      <TableCell>
+                        <Tooltip title="View">
+                          <IconButton color="info" onClick={() => {
+                            setSpareForm(spare);
+                            setSpareViewOpen(true);
+                          }}>
+                            <VisibilityIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Edit">
+                          <IconButton color="primary" onClick={() => {
+                            setSpareForm(spare);
+                            setSpareEditMode(true); 
+                            setSpareDialogOpen(true); 
+                          }}>
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <IconButton
+                            color="error"
+                            onClick={async () => {
+                              if (window.confirm(`Delete "${spare.spareName}"?`)) {
+                                try {
+                                  await deleteAssetSpare(spare.spareId);
+                                  const updatedSpares = await getAssetSpares(selectedAsset.assetId);
+                                  setSpares(updatedSpares);
+                                  showAlert("success", "Spare deleted successfully");
+                                } catch {
+                                  showAlert("error", "Failed to delete spare");
+                                }
+                              }
+                            }}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} align="center">No spares found.</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSpareDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={spareViewOpen} onClose={() => setSpareViewOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>View Spare - {spareForm.spareName}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} mt={1}>
+            <TextField fullWidth label="Spare Code" value={spareForm.spareCode} disabled />
+            <TextField fullWidth label="Spare Name" value={spareForm.spareName} disabled />
+            <TextField fullWidth label="Part Number" value={spareForm.partNumber} disabled />
+            <TextField fullWidth label="Category" value={spareForm.category} disabled />
+            <TextField fullWidth label="Specification" value={spareForm.specification} disabled />
+            <TextField fullWidth label="Unit of Measure" value={spareForm.unitOfMeasure} disabled />
+            <TextField fullWidth label="Current Stock" value={spareForm.currentStock} disabled />
+            <TextField fullWidth label="Reorder Level" value={spareForm.reorderLevel} disabled />
+            <TextField fullWidth label="Reorder Quantity" value={spareForm.reorderQuantity} disabled />
+            <TextField fullWidth label="Location" value={spareForm.location} disabled />
+            <TextField fullWidth label="Vendor Name" value={spareForm.vendorName} disabled />
+            <TextField fullWidth label="Purchase Rate" value={spareForm.purchaseRate} disabled />
+            <TextField fullWidth label="Average Cost" value={spareForm.averageCost} disabled />
+            <TextField fullWidth label="Lead Time (Days)" value={spareForm.leadTimeDays} disabled />
+            <TextField fullWidth label="Criticality" value={spareForm.criticality} disabled />
+            <TextField fullWidth label="Warranty Expiry" value={spareForm.warrantyExpiry?.split("T")[0]} disabled />
+            <TextField fullWidth label="Remarks" value={spareForm.remarks} disabled />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSpareViewOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
 

@@ -28,9 +28,16 @@ import WorkOrder from "./Modules/Work Order Management/WorkOrder.jsx";
 import ProductMaster from "./Modules/Work Order Management/ProductMaster.jsx"; 
 import ProcessChartMaster from "./Modules/Employee/ProcessChart.jsx";
 import ConstructionDesignSheet from "./Modules/Employee/ConstructionDesignSheet.jsx";
-
+import ExpenseTypeMaster from "./Modules/Employee/ExpenseTypeMaster.jsx";
+import ExpenseMaster from "./Modules/Employee/ExpenseMaster";
 import ServicePage from "./Modules/Asset Management/AssetServiceRecord.jsx";
 import AssetCheckinout from './Modules/Asset Management/AssetCheckinout.jsx';
+import LeaveMaster from './Modules/Attendance Management/LeaveMaster.jsx';
+import EmployeeLeave from './Modules/Attendance Management/EmployeeLeave.jsx';
+import ItemIssue from "./Modules/Inventory/ItemIssue.jsx";
+import WorkInProcess from "./Modules/Employee/WorkInProcess.jsx";
+import StockRegister from "./Modules/Inventory/StockRegister.jsx";
+import ExpenseReport from "./Modules/Employee/ExpensePage.jsx";
 
 function AppRoutes() {
   return (
@@ -40,7 +47,7 @@ function AppRoutes() {
       <Route path="/office" element={<AuthWrapper><OfficeMaster /></AuthWrapper>} />
       <Route path="/employee" element={<AuthWrapper><EmployeeMaster /></AuthWrapper>} />
       <Route path="/inventory/item" element={<AuthWrapper><ItemMaster /></AuthWrapper>} />
-      <Route path="/inventory/Category" element={<AuthWrapper><Category /></AuthWrapper>} />
+      <Route path="/inventory/Category" element={<AuthWrapper><Category /></AuthWrapper>} />  
       <Route path="/inventory/Vendor" element={<AuthWrapper><Vendor /></AuthWrapper>} />
       <Route path="/inventory/RateCard" element={<AuthWrapper><RateCard /></AuthWrapper>} />
       <Route path="/inventory/PO" element={<AuthWrapper><PurchaseOrder /></AuthWrapper>} />
@@ -60,10 +67,17 @@ function AppRoutes() {
       <Route path="/Attendance/Attendance" element={<AuthWrapper><Attendance /></AuthWrapper>} />
       <Route path="/Attendance/Leave" element={<AuthWrapper><Leave /></AuthWrapper>} />
       <Route path="/ConstructionDesignSheet" element={<AuthWrapper><ConstructionDesignSheet /></AuthWrapper>} />
-
+      <Route path="/ExpenseTypeMaster" element={<AuthWrapper><ExpenseTypeMaster /></AuthWrapper>} />
+      <Route path="/ExpenseMaster" element={<AuthWrapper><ExpenseMaster /></AuthWrapper>} />
+      <Route path="/Attendance/LeaveMaster" element={<AuthWrapper><LeaveMaster /></AuthWrapper>} />
       <Route path="/Asset/AssetServiceRecord" element={<AuthWrapper><ServicePage /></AuthWrapper>} />
       <Route path="/Asset/AssetSpareRepair" element={<AuthWrapper><AssetCheckinout /></AuthWrapper>} />
-
+      <Route path="/Attendance/EmployeeLeave" element={<AuthWrapper><EmployeeLeave /></AuthWrapper>} />
+      <Route path="/itemissue/Stock" element={<AuthWrapper><ItemIssue /></AuthWrapper>} />
+      <Route path="/inventory/itemIssue" element={<AuthWrapper><ItemIssue /></AuthWrapper>} />
+      <Route path="/inventory/StockRegister" element={<AuthWrapper><StockRegister /></AuthWrapper>} />
+      <Route path="/Employee/ExpenseReport" element={<AuthWrapper><ExpenseReport /></AuthWrapper>} />
+      <Route path="/WorkInProcess" element={<AuthWrapper><WorkInProcess /></AuthWrapper>} />
 
       {/* Redirect to dashboard if no match */}
     </Routes>

@@ -14,31 +14,33 @@ import { useSelector } from 'react-redux';
 import { getProductMasters } from "../../Services/ProductMasterService";
 import { getPartyMasters } from '../../Services/PartyMasterService';
 import {
-  getWorkOrders,
-  createWorkOrder,
-  deleteWorkOrder
+    getWorkOrders,
+    createWorkOrder,
+    deleteWorkOrder,
+    updateWorkOrder
 } from '../../Services/WorkOrderService';
 import ExportCSVButton from '../../Components/Export to CSV/ExportCSVButton';
 import {
-  getMilestones,
-  deleteMilestone,
-  updateMilestone,
-  createMilestone
+    getMilestones,
+    deleteMilestone,
+    updateMilestone,
+    createMilestone
 } from '../../Services/WorkOrderMilestone';
 import {
-  getDetails,
-  createDetail,
-  updateDetail,
-  deleteDetail
+    getDetails,
+    createDetail,
+    updateDetail,
+    deleteDetail
 } from '../../Services/InternalWorkOrderService';
+import { getGroupedProcesses } from '../../Services/ProcessService';
 import InfoIcon from '@mui/icons-material/Info';
-
+import SingleProcessFlow from '../../Components/Processchart';
 
 const WorkOrder = () => {
     const todayDate = new Date().toISOString().split('T')[0];
     const officeId = useSelector((state) => state.user.officeId);
     const userId = useSelector((state) => state.user.userId);
-
+    const [selectedProcessId, setSelectedProcessId] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [workOrders, setWorkOrders] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -60,12 +62,14 @@ const WorkOrder = () => {
     const [milestones, setMilestones] = useState([]);
     const [newMilestone, setNewMilestone] = useState({ targetDate: '', target: '' });
     const [editingMilestoneId, setEditingMilestoneId] = useState(null);
+    const [processData, setProcessData] = useState([]);
+
 
     const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-const [detailWorkOrderId, setDetailWorkOrderId] = useState(null);
-const [details, setDetails] = useState([]);
-const [newDetail, setNewDetail] = useState({ quantity: '', dispatchDate: '' });
-const [editingDetailId, setEditingDetailId] = useState(null);
+    const [detailWorkOrderId, setDetailWorkOrderId] = useState(null);
+    const [details, setDetails] = useState([]);
+    const [newDetail, setNewDetail] = useState({ quantity: '', dispatchDate: '' });
+    const [editingDetailId, setEditingDetailId] = useState(null);
 
 
     useEffect(() => {
@@ -73,8 +77,18 @@ const [editingDetailId, setEditingDetailId] = useState(null);
             loadWorkOrders();
             fetchPartyList();
             fetchProductList();
+            loadProcesses();
         }
     }, [officeId]);
+
+    const loadProcesses = async () => {
+        try {
+            const data = await getGroupedProcesses(officeId);
+            setProcessData(data);
+        } catch (error) {
+            alert('Failed to fetch processes');
+        }
+    };
 
     const loadWorkOrders = async () => {
         setLoading(true);
@@ -92,16 +106,16 @@ const [editingDetailId, setEditingDetailId] = useState(null);
     };
 
     const handleDetail = async (workOrder) => {
-    setDetailWorkOrderId(workOrder.id);
-    setSelectedWorkOrder(workOrder);
-    try {
-        const data = await getDetails(workOrder.id);
-        setDetails(data);
-        setDetailDialogOpen(true);
-    } catch (error) {
-        alert('Failed to fetch work order details');
-    }
-};
+        setDetailWorkOrderId(workOrder.id);
+        setSelectedWorkOrder(workOrder);
+        try {
+            const data = await getDetails(workOrder.id);
+            setDetails(data);
+            setDetailDialogOpen(true);
+        } catch (error) {
+            alert('Failed to fetch work order details');
+        }
+    };
 
 
     const fetchProductList = async () => {
@@ -127,9 +141,10 @@ const [editingDetailId, setEditingDetailId] = useState(null);
         setSelectedWorkOrder({
             ...workOrder,
             poDate: formattedDate || '',
+            deliveryDate: workOrder.deliveryDate?.split('T')[0] || '',
             products: enrichedProducts
         });
-
+        setSelectedProcessId(workOrder.processId || 0);
         setIsEdit(false);
         setIsView(true);
         setDialogOpen(true);
@@ -164,20 +179,37 @@ const [editingDetailId, setEditingDetailId] = useState(null);
                 isActive: selectedWorkOrder.isActive ? 1 : 0,
                 partyId: selectedWorkOrder.partyId,
                 poDate: selectedWorkOrder.poDate,
+                processId: selectedProcessId || 0,
                 deliveryDate: selectedWorkOrder.deliveryDate,
                 totalDeliverable: selectedWorkOrder.totalDeliverable || 0,
                 products: selectedWorkOrder.products.map(p => ({
+                    id: p.id || 0,
+                    woId: selectedWorkOrder.id || 0,
                     productId: p.productId,
-                    quantity: p.quantity ?? '',
-                    store: p.store ?? '',
+                    quantity: Number(p.quantity || 0),
+                    store: p.store || '',
+                    createdOn: p.createdOn || new Date().toISOString(),
+                    createdBy: p.createdBy || userId,
+                    updatedOn: new Date().toISOString(),
+                    updatedBy: userId
                 })),
                 officeId: officeId,
-                createdBy: userId,
-                createdOn: new Date().toISOString(),
+                createdBy: selectedWorkOrder.createdBy || userId,
+                createdOn: selectedWorkOrder.createdOn || new Date().toISOString(),
+                updatedBy: userId,
+                updatedOn: new Date().toISOString()
             };
-            await createWorkOrder(workOrderToSend);
-            alert('Work Order created successfully!');
+
+            if (isEdit) {
+                await updateWorkOrder(selectedWorkOrder.id, workOrderToSend);
+                alert('Work Order updated successfully!');
+            } else {
+                await createWorkOrder(workOrderToSend);
+                alert('Work Order created successfully!');
+            }
+
             setDialogOpen(false);
+            setIsEdit(false);
             loadWorkOrders();
         } catch (error) {
             alert(error.message);
@@ -272,7 +304,7 @@ const [editingDetailId, setEditingDetailId] = useState(null);
     });
 
     const csvHeaders = [
-        { label: "PO No", key: "poNo" },
+        { label: "Party No", key: "poNo" },
         { label: "PO Date", key: "poDate" },
         { label: "PO Amount", key: "poAmount" },
         { label: "Board Name", key: "boardName" },
@@ -283,6 +315,27 @@ const [editingDetailId, setEditingDetailId] = useState(null);
         { label: "Quantity", key: "quantity" },
         { label: "Store", key: "store" }
     ];
+
+    const handleEdit = (workOrder) => {
+        const enrichedProducts = workOrder.products.map(p => {
+            const fullProduct = productList.find(prod => String(prod.id) === String(p.productId));
+            return {
+                ...p,
+                productName: fullProduct?.product_name || ''
+            };
+        });
+
+        setSelectedWorkOrder({
+            ...workOrder,
+            poDate: workOrder.poDate?.split('T')[0] || '',
+            deliveryDate: workOrder.deliveryDate?.split('T')[0] || '',
+            products: enrichedProducts
+        });
+        setSelectedProcessId(workOrder.processId || 0);
+        setIsEdit(true);
+        setIsView(false);
+        setDialogOpen(true);
+    };
 
     return (
         <div className="col-12">
@@ -322,7 +375,7 @@ const [editingDetailId, setEditingDetailId] = useState(null);
                         <TableHead>
                             <TableRow>
                                 <TableCell>#</TableCell>
-                                <TableCell>PO Number</TableCell>
+                                <TableCell>Party Number</TableCell>
                                 <TableCell>PO Date</TableCell>
                                 <TableCell>PO Amount</TableCell>
                                 <TableCell>Board Name</TableCell>
@@ -343,11 +396,11 @@ const [editingDetailId, setEditingDetailId] = useState(null);
                                         <TableCell >{wo.deliveryDate ? wo.deliveryDate.split('T')[0] : '-'}</TableCell>
                                         <TableCell>{wo.totalDeliverable ? wo.totalDeliverable : '-'}</TableCell>
                                         <TableCell align="center">
-                                            {/* <Tooltip title="Edit">
+                                            <Tooltip title="Edit">
                                                 <IconButton color="primary" onClick={() => handleEdit(wo)}>
                                                     <EditIcon />
                                                 </IconButton>
-                                            </Tooltip> */}
+                                            </Tooltip>
                                             <Tooltip title="View">
                                                 <IconButton color="primary" onClick={() => handleView(wo)}>
                                                     <ViewIcon />
@@ -364,11 +417,11 @@ const [editingDetailId, setEditingDetailId] = useState(null);
                                                 </IconButton>
                                             </Tooltip>
                                             <Tooltip title="View Details">
-                                <IconButton color="info" onClick={() => handleDetail(wo)}>
-                                    <InfoIcon />
-                                </IconButton>
-                            </Tooltip>
-                                                                    </TableCell>
+                                                <IconButton color="info" onClick={() => handleDetail(wo)}>
+                                                    <InfoIcon />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </TableCell>
                                     </TableRow>
                                 ))
                             ) : (
@@ -387,7 +440,7 @@ const [editingDetailId, setEditingDetailId] = useState(null);
                 open={dialogOpen}
                 onClose={handleDialogClose}
                 fullWidth
-                maxWidth="sm"
+                maxWidth="md"
             >
                 <DialogTitle>{isView ? 'View Work Order' : isEdit ? 'Edit Work Order' : 'Create New Work Order'}</DialogTitle>
                 <DialogContent>
@@ -407,9 +460,9 @@ const [editingDetailId, setEditingDetailId] = useState(null);
                                 ))}
                             </Select>
                         </FormControl>
-                        {/* PO Number, PO Date, etc. */}
+                        {/* Party Number, Party Date, etc. */}
                         <TextField
-                            label="PO Number"
+                            label="Party Number"
                             value={selectedWorkOrder.poNo}
                             onChange={(e) => setSelectedWorkOrder({ ...selectedWorkOrder, poNo: e.target.value })}
                             required
@@ -492,6 +545,9 @@ const [editingDetailId, setEditingDetailId] = useState(null);
                             onChange={(e) => setSelectedWorkOrder({ ...selectedWorkOrder, poAmount: e.target.value })}
                             fullWidth
                             disabled={isView}
+                            InputProps={{
+                                startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                            }}
                         />
                         <TextField
                             label="Board Name"
@@ -517,6 +573,25 @@ const [editingDetailId, setEditingDetailId] = useState(null);
                             fullWidth
                             disabled={isView}
                         />
+                        <FormControl fullWidth>
+                            <InputLabel id="process-select-label">Select Process</InputLabel>
+                            <Select
+                                labelId="process-select-label"
+                                value={selectedProcessId}
+                                label="Select Process"
+                                onChange={(e) => setSelectedProcessId(e.target.value)}
+                                disabled={isView}
+                            >
+                                {processData.map((process) => (
+                                    <MenuItem key={process.processId} value={process.processId}>
+                                        {process.processName}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        {selectedProcessId && (
+                            <SingleProcessFlow officeId={officeId} processId={selectedProcessId} />
+                        )}
                         {/* Active Switch */}
                         <FormControlLabel
                             control={
@@ -629,6 +704,16 @@ const [editingDetailId, setEditingDetailId] = useState(null);
                 <DialogTitle>Milestones</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} mt={1}>
+                        <TextField
+                            label="Party Name"
+                            value={partyList.find(p => p.id === selectedWorkOrder.partyId)?.name || ''}
+                            InputProps={{ readOnly: true }}
+                        />
+                        <TextField
+                            label="Board Name"
+                            value={selectedWorkOrder.boardName || ''}
+                            InputProps={{ readOnly: true }}
+                        />
                         <TextField
                             label="Target Date"
                             type="date"
@@ -764,39 +849,48 @@ const [editingDetailId, setEditingDetailId] = useState(null);
                     </Button>
                 </DialogActions>
             </Dialog>
+            <Dialog open={detailDialogOpen} onClose={() => setDetailDialogOpen(false)} fullWidth maxWidth="sm">
+                <DialogTitle>Work Order Details</DialogTitle>
+                <DialogContent>
+                    <Stack spacing={2} mt={1}>
+                        <TextField
+                            label="Party Name"
+                            value={partyList.find(p => p.id === selectedWorkOrder.partyId)?.name || ''}
+                            InputProps={{ readOnly: true }}
+                        />
+                        <TextField
+                            label="Board Name"
+                            value={selectedWorkOrder.boardName || ''}
+                            InputProps={{ readOnly: true }}
+                        />
+                        <TextField
+                            label="Quantity"
+                            type="number"
+                            value={newDetail.quantity}
+                            onChange={(e) => setNewDetail({ ...newDetail, quantity: e.target.value })}
+                            fullWidth
+                        />
+                        <TextField
+                            label="Dispatch Date"
+                            type="date"
+                            value={newDetail.dispatchDate}
+                            onChange={(e) => setNewDetail({ ...newDetail, dispatchDate: e.target.value })}
+                            InputLabelProps={{ shrink: true }}
+                            fullWidth
+                        />
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={async () => {
+                                const timestamp = new Date().toISOString();
 
-            <Dialog open={detailDialogOpen} onClose={() => setDetailDialogOpen(false)} fullWidth maxWidth="md">
-                                    <DialogTitle>Internal Work Order Details</DialogTitle>
-                                    <DialogContent>
-                                        <Stack spacing={2} mt={1}>
-                                            <TextField
-                                                label="Quantity"
-                                                type="number"
-                                                value={newDetail.quantity}
-                                                onChange={(e) => setNewDetail({ ...newDetail, quantity: e.target.value })}
-                                                fullWidth
-                                            />
-                                            <TextField
-                                                label="Dispatch Date"
-                                                type="date"
-                                                value={newDetail.dispatchDate}
-                                                onChange={(e) => setNewDetail({ ...newDetail, dispatchDate: e.target.value })}
-                                                InputLabelProps={{ shrink: true }}
-                                                fullWidth
-                                            />
-                                            <Button
-                                    variant="contained"
-                                    color="primary"
-                                    onClick={async () => {
-                                        const timestamp = new Date().toISOString();
+                                // Validation: Dispatch Date ≤ Delivery Date
+                                if (new Date(newDetail.dispatchDate) > new Date(selectedWorkOrder.deliveryDate)) {
+                                    alert('Dispatch date must be on or before the Delivery Date.');
+                                    return;
+                                }
 
-                                        // Validation: Dispatch Date ≤ Delivery Date
-                                        if (new Date(newDetail.dispatchDate) > new Date(selectedWorkOrder.deliveryDate)) {
-                                            alert('Dispatch date must be on or before the Delivery Date.');
-                                            return;
-                                        }
-
-                                        const payload = {
+                                const payload = {
                                     id: editingDetailId || 0,
                                     woid: detailWorkOrderId,
                                     quantity: Number(newDetail.quantity),
@@ -808,78 +902,73 @@ const [editingDetailId, setEditingDetailId] = useState(null);
                                     isActive: true
                                 };
 
-
-                                        try {
-                                            if (editingDetailId) {
-                                                await updateDetail(editingDetailId, payload); 
-                                            } else {
-                                                await createDetail(payload); 
-                                            }
-                                            const updatedDetails = await getDetails(detailWorkOrderId); 
-                                            setDetails(updatedDetails);
-                                            setNewDetail({ quantity: '', dispatchDate: '' });
-                                            setEditingDetailId(null);
-                                        } catch (err) {
-                                            alert('Failed to save detail');
-                                        }
-                                    }}
-                                    disabled={!newDetail.quantity || !newDetail.dispatchDate}
-                                >
-                                    {editingDetailId ? "Update" : "Add"}
-                                </Button>
-
-                                        </Stack>
-
-                                        <Table size="small" sx={{ mt: 2 }}>
-                                            <TableHead>
-                                                <TableRow>
-                                                <TableCell>Party Name</TableCell>
-                                                <TableCell>Delivery Date</TableCell>
-                                                <TableCell>Total Deliverables</TableCell>
-                                                    <TableCell>Quantity</TableCell>
-                                                    <TableCell>Dispatch Date</TableCell>
-                                                    <TableCell>Actions</TableCell>
-                                                </TableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                {details.map((d, idx) => (
-                                                    <TableRow key={d.id || idx}>
-                                                        <TableCell>
-                                {partyList.find(p => p.id === selectedWorkOrder.partyId)?.name || ''}
-                                </TableCell>
-                                <TableCell>{selectedWorkOrder.deliveryDate}</TableCell>
-                                <TableCell>{selectedWorkOrder.totalDeliverable}</TableCell>
-                                                        <TableCell>{d.quantity}</TableCell>
-                                                        <TableCell>{d.dispatchDate?.split('T')[0]}</TableCell>
-                                                        <TableCell>
-                                                            <IconButton
-                                                                color="primary"
-                                                                onClick={() => {
-                                                                    setNewDetail({
-                                                                        quantity: d.quantity,
-                                                                        dispatchDate: d.dispatchDate?.split('T')[0]
-                                                                    });
-                                                                    setEditingDetailId(d.id);
-                                                                }}
-                                                            >
-                                                                <EditIcon />
-                                                            </IconButton>
-                            <IconButton
-                                color="error"
-                                onClick={async () => {
-                                    if (window.confirm('Are you sure to delete this detail?')) {
-                                        await deleteDetail(d.id); // API call
-                                        const updatedDetails = await getDetails(detailWorkOrderId);
-                                        setDetails(updatedDetails);
+                                try {
+                                    if (editingDetailId) {
+                                        await updateDetail(editingDetailId, payload);
+                                    } else {
+                                        await createDetail(payload);
                                     }
-                                }}
-                            >
-                                <DeleteIcon />
-                            </IconButton>
-                        </TableCell>
-                    </TableRow>
-                ))}
-            </TableBody>
+                                    const updatedDetails = await getDetails(detailWorkOrderId);
+                                    setDetails(updatedDetails);
+                                    setNewDetail({ quantity: '', dispatchDate: '' });
+                                    setEditingDetailId(null);
+                                } catch (err) {
+                                    alert('Failed to save detail');
+                                }
+                            }}
+                            disabled={!newDetail.quantity || !newDetail.dispatchDate}
+                        >
+                            {editingDetailId ? "Update" : "Add"}
+                        </Button>
+
+                    </Stack>
+
+                    <Table size="small" sx={{ mt: 2 }}>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Delivery Date</TableCell>
+                                <TableCell>Total Deliverables</TableCell>
+                                <TableCell>Quantity</TableCell>
+                                <TableCell>Dispatch Date</TableCell>
+                                <TableCell>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {details.map((d, idx) => (
+                                <TableRow key={d.id || idx}>
+                                    <TableCell>{selectedWorkOrder.deliveryDate}</TableCell>
+                                    <TableCell>{selectedWorkOrder.totalDeliverable}</TableCell>
+                                    <TableCell>{d.quantity}</TableCell>
+                                    <TableCell>{d.dispatchDate?.split('T')[0]}</TableCell>
+                                    <TableCell>
+                                        <IconButton
+                                            color="primary"
+                                            onClick={() => {
+                                                setNewDetail({
+                                                    quantity: d.quantity,
+                                                    dispatchDate: d.dispatchDate?.split('T')[0]
+                                                });
+                                                setEditingDetailId(d.id);
+                                            }}
+                                        >
+                                            <EditIcon />
+                                        </IconButton>
+                                        <IconButton
+                                            color="error"
+                                            onClick={async () => {
+                                                if (window.confirm('Are you sure to delete this detail?')) {
+                                                    await deleteDetail(d.id); // API call
+                                                    const updatedDetails = await getDetails(detailWorkOrderId);
+                                                    setDetails(updatedDetails);
+                                                }
+                                            }}
+                                        >
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
                     </Table>
                 </DialogContent>
                 <DialogActions>

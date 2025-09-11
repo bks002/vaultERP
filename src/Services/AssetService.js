@@ -3,6 +3,25 @@ import axios from 'axios';
 const API_BASE = "https://admin.urest.in:8089/api/asset/Asset";
 //const API_BASE= "https://localhost:7093/api/asset/Asset";
 
+export const getAssetDetails = async (assetId) => {
+  try {
+    const response = await axios.get(`${API_BASE}/GetCheckOutRecordsByAsset?assetId=${assetId}`);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch asset details');
+  }
+};
+
+export const getAssetsByIds = async (assetIds) => {
+  try {
+    const response = await axios.get(`${API_BASE}/${assetIds}`);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch assets');
+  }
+}
+
+
 export const getAllAssets = async (officeId) => {
     try {
         const response = await axios.get(`${API_BASE}?officeId=${officeId}`);
@@ -83,3 +102,34 @@ export const checkinAsset = async (payload) => {
     throw err;
   }
 };
+
+// AssetService.js
+export const approveAssetCheckout = async (checkoutId, approvedBy) => {
+  try {
+    const response = await fetch(`${API_BASE}/ApproveCheckOut/${checkoutId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ approvedBy }), // send required field
+    });
+    return await response.json();
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
+
+export const approveAssetCheckin = async (checkinId, approvedBy) => {
+  try {
+    const response = await fetch(`${API_BASE}/ApproveCheckIn/${checkinId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ approvedBy }), // send required field
+    });
+    return await response.json();
+  }
+  catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
+
