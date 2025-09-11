@@ -886,7 +886,7 @@ export default function AssetMaintenance() {
                           : "-"}
                       </TableCell>
                       <TableCell>{row.status || "-"}</TableCell>
-                      <TableCell>{row.remarks || "-"}</TableCell>
+                      <TableCell>{row.remarks || " "}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
