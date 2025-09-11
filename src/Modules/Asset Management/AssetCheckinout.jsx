@@ -339,7 +339,6 @@ export default function AssetMaintenance() {
   return (
     <Box p={1}>
       <h2>Asset Maintenance</h2>
-
       <TableContainer component={Paper}>
         <Table>
           <TableHead>

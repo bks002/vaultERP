@@ -51,6 +51,12 @@ import {
   createJobCard,
   updateJobCard,
 } from "../../Services/JobCard";
+import { getAllShift } from "../../Services/ShiftService";
+import { getInternalWorkOrdersByOffice } from "../../Services/InternalWorkOrderService";
+import { getAllAssets } from "../../Services/AssetService";
+import { getAllItems } from "../../Services/InventoryService";
+import { getAllOperation } from "../../Services/OperationService";
+import { getContructionByitemoperationinwo } from "../../Services/ConstructionDesignSheet";
 
 const todayDate = () => new Date().toISOString().split("T")[0];
 
@@ -952,9 +958,10 @@ const JobCardMaster = () => {
       } catch (err) {
         console.error("Failed to delete job card", err);
       }
+    } else {
+      setConstructionData([]);
     }
   };
-
   const handleAddClick = () => {
     setEditData(null);
     setEditDialogOpen(true);
@@ -1169,6 +1176,7 @@ const JobCardMaster = () => {
           </Button>
         </Box>
       </Box>
+
       <TableContainer component={Paper} sx={{ mt: 2 }}>
         <Table>
           <TableHead>

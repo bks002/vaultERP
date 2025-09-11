@@ -74,16 +74,13 @@ const ConstructionDesignSheet = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [viewopen, setViewOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const [constructionData, setConstructionData] = useState([]);
-
   const [internalWorkOrders, setInternalWorkOrders] = useState([]);
   const [operations, setOperations] = useState([]);
   const [products, setProducts] = useState([]);
   const [items, setItems] = useState([]);
   const [productDetailsMap, setProductDetailsMap] = useState({});
   const [selectedWOData, setSelectedWOData] = useState([]);
-
   const [selectedItem, setSelectedItem] = useState("");
   const [selectedInternalWO, setSelectedInternalWO] = useState("");
   const [selectedOperation, setSelectedOperation] = useState("");
@@ -197,7 +194,6 @@ const ConstructionDesignSheet = () => {
     try {
       const data = await getConstructionDesignSheets(officeId);
       setConstructionData(data || []);
-
       const allProductIds = Array.from(
         new Set((data || []).map((d) => d.productId).filter(Boolean))
       );
@@ -244,6 +240,7 @@ const ConstructionDesignSheet = () => {
         setProductDetailsMap({});
         return;
       }
+
       const productIds = await getInternalWorkOrderProduct(inwoId);
       if (productIds?.length) {
         const productData = await Promise.all(
@@ -614,7 +611,6 @@ const ConstructionDesignSheet = () => {
                           <DeleteIcon />
                         </IconButton>
                       </Tooltip>
-
                     </TableCell>
                   </TableRow>
                 ))
@@ -692,7 +688,6 @@ const ConstructionDesignSheet = () => {
                 </Table>
               )}
             </Box>
-
             <TextField
               select
               label="Product"
@@ -785,7 +780,6 @@ const ConstructionDesignSheet = () => {
                 )}
                 sx={{ flex: 1 }}
               />
-
               <TextField
                 label="Value"
                 value={tempValue}

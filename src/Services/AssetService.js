@@ -21,6 +21,7 @@ export const getAssetsByIds = async (assetIds) => {
   }
 }
 
+
 export const getAllAssets = async (officeId) => {
     try {
         const response = await axios.get(`${API_BASE}?officeId=${officeId}`);
@@ -131,3 +132,4 @@ export const approveAssetCheckin = async (checkinId, approvedBy) => {
     throw err;
   }
 };
+

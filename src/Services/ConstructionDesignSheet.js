@@ -43,6 +43,7 @@ export const updateConstructionDesignSheet = async (id, constructionData) => {
     } else {
       console.error("Axios Error:", error.message);
     }
+
     throw error;
   }
 };
@@ -161,3 +162,4 @@ export const getCompoundByOperationWO = async (operationId, officeId, internalWo
     throw error;
   }
 };
+

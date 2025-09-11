@@ -5,7 +5,6 @@ const JOBCARD_BY_INWO_API_BASE = "https://admin.urest.in:8089/api/planning/JobCa
 const OPERATION_BY_JOBCARD_API_BASE = "https://admin.urest.in:8089/api/planning/JobCard/operations/by-jobcard";
 const CONTRUCTION_GRADE_API = "https://admin.urest.in:8089/api/planning/Contruction/by-grade";
 
-// Get all job cards by officeId
 export const getJobCards = async (officeId) => {
   try {
     const { data } = await axios.get(`${API_BASE}?officeId=${officeId}`);
@@ -43,6 +42,7 @@ export const deleteJobCard = async (jobCardId) => {
   try {
     const { data } = await axios.delete(`${API_BASE}/by-id/${jobCardId}`);
     return data;
+
   } catch (error) {
     console.error("Error deleting job card:", error);
     throw error;
