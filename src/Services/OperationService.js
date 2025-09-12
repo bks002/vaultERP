@@ -20,6 +20,15 @@ export const getAllOperation = async (officeId) => {
   }
 };
 
+export const getOperationsByInternalWO = async (internalWOId) => {
+  try {
+    const response = await api.get(`/work_order/InternalWorkOrder/operations/${internalWOId}`);
+    return response.data;
+  } catch (error) {
+    throw new Error("Failed to fetch operations by Internal WO");
+  }
+};
+
 // 2. Map operations to an employee
 export const OperationMapping = async ({
   employeeId,
