@@ -25,18 +25,15 @@ import {
   FormControlLabel,
   FormControl,
   FormLabel,
-  Divider,
 } from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
-
 import ViewIcon from "@mui/icons-material/Visibility";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-
 import SearchIcon from "@mui/icons-material/Search";
 import { useSelector } from "react-redux";
+import { getOperationsByInternalWO } from "../../Services/OperationService.js";
 
-import { getAllOperation } from "../../Services/OperationService.js";
 import {
   getInternalWorkOrdersByOffice,
   getInternalWorkOrderProduct,
@@ -59,14 +56,6 @@ const FIXED_ROWS = [
   { id: "temp-min-thickness", specification: "Min. Thickness", value: "", isFixed: true },
   { id: "temp-color", specification: "Color", value: "", isFixed: true },
 ];
-
-// 🔹 Permanent row definition (always in table)
-const FIXED_ROW = {
-  id: "fixed-min-thickness",
-  specification: "Min. Thickness",
-  value: "",
-  isFixed: true,
-};
 
 const ConstructionDesignSheet = () => {
   const officeId = useSelector((state) => state.user.officeId);
@@ -147,7 +136,6 @@ const ConstructionDesignSheet = () => {
     };
     fetchGradeCodes();
   }, [officeId]);
-
   // 🔹 Load specification master list
   useEffect(() => {
     (async () => {
@@ -168,7 +156,6 @@ const ConstructionDesignSheet = () => {
         try {
           await Promise.all([
             loadInternalWorkOrders(),
-            loadOperations(),
             loadItems(),
             loadConstructionData(),
             loadParty(),
@@ -261,15 +248,18 @@ const ConstructionDesignSheet = () => {
     }
   };
 
-  const loadOperations = async () => {
+  const loadOperationsByInternalWO = async (inwoId) => {
     try {
-      const data = await getAllOperation(officeId);
+      if (!inwoId) {
+        setOperations([]);
+        return;
+      }
+      const data = await getOperationsByInternalWO(inwoId);
       setOperations(data || []);
     } catch (err) {
       console.error("Failed to fetch operations:", err.message);
     }
   };
-
   // ---------- Add Spec ----------
   const handleAddSpecValue = async () => {
     if (tempSpec.trim() && tempValue.trim()) {
@@ -437,11 +427,11 @@ const ConstructionDesignSheet = () => {
   const handleInternalWOChange = (id) => {
     setSelectedInternalWO(id);
     setSelectedProduct("");
-
     const filteredData = internalWorkOrders.filter((wo) => wo.id === id);
     setSelectedWOData(filteredData);
 
-    loadProductsByInternalWO(id); // Use id for fetching products
+    loadProductsByInternalWO(id);
+    loadOperationsByInternalWO(id);   // 🔹 now loads ops specific to WO
   };
 
   // --- Helpers ---

@@ -5,7 +5,7 @@ const API_BASE = 'https://admin.urest.in:8089/api/Employee';
 
 
 export const getAllEmployees = async (officeId) => {
-    const response = await fetch(`${API_BASE}?officeId=${officeId}`);
+    const response = await fetch(`${API_BASE}/byOffice/${officeId}`);
     if (!response.ok) throw new Error('Failed to fetch employees');
     return await response.json();
 };
