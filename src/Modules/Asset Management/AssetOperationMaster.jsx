@@ -14,7 +14,9 @@ const AssetOperationMaster = () => {
     const [type, setType] = useState([]);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    // Inside component state
     const [selectedType, setSelectedType] = useState({
+        operationCode: '',
         operationName: '',
         description: '',
     });
@@ -40,10 +42,9 @@ const AssetOperationMaster = () => {
     }, [officeId]);
 
     const handleCreate = () => {
-        setSelectedType({ operationName: '', description: '', officeId: officeId, createdBy: userId });
+        setSelectedType({ operationCode: '', operationName: '', description: '', officeId, createdBy: userId });
         setDialogOpen(true);
     };
-
     const handleChange = (e) => {
         setSelectedType({ ...selectedType, [e.target.name]: e.target.value });
     };
@@ -58,17 +59,19 @@ const AssetOperationMaster = () => {
             showAlert('error', 'Failed to save operation');
         }
     };
-     const filteredOperation = type.filter((v) =>
+    const filteredOperation = type.filter((v) =>
         v.machineName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         v.operationName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         v.manpower?.includes(searchQuery) ||
-        v.item?.toLowerCase().includes(searchQuery.toLowerCase()) 
- );
+        v.item?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     const csvHeaders = [
-        { label: 'Operation Name', key: 'operationName' },  
+        { label: 'Operation Code', key: 'operationCode' },
+        { label: 'Operation Name', key: 'operationName' },
         { label: 'Description', key: 'description' },
     ];
+
     return (
         <Container maxWidth={false}>
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
@@ -104,6 +107,7 @@ const AssetOperationMaster = () => {
                         <TableCell>#</TableCell>
                         <TableCell>Name</TableCell>
                         <TableCell>Description</TableCell>
+                        <TableCell>Operation Code</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -113,6 +117,7 @@ const AssetOperationMaster = () => {
                                 <TableCell>{index + 1}</TableCell>
                                 <TableCell>{item.operationName}</TableCell>
                                 <TableCell>{item.description}</TableCell>
+                                <TableCell>{item.operationCode}</TableCell>
                             </TableRow>
                         ))
                     ) : (
@@ -128,6 +133,13 @@ const AssetOperationMaster = () => {
                 <DialogTitle>Add Operation</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} mt={1}>
+                        <TextField
+                            label="Operation Code"
+                            name="operationCode"
+                            value={selectedType.operationCode}
+                            onChange={handleChange}
+                            fullWidth
+                        />
                         <TextField
                             label="Operation Name"
                             name="operationName"

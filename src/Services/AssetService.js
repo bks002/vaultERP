@@ -101,3 +101,33 @@ export const checkinAsset = async (payload) => {
     throw err;
   }
 };
+
+// AssetService.js
+export const approveAssetCheckout = async (checkoutId, approvedBy) => {
+  try {
+    const response = await fetch(`${API_BASE}/ApproveCheckOut/${checkoutId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ approvedBy }), // send required field
+    });
+    return await response.json();
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
+
+export const approveAssetCheckin = async (checkinId, approvedBy) => {
+  try {
+    const response = await fetch(`${API_BASE}/ApproveCheckIn/${checkinId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ approvedBy }), // send required field
+    });
+    return await response.json();
+  }
+  catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
