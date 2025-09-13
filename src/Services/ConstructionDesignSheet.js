@@ -162,4 +162,3 @@ export const getCompoundByOperationWO = async (operationId, officeId, internalWo
     throw error;
   }
 };
-
