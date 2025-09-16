@@ -38,6 +38,7 @@ import ItemIssue from "./Modules/Inventory/ItemIssue.jsx";
 import WorkInProcess from "./Modules/Employee/WorkInProcess.jsx";
 import StockRegister from "./Modules/Inventory/StockRegister.jsx";
 import ExpenseReport from "./Modules/Employee/ExpensePage.jsx";
+import AssetDowntimeReport from "./Modules/Asset Management/AssetDowntimeReport.jsx";
 
 function AppRoutes() {
   return (
@@ -78,7 +79,7 @@ function AppRoutes() {
       <Route path="/inventory/StockRegister" element={<AuthWrapper><StockRegister /></AuthWrapper>} />
       <Route path="/Employee/ExpenseReport" element={<AuthWrapper><ExpenseReport /></AuthWrapper>} />
       <Route path="/WorkInProcess" element={<AuthWrapper><WorkInProcess /></AuthWrapper>} />
-
+      <Route path="/Asset/AssetDowntimeReport" element={<AuthWrapper><AssetDowntimeReport /></AuthWrapper>} />
       {/* Redirect to dashboard if no match */}
     </Routes>
   );

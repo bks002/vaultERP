@@ -246,6 +246,12 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
                         <ListItemText primary="Asset Spare Repair" />
                     </ListItemButton>
                 </ListItem>
+                <ListItem disablePadding>
+                    <ListItemButton component={Link} to="/Asset/AssetDowntimeReport"  >
+                        <ListItemIcon><InboxIcon /></ListItemIcon>
+                        <ListItemText primary="Asset Downtime Report" />
+                    </ListItemButton>
+                </ListItem>
             </List>
             <Divider />
             <List>
