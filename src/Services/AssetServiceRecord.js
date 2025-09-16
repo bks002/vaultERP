@@ -18,3 +18,8 @@ export const saveServiceRecord = async (formData) => {
     });
     return response.data;
 };
+
+export const approveOrRejectServiceRecord = async (data) => {
+  const res = await axios.post(`${API_BASE}ApproveOrReject`, data);
+  return res.data;
+};

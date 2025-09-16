@@ -64,6 +64,7 @@ const ConstructionDesignSheet = () => {
   const [viewopen, setViewOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [constructionData, setConstructionData] = useState([]);
+
   const [internalWorkOrders, setInternalWorkOrders] = useState([]);
   const [operations, setOperations] = useState([]);
   const [products, setProducts] = useState([]);
@@ -387,7 +388,7 @@ const ConstructionDesignSheet = () => {
         itemId: itemIdNum,
         specification: sv.specification,
         value: sv.value,
-        gradecode: selectedGradeCode || generateGradeCode(),
+        gradecode: selectedGradeCode || "",
         officeId: Number(officeId),
         isActive: true,
         createdOn: now,
@@ -601,6 +602,7 @@ const ConstructionDesignSheet = () => {
                           <DeleteIcon />
                         </IconButton>
                       </Tooltip>
+
                     </TableCell>
                   </TableRow>
                 ))

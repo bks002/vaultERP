@@ -17,7 +17,7 @@ import { getAssetOperation, OperationMapping } from "../../Services/AssetOperati
 import AlertSnackbar from "../../Components/Alert/AlertSnackBar";
 import ExportCSVButton from "../../Components/Export to CSV/ExportCSVButton";
 import BuildIcon from '@mui/icons-material/Build';
-import { getAssetSpares, deleteAssetSpare, addAssetSpare,updateAssetSpare } from "../../Services/AssetSpare";
+import { getAssetSpares, deleteAssetSpare, addAssetSpare, updateAssetSpare } from "../../Services/AssetSpare";
 
 const AssetMaster = () => {
   const officeId = useSelector((state) => state.user.officeId);
@@ -157,19 +157,18 @@ const AssetMaster = () => {
     }
 
     const payload = {
-      dto: {
-        assetId: parseInt(formData.assetId),
-        operationIds: selectedIds,
-        updatedBy: parseInt(userId)
-      }
+      assetId: parseInt(formData.assetId),
+      operationIds: selectedIds.map(id => parseInt(id)), // ensure integers
+      updatedBy: parseInt(userId)
     };
 
     try {
-      await OperationMapping(payload);  // Make sure this sends raw JSON with dto
+      await OperationMapping(payload); // no dto wrapper
       showAlert("success", "Operations mapped successfully");
       setSettingOpen(false);
       loadAllassets();
     } catch (error) {
+      console.error("Mapping error:", error.response || error);
       showAlert("error", error.response?.data?.title || "Failed to map operations");
     }
   };
@@ -549,8 +548,8 @@ const AssetMaster = () => {
                         <Tooltip title="Edit">
                           <IconButton color="primary" onClick={() => {
                             setSpareForm(spare);
-                            setSpareEditMode(true); 
-                            setSpareDialogOpen(true); 
+                            setSpareEditMode(true);
+                            setSpareDialogOpen(true);
                           }}>
                             <EditIcon />
                           </IconButton>

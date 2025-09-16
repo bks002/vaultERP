@@ -15,14 +15,20 @@ import {
     DialogContent,
     DialogActions,
     Button,
+    
     TextField, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel,MenuItem
 } from "@mui/material";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
+
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import AddIcon from "@mui/icons-material/Add";
 import { getAllAssets, getServiceDates } from "../../Services/AssetService";
-import { saveServiceRecord, getServiceHistory } from "../../Services/AssetServiceRecord";
+import { saveServiceRecord, getServiceHistory,  approveOrRejectServiceRecord, } from "../../Services/AssetServiceRecord";
 import { getAllEmployees } from "../../Services/EmployeeService";
 import { useSelector } from "react-redux";
+import { LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 
 export default function ServicePage() {
     const [passedServices, setPassedServices] = useState([]);
@@ -32,6 +38,9 @@ export default function ServicePage() {
     const [serviceHistory, setServiceHistory] = useState([]);
     const [selectedAsset, setSelectedAsset] = useState(null);
     const [serviceType, setServiceType] = useState("Paid"); // default Paid
+    const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectRemark, setRejectRemark] = useState("");
+  const [selectedRecord, setSelectedRecord] = useState(null);
     const getTodayDate = () => {
         const today = new Date();
         const yyyy = today.getFullYear();
@@ -49,7 +58,9 @@ export default function ServicePage() {
         servicedBy: "",
         approvedBy: "",
         imageFile: null,
-        receiptFile: null
+        receiptFile: null,
+        Days:"",
+        Duration:"", 
     });
 
     const officeId = useSelector((state) => state.user.officeId);
@@ -66,7 +77,60 @@ useEffect(() => {
         }
     };
     fetchEmployees();
-}, []);
+}, [officeId]);
+
+
+ const handleApprove = async (record) => {
+  try {
+    const payload = {
+      recordId: record.recordId ?? record.id,
+      isApproved: true,
+      isRejected: false,
+      rejectionRemark: "",
+      approvedBy: record.approvedBy ?? newRecord.approvedBy, // 👈 dropdown se
+    };
+
+    await approveOrRejectServiceRecord(payload);
+
+    setServiceHistory((prev) =>
+      prev.map((r) =>
+        (r.recordId ?? r.id) === (record.recordId ?? record.id)
+          ? { ...r, status: "Approved", approvedBy: payload.approvedBy }
+          : r
+      )
+    );
+  } catch (error) {
+    console.error("Approve failed", error);
+  }
+};
+
+const handleRejectSave = async () => {
+  if (!selectedRecord) return;
+  try {
+    const payload = {
+      recordId: selectedRecord.recordId ?? selectedRecord.id,
+      isApproved: false,
+      isRejected: true,
+      rejectionRemark: rejectRemark || "Rejected",
+      approvedBy: selectedRecord.approvedBy ?? newRecord.approvedBy, // 👈 dropdown se
+    };
+
+    await approveOrRejectServiceRecord(payload);
+
+    setServiceHistory((prev) =>
+      prev.map((r) =>
+        (r.recordId ?? r.id) === (selectedRecord.recordId ?? selectedRecord.id)
+          ? { ...r, status: payload.rejectionRemark, approvedBy: payload.approvedBy }
+          : r
+      )
+    );
+
+    setRejectDialogOpen(false);
+  } catch (error) {
+    console.error("Reject failed", error);
+  }
+};
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -101,6 +165,8 @@ useEffect(() => {
             serviceCost: "",
             servicedBy: "",
             approvedBy: "",
+            Days:"",
+            Duration:"",
             imageFile: null,
             receiptFile: null
         });
@@ -120,7 +186,14 @@ useEffect(() => {
             formData.append("servicedBy", newRecord.servicedBy);
             formData.append("approvedBy", newRecord.approvedBy);
             formData.append("createdBy", userId);
-
+            
+             // 👇 Yaha duration fields add karo
+               if (newRecord.Days !== undefined) {
+                formData.append("Days", newRecord.Days || 0);
+                }
+                if (newRecord.Duration) {
+                formData.append("Duration", newRecord.Duration); // HH:MM string
+                }
             if (newRecord.imageFile) {
                 formData.append("image", newRecord.imageFile);
             }
@@ -143,6 +216,8 @@ useEffect(() => {
             serviceCost: "",
             servicedBy: "",
             approvedBy: "",
+            Days:"",
+            Duration:"",
             imageFile: null,
             receiptFile: null
         });
@@ -241,9 +316,13 @@ useEffect(() => {
                                 <TableCell>Remark</TableCell>
                                 <TableCell>Cost</TableCell>
                                 <TableCell>Serviced By</TableCell>
+                                <TableCell>Days</TableCell>
+                                <TableCell>Duration</TableCell>
                                 <TableCell>Approved By</TableCell>
                                 <TableCell>Image</TableCell>
                                 <TableCell>Document</TableCell>
+                                 <TableCell>Status</TableCell>
+                                 <TableCell>Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -254,7 +333,10 @@ useEffect(() => {
                                     <TableCell>{rec.remark || "-"}</TableCell>
                                     <TableCell>{rec.serviceCost}</TableCell>
                                     <TableCell>{rec.servicedBy || "-"}</TableCell>
+                                    <TableCell>{rec.days || "-"}</TableCell>
+                                    <TableCell>{rec.duration || "-"}</TableCell>
                                     <TableCell>{rec.approvedBy || "-"}</TableCell>
+                                     
 
                                     <TableCell>
                                         {rec.image ? (
@@ -277,6 +359,77 @@ useEffect(() => {
                                                 View Doc
                                             </Button>
                                         ) : "-"}
+
+                                        
+                                    </TableCell>
+                                    <TableCell>
+                                        {rec.isApproved ? (
+                                            <Box
+                                            sx={{
+                                                display: "inline-block",
+                                                px: 1.5,
+                                                py: 0.5,
+                                                borderRadius: "12px",
+                                                bgcolor: "#d4edda",
+                                                color: "#155724",
+                                                fontWeight: "bold",
+                                                fontSize: "0.8rem",
+                                            }}
+                                            >
+                                            Approved
+                                            </Box>
+                                        ) : rec.isRejected ? (
+                                            <Box
+                                            sx={{
+                                                display: "inline-block",
+                                                px: 1.5,
+                                                py: 0.5,
+                                                borderRadius: "12px",
+                                                bgcolor: "#f8d7da",
+                                                color: "#721c24",
+                                                fontWeight: "bold",
+                                                fontSize: "0.8rem",
+                                            }}
+                                            >
+                                            {`Rejected (${rec.rejectionRemark || "No remark"})`}
+                                            </Box>
+                                        ) : (
+                                            <Box
+                                            sx={{
+                                                display: "inline-block",
+                                                px: 1.5,
+                                                py: 0.5,
+                                                borderRadius: "12px",
+                                                bgcolor: "#e2e3e5",
+                                                color: "#383d41",
+                                                fontWeight: "bold",
+                                                fontSize: "0.8rem",
+                                            }}
+                                            >
+                                            {rec.status || "Pending"}
+                                            </Box>
+                                        )}
+                                        </TableCell>
+
+
+                                    <TableCell>
+                                        <IconButton
+                                            color="success"
+                                            onClick={() => handleApprove(rec)}
+                                            title="Approve"
+                                        >
+                                            <CheckIcon />
+                                        </IconButton>
+                                        <IconButton
+                                            color="error"
+                                             onClick={() => {
+    setSelectedRecord(rec);   // store record here
+    setRejectDialogOpen(true); // open dialog properly
+  }}
+                                            title="Reject"
+                                        >
+                                            <CloseIcon />
+                                        </IconButton>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -285,6 +438,25 @@ useEffect(() => {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setHistoryDialogOpen(false)}>Close</Button>
+                </DialogActions>
+            </Dialog>
+
+             {/* Reject Remark Dialog */}
+            <Dialog open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>Reject Service Record</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        label="Rejection Remark"
+                        multiline
+                        rows={4}
+                        fullWidth
+                        value={rejectRemark}
+                        onChange={(e) => setRejectRemark(e.target.value)}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setRejectDialogOpen(false)}>Cancel</Button>
+                    <Button variant="contained" onClick={handleRejectSave}>Save</Button>
                 </DialogActions>
             </Dialog>
 
@@ -327,6 +499,78 @@ useEffect(() => {
                         InputLabelProps={{ shrink: true }}
                         sx={{ mb: 2 }}
                     />
+                 <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+  {/* Days Field */}
+  <TextField
+    label="Duration (Days)"
+    type="number"
+    sx={{ flex: 1 }}
+    value={newRecord.Days ?? ""}
+    onChange={(e) => {
+      const days = e.target.value === "" ? "" : parseInt(e.target.value, 10);
+      const serviceDate = new Date(newRecord.serviceDate);
+      const nextDate = new Date(serviceDate);
+
+      if (days !== "") {
+        nextDate.setDate(nextDate.getDate() + days);
+      }
+
+      if (newRecord.Duration) {
+        const [h, m] = newRecord.Duration.split(":").map(Number);
+        nextDate.setHours(nextDate.getHours() + (h || 0));
+        nextDate.setMinutes(nextDate.getMinutes() + (m || 0));
+      }
+
+      setNewRecord({
+        ...newRecord,
+        Days: days,
+        nextServiceDate: nextDate.toISOString().slice(0, 16),
+      });
+    }}
+  />
+
+  {/* Hours & Minutes in 24h format */}
+  <Box sx={{ flex: 1 }}>
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <TimePicker
+        label="Duration (HH:MM)"
+        ampm={false}
+        value={
+          newRecord.Duration
+            ? new Date(`1970-01-01T${newRecord.Duration}:00`)
+            : null
+        }
+        onChange={(newValue) => {
+          if (!newValue) return;
+          const hours = newValue.getHours();
+          const minutes = newValue.getMinutes();
+
+          const serviceDate = new Date(newRecord.serviceDate);
+          const nextDate = new Date(serviceDate);
+          if (newRecord.Days) {
+            nextDate.setDate(nextDate.getDate() + newRecord.Days);
+          }
+          nextDate.setHours(nextDate.getHours() + hours);
+          nextDate.setMinutes(nextDate.getMinutes() + minutes);
+
+          setNewRecord({
+            ...newRecord,
+            Duration: `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`,
+            nextServiceDate: nextDate.toISOString().slice(0, 16),
+          });
+        }}
+        renderInput={(params) => <TextField {...params} fullWidth />}
+      />
+    </LocalizationProvider>
+  </Box>
+</Box>
+
+
+
+
+
+
+
                     <TextField
                         label="Remark"
                         fullWidth
@@ -350,23 +594,24 @@ useEffect(() => {
                         onChange={(e) => setNewRecord({ ...newRecord, servicedBy: e.target.value })}
                         sx={{ mb: 2 }}
                     />
-                    <TextField
-                    select 
-                        label="Approved By"
-                        fullWidth
-                        value={newRecord.approvedBy}
-                        onChange={(e) => setNewRecord({ ...newRecord, approvedBy: e.target.value })}
-                        sx={{ mb: 2 }}
-                    >
-                        <MenuItem value="">
-                            <em>None</em>
-                        </MenuItem>
-                        {employees.map((employee) => (
-                            <MenuItem key={employee.employeeId} value={employee.employeeName}>
-                                {employee.employeeName}
-                            </MenuItem>
-                        ))}
-                    </TextField>
+                   <TextField
+  select 
+  label="Approved By"
+  fullWidth
+  value={newRecord.approvedBy}
+  onChange={(e) => setNewRecord({ ...newRecord, approvedBy: Number(e.target.value) })}
+  sx={{ mb: 2 }}
+>
+  <MenuItem value="">
+    <em>None</em>
+  </MenuItem>
+  {employees.map((employee) => (
+    <MenuItem key={employee.employeeId} value={employee.employeeId}>
+      {employee.employeeName}
+    </MenuItem>
+  ))}
+</TextField>
+
                     <Typography variant="subtitle2" sx={{ mb: 1 }}>
                         Upload Image
                     </Typography>
