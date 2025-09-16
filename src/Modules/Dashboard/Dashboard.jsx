@@ -28,7 +28,6 @@ const DepartmentAttendanceDashboard = () => {
       if (!fromDate || !toDate) return;
       try {
         const result = await getMinStockAll(officeId, fromDate, toDate);
-        console.log("Min Stock Data:", result);
         const filtered = result
           .filter(item => item.runningStock < item.minStockLevel)
           .map(item => ({
@@ -121,8 +120,6 @@ const DepartmentAttendanceDashboard = () => {
       setLoading(true);
       try {
         const result = await getServiceDueSummary(fromDate, toDate);
-        console.log("From:", fromDate, "To:", toDate);
-        console.log("Service Due Summary:", result);
         setAssetServiceSummary(result.summary || { overdue: 0, upcoming: 0, total: 0 });
         const formatted = result.data.map(item => ({
           assetName: item.assetName,

@@ -121,6 +121,7 @@ const Stock = () => {
           name: row.name,
           current_qty: row.current_qty,
           vendor_names: row.vendor_names,
+          quantity: row.quantity,
           quantityReturned: "",
         }))
       );
@@ -158,13 +159,14 @@ const Stock = () => {
       for (const row of stockData) {
         if (!row.quantityReturned || parseInt(row.quantityReturned) <= 0)
           continue;
+        console.log("Returning stock for row:", row);
         const payload = {
           poNumber: row.po_number,
           itemName: row.name,
           itemId: row.item_id,
           quantityReturned: parseInt(row.quantityReturned, 10),
           officeId: officeId,
-          quantity: row.current_qty,
+          quantity: row.quantity,
           scanDateTime: new Date().toISOString(),
         };
         await returnStock(payload);

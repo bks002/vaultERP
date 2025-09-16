@@ -397,7 +397,7 @@ const ConstructionDesignSheet = () => {
         itemId: itemIdNum,
         specification: sv.specification,
         value: sv.value,
-        gradecode: selectedGradeCode || generateGradeCode(),
+        gradecode: selectedGradeCode || "",
         officeId: Number(officeId),
         isActive: true,
         createdOn: now,
