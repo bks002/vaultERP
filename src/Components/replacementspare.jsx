@@ -71,8 +71,6 @@ const ReplacementDialog = ({ open, onClose, onSave, asset }) => {
     IsNew: newSpare.isNew
 };
 
-    
-
     try {
         let savedSpareId = newSpare.spareId;
 

@@ -45,7 +45,7 @@ export default function AssetMaintenance() {
 
   const fetchEmployees = async () => {
     try {
-      const res = await fetch(`https://admin.urest.in:8089/api/Employee?officeId=${officeId}`);
+      const res = await fetch(`https://admin.urest.in:8089/api/Employee/byOffice/${officeId}`);
       const data = await res.json();
       setEmployees(data);
     } catch (err) {
@@ -233,74 +233,136 @@ export default function AssetMaintenance() {
 
   const handleCheckinSubmit = async () => {
     if (!selectedAsset) return;
+if (!sentTo) {
+    alert("Please enter Sent To");
+    return;
+  }
+  if (!outFrom) {
+    alert("Please select Out From");
+    return;
+  }
+  if (!purpose) {
+    alert("Please select Purpose");
+    return;
+  }
+  if (!returnCondition) {
+    alert("Please enter Return Condition");
+    return;
+  }
 
     try {
-      // Prepare the payload for each spare
       for (const spare of spares) {
         const isReplacement = purpose === "Replacement" && spare.replacementRequired;
-
         const formData = new FormData();
 
-        // maintenance object → stringify
-        formData.append("Maintenance", JSON.stringify({
-          id: 0,
-          spareId: spare.spareId || 0,
-          assetId: selectedAsset.id,
-          issuedTo: assigneeId || 0,
-          issuedBy: approverId || 0, // or logged-in user id if available
-          issueDate: new Date().toISOString(),
-          expectedReturnDate: spare.tentativeReturnDate
+        // ---------------- Maintenance ----------------
+        formData.append("Maintenance.Id", 0);
+        formData.append("Maintenance.SpareId", spare.spareId || 0);
+        formData.append("Maintenance.AssetId", selectedAsset.id);
+        formData.append("Maintenance.IssuedTo", assigneeId || 0);
+        formData.append("Maintenance.IssuedBy", approverId || 0);
+        formData.append("Maintenance.IssueDate", new Date().toISOString());
+        formData.append(
+          "Maintenance.ExpectedReturnDate",
+          spare.tentativeReturnDate
             ? new Date(spare.tentativeReturnDate).toISOString()
-            : new Date().toISOString(),
-          actualReturnDate: new Date(checkinDateTime).toISOString(),
-          underWarranty: !!spare.warrantyExpiry,
-          warrantyExpiry: spare.warrantyExpiry || new Date().toISOString(),
-          replacementCost: spare.replacementCost || 0,
-          scrapValue: spare.scrapValue || 0,
-          netCost: spare.netCost || 0,
-          returnCondition: returnCondition || "Good",
-          quantity: spare.spareAmount || 1,
-          status: "CheckedIn",
-          purpose: purpose || "",
-          outFrom: outFrom || "",
-          sentTo: sentTo || "",
-          imageOut: spare.imageOut || "",
-          remarks: spare.remarks || "",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }));
+            : new Date().toISOString()
+        );
+        formData.append("Maintenance.ActualReturnDate", new Date(checkinDateTime).toISOString());
+        formData.append("Maintenance.UnderWarranty", (!!spare.warrantyExpiry).toString()); // boolean → string
+        formData.append("Maintenance.WarrantyExpiry", spare.warrantyExpiry || new Date().toISOString());
+        formData.append("Maintenance.ReplacementCost", spare.replacementCost || 0);
+        formData.append("Maintenance.ScrapValue", spare.scrapValue || 0);
+        formData.append("Maintenance.NetCost", spare.netCost || 0);
+        formData.append("Maintenance.ReturnCondition", returnCondition || "Good");
+        formData.append("Maintenance.SentTo", sentTo || "NA");
+        formData.append("Maintenance.OutFrom", outFrom || "NA");
+        formData.append("Maintenance.Purpose", purpose || "Maintenance");
+        formData.append("Maintenance.Remarks", spare.remarks || "NA");
+        formData.append("Maintenance.Quantity", spare.spareAmount || 1);
+        formData.append("Maintenance.Status", "CheckedIn");
+        formData.append("Maintenance.CreatedAt", new Date().toISOString());
+        formData.append("Maintenance.UpdatedAt", new Date().toISOString());
 
-        // If you need to upload an image (binary file), append it separately
-        if (spare.imageFile) {
-          formData.append("imageIn", spare.imageFile);
-        } else {
-          formData.append("imageIn", ""); // optional
-        }
+        // Images (binary)
+        formData.append("Maintenance.ImageOut", spare.imageOut || "");
+        formData.append("Maintenance.ImageIn", spare.imageFile || "");
 
-        // ReplacementRequired flag
-        formData.append("ReplacementRequired", isReplacement ? "true" : "false");
-        // Replacement object → stringify only if required
+        // ---------------- Replacement ----------------
+        formData.append("ReplacementRequired", isReplacement.toString());
         if (isReplacement && replacementData) {
-          formData.append("Replacement", JSON.stringify(replacementData));
+          formData.append("Replacement.OldSpareId", replacementData.oldSpareId || 0);
+          formData.append("Replacement.AssetId", selectedAsset.id);
+          formData.append("Replacement.UseExistingSpare", (replacementData.useExistingSpare || false).toString());
+          formData.append("Replacement.NewSpareId", replacementData.newSpareId || 0);
+
+          if (replacementData.newSpare) {
+            const ns = replacementData.newSpare;
+            formData.append("Replacement.NewSpare.SpareId", ns.spareId || 0);
+            formData.append("Replacement.NewSpare.SpareCode", ns.spareCode || "");
+            formData.append("Replacement.NewSpare.SpareName", ns.spareName || "");
+            formData.append("Replacement.NewSpare.PartNumber", ns.partNumber || "");
+            formData.append("Replacement.NewSpare.Category", ns.category || "");
+            formData.append("Replacement.NewSpare.Specification", ns.specification || "");
+            formData.append("Replacement.NewSpare.UnitOfMeasure", ns.unitOfMeasure || "");
+            formData.append("Replacement.NewSpare.CurrentStock", ns.currentStock || 0);
+            formData.append("Replacement.NewSpare.ReorderLevel", ns.reorderLevel || 0);
+            formData.append("Replacement.NewSpare.ReorderQuantity", ns.reorderQuantity || 0);
+            formData.append("Replacement.NewSpare.Location", ns.location || "");
+            formData.append("Replacement.NewSpare.LinkedAssetId", selectedAsset.id);
+            formData.append("Replacement.NewSpare.VendorName", ns.vendorName || "");
+            formData.append("Replacement.NewSpare.PurchaseRate", ns.purchaseRate || 0);
+            formData.append("Replacement.NewSpare.AverageCost", ns.averageCost || 0);
+            formData.append("Replacement.NewSpare.LeadTimeDays", ns.leadTimeDays || 0);
+            formData.append("Replacement.NewSpare.Criticality", ns.criticality || "");
+            formData.append("Replacement.NewSpare.WarrantyExpiry", ns.warrantyExpiry || new Date().toISOString());
+            formData.append("Replacement.NewSpare.Remarks", ns.remarks || "");
+            formData.append("Replacement.NewSpare.CreatedAt", ns.createdAt || new Date().toISOString());
+            formData.append("Replacement.NewSpare.UpdatedAt", ns.updatedAt || new Date().toISOString());
+            formData.append("Replacement.NewSpare.IsNew", (ns.isNew || false).toString());
+          } else {
+            // Ensure keys still exist even if no new spare object
+            formData.append("Replacement.NewSpare.SpareId", 0);
+            formData.append("Replacement.NewSpare.SpareCode", "");
+            formData.append("Replacement.NewSpare.SpareName", "");
+            formData.append("Replacement.NewSpare.PartNumber", "");
+            formData.append("Replacement.NewSpare.Category", "");
+            formData.append("Replacement.NewSpare.Specification", "");
+            formData.append("Replacement.NewSpare.UnitOfMeasure", "");
+            formData.append("Replacement.NewSpare.CurrentStock", 0);
+            formData.append("Replacement.NewSpare.ReorderLevel", 0);
+            formData.append("Replacement.NewSpare.ReorderQuantity", 0);
+            formData.append("Replacement.NewSpare.Location", "");
+            formData.append("Replacement.NewSpare.LinkedAssetId", selectedAsset.id);
+            formData.append("Replacement.NewSpare.VendorName", "");
+            formData.append("Replacement.NewSpare.PurchaseRate", 0);
+            formData.append("Replacement.NewSpare.AverageCost", 0);
+            formData.append("Replacement.NewSpare.LeadTimeDays", 0);
+            formData.append("Replacement.NewSpare.Criticality", "");
+            formData.append("Replacement.NewSpare.WarrantyExpiry", new Date().toISOString());
+            formData.append("Replacement.NewSpare.Remarks", "");
+            formData.append("Replacement.NewSpare.CreatedAt", new Date().toISOString());
+            formData.append("Replacement.NewSpare.UpdatedAt", new Date().toISOString());
+            formData.append("Replacement.NewSpare.IsNew", "false");
+          }
+
+          formData.append("Replacement.ScrapValue", replacementData.scrapValue || 0);
+          formData.append("Replacement.ReplacementCost", replacementData.replacementCost || 0);
+          formData.append("Replacement.Remarks", replacementData.remarks || "");
         }
 
-        // ApproverId
+        // ---------------- Approver ----------------
         formData.append("ApproverId", approverId || 0);
 
+        // ---------------- API Call ----------------
         const res = await fetch(
           "https://admin.urest.in:8089/api/asset/AssetSpareOps/checkin-full",
-          {
-            method: "POST",
-            body: formData, // do NOT set Content-Type, browser will set with boundary
-          }
+          { method: "POST", body: formData }
         );
-
-        const data = await res.json();
-        console.log(data);
 
         if (!res.ok) {
           const errData = await res.json();
-          console.error(errData);
+          console.error("Checkin failed:", errData);
           alert("Checkin failed");
           return;
         }
@@ -310,20 +372,20 @@ export default function AssetMaintenance() {
       setOpenCheckin(false);
       setSpares([]);
       fetchAssets();
-      setAssetStatus((prev) => ({
+      setAssetStatus(prev => ({
         ...prev,
         [selectedAsset.id]: {
           ...(prev[selectedAsset.id] || {}),
           assetStatus: "CheckedIn",
-          approvalStatus: "Pending",  // ✅ requires approval
-          lastCheckout: { outFrom, sentTo }
-        }
+          approvalStatus: "Pending"
+        },
       }));
     } catch (err) {
       console.error(err);
       alert("Checkin failed");
     }
   };
+
 
   // When opening Checkin dialog
   const openCheckinDialog = (asset) => {
