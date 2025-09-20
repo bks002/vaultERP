@@ -267,7 +267,6 @@ const DepartmentAttendanceDashboard = () => {
           </Box>
         </Box>
 
-        {/* --- Asset Service Detail --- */}
         <Box sx={{ border: '1px solid #ccc', borderRadius: 1, p: 2, width: '45%', height: 300,
           display: "flex", flexDirection: "column" }}>
           <Box sx={{ width: "100%", textAlign: "center", fontSize: '18px', fontWeight: 600, mb: 1 }}>
@@ -302,7 +301,6 @@ const DepartmentAttendanceDashboard = () => {
           {loading && <div>Loading...</div>}
         </Box>
 
-        {/* --- Min Stock Level --- */}
         <Box sx={{ border: '1px solid #ccc', borderRadius: 1, p: 2, display: 'flex',
           flexDirection: 'column', alignItems: 'center', width: '45%', height: 300 }}>
           <Box sx={{ width: "100%", textAlign: "center", fontSize: '18px', fontWeight: 600, mb: 1 }}>
