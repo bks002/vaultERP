@@ -68,7 +68,7 @@ const DepartmentAttendanceDashboard = () => {
     fetchMinStock();
   }, [fromDate, toDate, officeId]);
 
-  // --- Helper: get months between ---
+
   function getMonthsBetween(fromDate, toDate) {
     const start = new Date(fromDate);
     const end = new Date(toDate);
@@ -81,7 +81,6 @@ const DepartmentAttendanceDashboard = () => {
     return months;
   }
 
-  // --- Attendance ---
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -108,7 +107,6 @@ const DepartmentAttendanceDashboard = () => {
     fetchData();
   }, [fromDate, toDate, officeId]);
 
-  // --- Assets ---
   useEffect(() => {
     const fetchAssets = async () => {
       if (!fromDate || !toDate) return;
@@ -122,6 +120,7 @@ const DepartmentAttendanceDashboard = () => {
           lastServiceDate: item.lastServiceDate,
           nextServiceDate: item.nextServiceDate,
         }));
+
         setAssetServiceData(formatted);
       } catch (error) {
         console.error("Error fetching assets:", error);
@@ -139,6 +138,7 @@ const DepartmentAttendanceDashboard = () => {
       if (!fromDate || !toDate) return;
       try {
         const result = await getExpenseReport(officeId, fromDate, toDate);
+
         const grouped = result.reduce((acc, item) => {
           const existing = acc.find((x) => x.name === item.expenseType);
           if (existing) {
@@ -153,6 +153,7 @@ const DepartmentAttendanceDashboard = () => {
           }
           return acc;
         }, []);
+
         setExpenseData(grouped);
       } catch (error) {
         console.error("Error loading expenses:", error);
@@ -335,6 +336,7 @@ const DepartmentAttendanceDashboard = () => {
           </Box>
         </Box>
 
+        </Box>
       </Box>
     </Box>
   );
