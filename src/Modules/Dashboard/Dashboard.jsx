@@ -338,7 +338,6 @@ const DepartmentAttendanceDashboard = () => {
 
         </Box>
       </Box>
-    </Box>
   );
 };
 
