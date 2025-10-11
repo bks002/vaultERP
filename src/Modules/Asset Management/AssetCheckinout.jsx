@@ -45,7 +45,7 @@ export default function AssetMaintenance() {
 
   const fetchEmployees = async () => {
     try {
-      const res = await fetch(`https://admin.urest.in:8089/api/Employee?officeId=${officeId}`);
+      const res = await fetch(`https://admin.urest.in:8089/api/Employee/byOffice/${officeId}`);
       const data = await res.json();
       setEmployees(data);
     } catch (err) {
@@ -231,99 +231,135 @@ export default function AssetMaintenance() {
     setSpares(updated);
   };
 
-  const handleCheckinSubmit = async () => {
-    if (!selectedAsset) return;
+ const handleCheckinSubmit = async () => {
+  if (!selectedAsset) return;
 
-    try {
-      // Prepare the payload for each spare
-      for (const spare of spares) {
-        const isReplacement = purpose === "Replacement" && spare.replacementRequired;
+  // Basic validations
+  if (!sentTo) return alert("Please enter Sent To");
+  if (!outFrom) return alert("Please select Out From");
+  if (!purpose) return alert("Please select Purpose");
+  if (!returnCondition) return alert("Please enter Return Condition");
+  if (!approverId) return alert("Please select Approver");
 
-        const formData = new FormData();
+  try {
+    // Build a payload array for all spares
+    const payload = spares.map(spare => {
+      const isReplacement = purpose === "Replacement" && spare.replacementRequired;
 
-        // maintenance object → stringify
-        formData.append("Maintenance", JSON.stringify({
-          id: 0,
-          spareId: spare.spareId || 0,
+      const maintenance = {
+        id: 0,
+        spareId: spare.spareId || 0,
+        assetId: selectedAsset.id,
+        issuedTo: assigneeId || 0,
+        issuedBy: approverId || 0,
+        issueDate: new Date().toISOString(),
+        expectedReturnDate: spare.tentativeReturnDate
+          ? new Date(spare.tentativeReturnDate).toISOString()
+          : new Date().toISOString(),
+        actualReturnDate: new Date(checkinDateTime).toISOString(),
+        underWarranty: !!spare.warrantyExpiry,
+        warrantyExpiry: spare.warrantyExpiry || new Date().toISOString(),
+        replacementCost: spare.replacementCost || 0,
+        scrapValue: spare.scrapValue || 0,
+        netCost: spare.netCost || 0,
+        returnCondition: returnCondition || "Good",
+        sentTo: sentTo || "NA",
+        outFrom: outFrom || "NA",
+        purpose: purpose || "Maintenance",
+        remarks: spare.remarks || "NA",
+        quantity: spare.spareAmount || 1,
+        status: "CheckedIn",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        imageOut: spare.imageOut || "",
+        imageIn: spare.imageFile || ""
+      };
+
+      let replacement = null;
+      if (isReplacement && replacementData) {
+        const ns = replacementData.newSpare || {};
+        replacement = {
+          oldSpareId: replacementData.oldSpareId || 0,
           assetId: selectedAsset.id,
-          issuedTo: assigneeId || 0,
-          issuedBy: approverId || 0, // or logged-in user id if available
-          issueDate: new Date().toISOString(),
-          expectedReturnDate: spare.tentativeReturnDate
-            ? new Date(spare.tentativeReturnDate).toISOString()
-            : new Date().toISOString(),
-          actualReturnDate: new Date(checkinDateTime).toISOString(),
-          underWarranty: !!spare.warrantyExpiry,
-          warrantyExpiry: spare.warrantyExpiry || new Date().toISOString(),
-          replacementCost: spare.replacementCost || 0,
-          scrapValue: spare.scrapValue || 0,
-          netCost: spare.netCost || 0,
-          returnCondition: returnCondition || "Good",
-          quantity: spare.spareAmount || 1,
-          status: "CheckedIn",
-          purpose: purpose || "",
-          outFrom: outFrom || "",
-          sentTo: sentTo || "",
-          imageOut: spare.imageOut || "",
-          remarks: spare.remarks || "",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }));
-
-        // If you need to upload an image (binary file), append it separately
-        if (spare.imageFile) {
-          formData.append("imageIn", spare.imageFile);
-        } else {
-          formData.append("imageIn", ""); // optional
-        }
-
-        // ReplacementRequired flag
-        formData.append("ReplacementRequired", isReplacement ? "true" : "false");
-        // Replacement object → stringify only if required
-        if (isReplacement && replacementData) {
-          formData.append("Replacement", JSON.stringify(replacementData));
-        }
-
-        // ApproverId
-        formData.append("ApproverId", approverId || 0);
-
-        const res = await fetch(
-          "https://admin.urest.in:8089/api/asset/AssetSpareOps/checkin-full",
-          {
-            method: "POST",
-            body: formData, // do NOT set Content-Type, browser will set with boundary
-          }
-        );
-
-        const data = await res.json();
-        console.log(data);
-
-        if (!res.ok) {
-          const errData = await res.json();
-          console.error(errData);
-          alert("Checkin failed");
-          return;
-        }
+          useExistingSpare: !!replacementData.useExistingSpare,
+          newSpareId: replacementData.newSpareId || 0,
+          newSpare: {
+            spareId: ns.spareId || 0,
+            spareCode: ns.spareCode || "",
+            spareName: ns.spareName || "",
+            partNumber: ns.partNumber || "",
+            category: ns.category || "",
+            specification: ns.specification || "",
+            unitOfMeasure: ns.unitOfMeasure || "",
+            currentStock: ns.currentStock || 0,
+            reorderLevel: ns.reorderLevel || 0,
+            reorderQuantity: ns.reorderQuantity || 0,
+            location: ns.location || "",
+            linkedAssetId: selectedAsset.id,
+            vendorName: ns.vendorName || "",
+            purchaseRate: ns.purchaseRate || 0,
+            averageCost: ns.averageCost || 0,
+            leadTimeDays: ns.leadTimeDays || 0,
+            criticality: ns.criticality || "",
+            warrantyExpiry: ns.warrantyExpiry || new Date().toISOString(),
+            remarks: ns.remarks || "",
+            createdAt: ns.createdAt || new Date().toISOString(),
+            updatedAt: ns.updatedAt || new Date().toISOString(),
+            isNew: !!ns.isNew
+          },
+          scrapValue: replacementData.scrapValue || 0,
+          replacementCost: replacementData.replacementCost || 0,
+          remarks: replacementData.remarks || ""
+        };
       }
 
-      // Reset UI
-      setOpenCheckin(false);
-      setSpares([]);
-      fetchAssets();
-      setAssetStatus((prev) => ({
-        ...prev,
-        [selectedAsset.id]: {
-          ...(prev[selectedAsset.id] || {}),
-          assetStatus: "CheckedIn",
-          approvalStatus: "Pending",  // ✅ requires approval
-          lastCheckout: { outFrom, sentTo }
+      return {
+        maintenanceJson: JSON.stringify(maintenance),
+        maintenance,
+        replacementRequired: !!isReplacement,
+        replacementJson: JSON.stringify(replacement),
+        replacement,
+        approverId: approverId
+      };
+    });
+
+    // Send all spares to API
+    for (const item of payload) {
+      const res = await fetch(
+        "https://admin.urest.in:8089/api/asset/AssetSpareOps/checkin-full",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(item)
         }
-      }));
-    } catch (err) {
-      console.error(err);
-      alert("Checkin failed");
+      );
+
+      if (!res.ok) {
+        const errData = await res.json();
+        console.error("Checkin failed:", errData);
+        return alert("Checkin failed");
+      }
     }
-  };
+
+    // Reset UI
+    setOpenCheckin(false);
+    setSpares([]);
+    fetchAssets();
+    setAssetStatus(prev => ({
+      ...prev,
+      [selectedAsset.id]: {
+        ...(prev[selectedAsset.id] || {}),
+        assetStatus: "CheckedIn",
+        approvalStatus: "Pending"
+      }
+    }));
+
+    alert("Checkin successful!");
+  } catch (err) {
+    console.error(err);
+    alert("Checkin failed");
+  }
+};
 
   // When opening Checkin dialog
   const openCheckinDialog = (asset) => {
@@ -356,7 +392,6 @@ export default function AssetMaintenance() {
                 <TableCell>
                   <Button
                     color="info"
-                    sx={{ ml: 1 }}
                     onClick={() => handleViewReport(asset.id)}
                   >
                     View
@@ -395,7 +430,6 @@ export default function AssetMaintenance() {
                           </Button>
                           <Button
                             color="error"
-                            sx={{ ml: 1 }}
                             onClick={() =>
                               handleApproval(asset.maintenanceId, "Rejected", "Not approved")
                             }
@@ -406,7 +440,7 @@ export default function AssetMaintenance() {
                       );
                     }
 
-                    if (status === "Approved" && approval === "Approved") {
+                    if (status === "Approved" || approval === "Approved") {
                       // Step 3
                       return (
                         <Button

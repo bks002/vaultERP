@@ -30,7 +30,6 @@ import Autocomplete from "@mui/material/Autocomplete";
 import ViewIcon from "@mui/icons-material/Visibility";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-
 import SearchIcon from "@mui/icons-material/Search";
 import { useSelector } from "react-redux";
 import { getOperationsByInternalWO } from "../../Services/OperationService.js";
@@ -57,14 +56,6 @@ const FIXED_ROWS = [
   { id: "temp-min-thickness", specification: "Min. Thickness", value: "", isFixed: true },
   { id: "temp-color", specification: "Color", value: "", isFixed: true },
 ];
-
-// 🔹 Permanent row definition (always in table)
-const FIXED_ROW = {
-  id: "fixed-min-thickness",
-  specification: "Min. Thickness",
-  value: "",
-  isFixed: true,
-};
 
 const ConstructionDesignSheet = () => {
   const officeId = useSelector((state) => state.user.officeId);
