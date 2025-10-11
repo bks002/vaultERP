@@ -24,6 +24,7 @@ import {
   setUserName,
   setEmail,
   setUserTypeId,
+  setallowedpages,
 } from "../../Redux/userSlice";
 import { useNavigate } from "react-router-dom";
 
@@ -179,10 +180,12 @@ export default function SlotsSignIn() {
               if (data.user) storage.setItem("user", JSON.stringify(data.user));
 
               const user = data.user || {};
+              console.log(user);
               dispatch(setUserId(user.id || null));
               dispatch(setUserName(user.username || null));
               dispatch(setEmail(user.email || null));
               dispatch(setUserTypeId(user.userTypeId || 0));
+              dispatch(setallowedpages(user.allowedPages || []));
 
               navigate("/dashboard");
             } else {
