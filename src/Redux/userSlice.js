@@ -8,6 +8,7 @@ const initialState = {
     email: null,
     userTypeId: 0,
     officeName: null,
+    allowedpages: [],
 };
 
 const userSlice = createSlice({
@@ -35,6 +36,9 @@ const userSlice = createSlice({
         setOfficeName: (state, action) => {
             state.officeName = action.payload;
         },
+        setallowedpages: (state, action) => {
+            state.allowedpages = action.payload;
+        },
         clearUserData: (state) => {
             state.userId = null;
             state.userRole = null;
@@ -43,10 +47,11 @@ const userSlice = createSlice({
             state.email = null;
             state.userTypeId = 0;
             state.officeName= null;
+            state.allowedpages = [];
         },
     },
 });
 
-export const { setUserId, setUserRole, setOfficeId, setUserName, setEmail, setUserTypeId, setOfficeName, clearUserData } = userSlice.actions;
+export const { setUserId, setUserRole, setOfficeId, setUserName, setEmail, setUserTypeId, setOfficeName, clearUserData, setallowedpages } = userSlice.actions;
 
 export default userSlice.reducer;
