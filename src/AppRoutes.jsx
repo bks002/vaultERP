@@ -39,10 +39,14 @@ import WorkInProcess from "./Modules/Employee/WorkInProcess.jsx";
 import StockRegister from "./Modules/Inventory/StockRegister.jsx";
 import ExpenseReport from "./Modules/Employee/ExpensePage.jsx";
 import AssetDowntimeReport from "./Modules/Asset Management/AssetDowntimeReport.jsx";
+import TicketComplaints from "./Modules/Complaints Management/TicketComplaints.jsx";
+import TicketCategories from "./Modules/Complaints Management/TicketCategories.jsx";
 
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/Complaints/TicketComplaints" element={<AuthWrapper><TicketComplaints /></AuthWrapper>} />
+      <Route path="/Complaints/TicketCategories" element={<AuthWrapper><TicketCategories /></AuthWrapper>} />
       <Route path="/" element={<SlotsSignIn />} />
       <Route path="/dashboard" element={<AuthWrapper><Dashboard /></AuthWrapper>} />
       <Route path="/office" element={<AuthWrapper><OfficeMaster /></AuthWrapper>} />

@@ -120,6 +120,14 @@ const sections = [
       { name: "Work Order", to: "/WorkOrder/WorkOrder" },
     ],
   },
+  {
+    id: "complaint_management",
+    title: "Complaint Management",
+    links: [
+      { name: "Complaints", to: "/Complaints/TicketComplaints" },
+      { name: "Categories", to: "/Complaints/TicketCategories" },
+    ],
+  }
 ];
 
 // ========================
@@ -141,6 +149,7 @@ export default function MiniDrawer({ drawer, handleDrawer }) {
           "asset_management",
           "attendance_management",
           "work_order_management",
+          "complaint_management",
         ];
 
   return (
