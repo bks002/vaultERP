@@ -64,10 +64,10 @@ function AppRoutes() {
       <Route path="/AddUser/AddNewUser" element={<AuthWrapper><AddNewUser /></AuthWrapper>} />
       <Route path="/employeeshift" element={<AuthWrapper><EmployeeShift /></AuthWrapper>} />
       <Route path="/JobCard" element={<AuthWrapper><JobCard /></AuthWrapper>} />
-      <Route path="Work Order Management/PartyMaster" element={<AuthWrapper><PartyMaster /></AuthWrapper>} />
+      <Route path="/WorkOrder/PartyMaster" element={<AuthWrapper><PartyMaster /></AuthWrapper>} />
       <Route path="/inventory/Stock" element={<AuthWrapper><Stock /></AuthWrapper>} />
-      <Route path="Work Order Management/WorkOrder" element={<AuthWrapper><WorkOrder /></AuthWrapper>} />
-      <Route path="Work Order Management/ProductMaster" element={<AuthWrapper><ProductMaster /></AuthWrapper>} />
+      <Route path="/WorkOrder/WorkOrder" element={<AuthWrapper><WorkOrder /></AuthWrapper>} />
+      <Route path="/WorkOrder/ProductMaster" element={<AuthWrapper><ProductMaster /></AuthWrapper>} />
       <Route path="/processchart" element={<AuthWrapper><ProcessChartMaster /></AuthWrapper>} />
       <Route path="/Attendance/Attendance" element={<AuthWrapper><Attendance /></AuthWrapper>} />
       <Route path="/Attendance/Leave" element={<AuthWrapper><Leave /></AuthWrapper>} />
